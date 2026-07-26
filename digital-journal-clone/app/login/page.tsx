@@ -17,9 +17,31 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showGoogleChooser, setShowGoogleChooser] = useState(false);
 
-  const handleQuickLogin = (userEmail: string, userPass: string, userName: string, roleName: string) => {
+  const [selectedRole, setSelectedRole] = useState<"Admin" | "Writer" | "Reader">("Admin");
+
+  const handleRoleSelect = (role: "Admin" | "Writer" | "Reader") => {
+    setSelectedRole(role);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (role === "Admin") {
+      setEmail("admin@digitaljournal.com");
+      setPassword("admin123");
+    } else if (role === "Writer") {
+      setEmail("writer@digitaljournal.com");
+      setPassword("writer123");
+    } else {
+      setEmail("reader@digitaljournal.com");
+      setPassword("reader123");
+    }
+  };
+
+  const handleQuickLogin = (userEmail: string, userPass: string, userName: string, roleName: "Admin" | "Writer" | "Reader") => {
     setIsSubmitting(true);
     setErrorMessage("");
+    setSelectedRole(roleName);
+    setEmail(userEmail);
+    setPassword(userPass);
 
     const loggedUser = {
       name: userName,
@@ -33,16 +55,12 @@ export default function LoginPage() {
     }
     localStorage.setItem("dj_toast", `Welcome back, ${userName}! Signed in as ${roleName}.`);
 
-    setSuccessMessage(`Signed in as ${userName} (${roleName})! Redirecting...`);
+    const destPath = roleName === "Admin" ? "/admin" : roleName === "Writer" ? "/writer" : "/reader";
+    setSuccessMessage(`Authenticated as ${roleName}! Navigating to ${destPath}...`);
+
     setTimeout(() => {
-      if (roleName === "Admin") {
-        router.push("/admin");
-      } else if (roleName === "Writer") {
-        router.push("/writer");
-      } else {
-        router.push("/reader");
-      }
-    }, 800);
+      router.push(destPath);
+    }, 700);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +72,7 @@ export default function LoginPage() {
     }
     setIsSubmitting(true);
 
-    let roleName = "Reader";
+    let roleName: "Admin" | "Writer" | "Reader" = selectedRole;
     let userName = email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
     if (email.toLowerCase().includes("admin")) {
@@ -63,7 +81,12 @@ export default function LoginPage() {
     } else if (email.toLowerCase().includes("writer")) {
       roleName = "Writer";
       userName = "Jennifer Friesen";
+    } else if (email.toLowerCase().includes("reader")) {
+      roleName = "Reader";
+      userName = userName || "Alex Reader";
     }
+
+    const targetDestination = roleName === "Admin" ? "/admin" : roleName === "Writer" ? "/writer" : "/reader";
 
     try {
       let res;
@@ -93,14 +116,12 @@ export default function LoginPage() {
       }
       localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
 
-      setSuccessMessage(`Successfully signed in as ${loggedUser.name} (${roleName})! Redirecting...`);
+      setSuccessMessage(`Successfully signed in as ${roleName}! Opening ${targetDestination}...`);
       setTimeout(() => {
-        if (roleName === "Admin") router.push("/admin");
-        else if (roleName === "Writer") router.push("/writer");
-        else router.push("/reader");
-      }, 1000);
+        router.push(targetDestination);
+      }, 800);
     } catch (err) {
-      console.warn("Login API error:", err);
+      console.warn("Login API fallback mode:", err);
       const fallbackUser = { name: userName, email, role: roleName };
       localStorage.setItem("dj_user", JSON.stringify(fallbackUser));
       if (roleName === "Admin") {
@@ -108,12 +129,10 @@ export default function LoginPage() {
       }
       localStorage.setItem("dj_toast", `Welcome back, ${fallbackUser.name}! Signed in as ${roleName}.`);
 
-      setSuccessMessage(`Successfully signed in as ${roleName}! Redirecting...`);
+      setSuccessMessage(`Successfully signed in as ${roleName}! Opening ${targetDestination}...`);
       setTimeout(() => {
-        if (roleName === "Admin") router.push("/admin");
-        else if (roleName === "Writer") router.push("/writer");
-        else router.push("/reader");
-      }, 1000);
+        router.push(targetDestination);
+      }, 800);
     } finally {
       setIsSubmitting(false);
     }
@@ -210,6 +229,48 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Role Selection Tabs */}
+          <div className="mb-6">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 text-center">
+              SELECT LOGIN PORTAL TYPE
+            </p>
+            <div className="grid grid-cols-3 gap-1 bg-zinc-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => handleRoleSelect("Admin")}
+                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  selectedRole === "Admin"
+                    ? "bg-red-700 text-white shadow-sm"
+                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
+                }`}
+              >
+                <span>🛡️</span> Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleSelect("Writer")}
+                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  selectedRole === "Writer"
+                    ? "bg-blue-700 text-white shadow-sm"
+                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
+                }`}
+              >
+                <span>✍️</span> Writer
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleSelect("Reader")}
+                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  selectedRole === "Reader"
+                    ? "bg-emerald-700 text-white shadow-sm"
+                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
+                }`}
+              >
+                <span>📖</span> Reader
+              </button>
+            </div>
+          </div>
+
           {/* Quick Role Demo Logins */}
           <div className="mb-6 bg-zinc-50 border border-zinc-200 rounded-lg p-3">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 text-center">
@@ -289,7 +350,7 @@ export default function LoginPage() {
           <div className="relative flex py-3 items-center mb-6">
             <div className="flex-grow border-t border-zinc-200"></div>
             <span className="flex-shrink mx-4 text-[10px] text-zinc-400 font-bold uppercase tracking-wider font-standard-sans">
-              OR EMAIL CREDENTIALS
+              OR ENTER {selectedRole.toUpperCase()} CREDENTIALS
             </span>
             <div className="flex-grow border-t border-zinc-200"></div>
           </div>
@@ -299,16 +360,26 @@ export default function LoginPage() {
             {/* Business Email Input */}
             <div>
               <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-2 font-standard-sans">
-                BUSINESS EMAIL
+                {selectedRole.toUpperCase()} EMAIL
               </label>
               <input
                 type="email"
                 name="user_business_email_no_autofill"
                 autoComplete="off"
-                placeholder="e.g. reader@digitaljournal.com"
+                placeholder={
+                  selectedRole === "Admin" ? "admin@digitaljournal.com" :
+                  selectedRole === "Writer" ? "writer@digitaljournal.com" :
+                  "reader@digitaljournal.com"
+                }
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-zinc-200 rounded text-[14px] text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors font-standard-sans bg-white"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEmail(val);
+                  if (val.toLowerCase().includes("admin")) setSelectedRole("Admin");
+                  else if (val.toLowerCase().includes("writer")) setSelectedRole("Writer");
+                  else if (val.toLowerCase().includes("reader")) setSelectedRole("Reader");
+                }}
+                className="w-full px-4 py-3 border border-zinc-200 rounded text-[14px] text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors font-standard-sans bg-white font-medium"
                 required
               />
             </div>
@@ -323,7 +394,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   name="user_password_no_autofill"
                   autoComplete="new-password"
-                  placeholder="Enter secure passcode"
+                  placeholder="Enter passcode"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 pr-10 py-3 border border-zinc-200 rounded text-[14px] text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors font-standard-sans bg-white"
@@ -355,7 +426,11 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#BF1E2D] hover:bg-red-800 active:scale-[0.99] text-white font-bold text-[14px] py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer font-standard-sans disabled:opacity-50 flex items-center justify-center gap-2"
+                className={`w-full text-white font-bold text-[14px] py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer font-standard-sans disabled:opacity-50 flex items-center justify-center gap-2 shadow ${
+                  selectedRole === "Admin" ? "bg-red-700 hover:bg-red-800" :
+                  selectedRole === "Writer" ? "bg-blue-700 hover:bg-blue-800" :
+                  "bg-emerald-700 hover:bg-emerald-800"
+                }`}
               >
                 {isSubmitting ? (
                   <>
@@ -366,7 +441,7 @@ export default function LoginPage() {
                     VERIFYING...
                   </>
                 ) : (
-                  "SIGN IN"
+                  `SIGN IN TO ${selectedRole === "Admin" ? "ADMIN PORTAL" : selectedRole === "Writer" ? "WRITER STUDIO" : "READER HUB"}`
                 )}
               </button>
             </div>
