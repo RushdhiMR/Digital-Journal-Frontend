@@ -229,81 +229,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Role Selection Tabs */}
-          <div className="mb-6">
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 text-center">
-              SELECT LOGIN PORTAL TYPE
-            </p>
-            <div className="grid grid-cols-3 gap-1 bg-zinc-100 p-1 rounded-lg">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("Admin")}
-                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                  selectedRole === "Admin"
-                    ? "bg-red-700 text-white shadow-sm"
-                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
-                }`}
-              >
-                <span>🛡️</span> Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("Writer")}
-                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                  selectedRole === "Writer"
-                    ? "bg-blue-700 text-white shadow-sm"
-                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
-                }`}
-              >
-                <span>✍️</span> Writer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("Reader")}
-                className={`py-2 text-[11px] font-bold rounded transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                  selectedRole === "Reader"
-                    ? "bg-emerald-700 text-white shadow-sm"
-                    : "text-zinc-600 hover:text-black hover:bg-zinc-200"
-                }`}
-              >
-                <span>📖</span> Reader
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Role Demo Logins */}
-          <div className="mb-6 bg-zinc-50 border border-zinc-200 rounded-lg p-3">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 text-center">
-              1-CLICK DEMO LOGIN ACCOUNTS
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("admin@digitaljournal.com", "admin123", "System Admin", "Admin")}
-                className="flex flex-col items-center justify-center py-2 px-1 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
-              >
-                <span className="text-[14px] mb-0.5">🛡️</span>
-                <span>ADMIN</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("writer@digitaljournal.com", "writer123", "Jennifer Friesen", "Writer")}
-                className="flex flex-col items-center justify-center py-2 px-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
-              >
-                <span className="text-[14px] mb-0.5">✍️</span>
-                <span>WRITER</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("reader@digitaljournal.com", "reader123", "Alex Reader", "Reader")}
-                className="flex flex-col items-center justify-center py-2 px-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
-              >
-                <span className="text-[14px] mb-0.5">📖</span>
-                <span>READER</span>
-              </button>
-            </div>
-          </div>
-
           {/* Success Banner */}
           {successMessage && (
             <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold p-3 rounded text-center animate-fade-in font-sans">
@@ -350,7 +275,7 @@ export default function LoginPage() {
           <div className="relative flex py-3 items-center mb-6">
             <div className="flex-grow border-t border-zinc-200"></div>
             <span className="flex-shrink mx-4 text-[10px] text-zinc-400 font-bold uppercase tracking-wider font-standard-sans">
-              OR ENTER {selectedRole.toUpperCase()} CREDENTIALS
+              OR EMAIL CREDENTIALS
             </span>
             <div className="flex-grow border-t border-zinc-200"></div>
           </div>
@@ -360,17 +285,13 @@ export default function LoginPage() {
             {/* Business Email Input */}
             <div>
               <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-2 font-standard-sans">
-                {selectedRole.toUpperCase()} EMAIL
+                BUSINESS EMAIL
               </label>
               <input
                 type="email"
                 name="user_business_email_no_autofill"
                 autoComplete="off"
-                placeholder={
-                  selectedRole === "Admin" ? "admin@digitaljournal.com" :
-                  selectedRole === "Writer" ? "writer@digitaljournal.com" :
-                  "reader@digitaljournal.com"
-                }
+                placeholder="e.g. admin@digitaljournal.com"
                 value={email}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -426,11 +347,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full text-white font-bold text-[14px] py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer font-standard-sans disabled:opacity-50 flex items-center justify-center gap-2 shadow ${
-                  selectedRole === "Admin" ? "bg-red-700 hover:bg-red-800" :
-                  selectedRole === "Writer" ? "bg-blue-700 hover:bg-blue-800" :
-                  "bg-emerald-700 hover:bg-emerald-800"
-                }`}
+                className="w-full bg-[#BF1E2D] hover:bg-red-800 active:scale-[0.99] text-white font-bold text-[14px] py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer font-standard-sans disabled:opacity-50 flex items-center justify-center gap-2 shadow"
               >
                 {isSubmitting ? (
                   <>
@@ -441,7 +358,7 @@ export default function LoginPage() {
                     VERIFYING...
                   </>
                 ) : (
-                  `SIGN IN TO ${selectedRole === "Admin" ? "ADMIN PORTAL" : selectedRole === "Writer" ? "WRITER STUDIO" : "READER HUB"}`
+                  "SIGN IN"
                 )}
               </button>
             </div>
