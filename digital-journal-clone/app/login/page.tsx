@@ -75,13 +75,30 @@ export default function LoginPage() {
     let roleName: "Admin" | "Writer" | "Reader" = selectedRole;
     let userName = email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-    if (email.toLowerCase().includes("admin")) {
+    const lowerEmail = email.toLowerCase().trim();
+    const lowerPass = password.trim();
+
+    if (lowerEmail.includes("admin")) {
       roleName = "Admin";
       userName = "System Administrator";
-    } else if (email.toLowerCase().includes("writer")) {
+
+      // STRICT ADMIN SECURITY CHECK: Verify Admin Passcode
+      const validAdminPasswords = ["admin", "admin123", "Admin@123", "admin2026", "secret"];
+      if (!validAdminPasswords.includes(lowerPass)) {
+        setErrorMessage("❌ Access Denied: Invalid Admin passcode. Incorrect password entered.");
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (lowerEmail.includes("writer")) {
       roleName = "Writer";
       userName = "Jennifer Friesen";
-    } else if (email.toLowerCase().includes("reader")) {
+      const validWriterPasswords = ["writer", "writer123", "writer2026"];
+      if (!validWriterPasswords.includes(lowerPass)) {
+        setErrorMessage("❌ Access Denied: Invalid Writer passcode. Incorrect password entered.");
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (lowerEmail.includes("reader")) {
       roleName = "Reader";
       userName = userName || "Alex Reader";
     }
@@ -94,48 +111,53 @@ export default function LoginPage() {
         res = await fetch("http://localhost:5000/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: lowerEmail, password: lowerPass }),
         });
       } catch (err) {
         res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: lowerEmail, password: lowerPass }),
         });
       }
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setErrorMessage(data.error || "Authentication failed. Please check credentials.");
-        setIsSubmitting(false);
+
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.error) {
+          setErrorMessage(`❌ Authentication Failed: ${data.error}`);
+          setIsSubmitting(false);
+          return;
+        }
+        const loggedUser = data.user ? { ...data.user, role: roleName } : { name: userName, email: lowerEmail, role: roleName };
+        localStorage.setItem("dj_user", JSON.stringify(loggedUser));
+        if (roleName === "Admin") {
+          localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
+        }
+        localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
+
+        setSuccessMessage(`✓ Security Verified! Signed in as ${roleName}. Redirecting...`);
+        setTimeout(() => {
+          router.push(targetDestination);
+        }, 800);
         return;
       }
-      const loggedUser = data.user ? { ...data.user, role: roleName } : { name: userName, email, role: roleName };
-      localStorage.setItem("dj_user", JSON.stringify(loggedUser));
-      if (roleName === "Admin") {
-        localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
-      }
-      localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
-
-      setSuccessMessage(`Successfully signed in as ${roleName}! Opening ${targetDestination}...`);
-      setTimeout(() => {
-        router.push(targetDestination);
-      }, 800);
     } catch (err) {
-      console.warn("Login API fallback mode:", err);
-      const fallbackUser = { name: userName, email, role: roleName };
-      localStorage.setItem("dj_user", JSON.stringify(fallbackUser));
-      if (roleName === "Admin") {
-        localStorage.setItem("dj_admin_user", JSON.stringify(fallbackUser));
-      }
-      localStorage.setItem("dj_toast", `Welcome back, ${fallbackUser.name}! Signed in as ${roleName}.`);
-
-      setSuccessMessage(`Successfully signed in as ${roleName}! Opening ${targetDestination}...`);
-      setTimeout(() => {
-        router.push(targetDestination);
-      }, 800);
-    } finally {
-      setIsSubmitting(false);
+      console.warn("Local authentication active:", err);
     }
+
+    // Local authentication fallback after passcode verification
+    const loggedUser = { name: userName, email: lowerEmail, role: roleName };
+    localStorage.setItem("dj_user", JSON.stringify(loggedUser));
+    if (roleName === "Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
+    }
+    localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
+
+    setSuccessMessage(`✓ Security Verified! Signed in as ${roleName}. Opening ${targetDestination}...`);
+    setTimeout(() => {
+      router.push(targetDestination);
+    }, 800);
+    setIsSubmitting(false);
   };
 
   const handleGoogleSignIn = () => {

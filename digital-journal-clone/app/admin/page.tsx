@@ -214,6 +214,10 @@ export default function AdminDashboardPage() {
   const [newReaderMembership, setNewReaderMembership] = useState<"Subscriber" | "Registered Reader" | "VIP Member">("Subscriber");
   const [newReaderCompany, setNewReaderCompany] = useState("");
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lockPasscode, setLockPasscode] = useState("");
+  const [lockError, setLockError] = useState("");
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Auth Check & Fetch
@@ -232,31 +236,41 @@ export default function AdminDashboardPage() {
         }
       }
 
-      // If no admin user is logged in, default to the pre-configured default Admin account
-      if (!currentUser) {
-        currentUser = {
-          name: "System Admin",
-          email: "admin@digitaljournal.com",
-          role: "Admin"
-        };
-        localStorage.setItem("dj_user", JSON.stringify(currentUser));
-        localStorage.setItem("dj_admin_user", JSON.stringify(currentUser));
+      // Strict session verification: require active Admin role
+      if (currentUser && (currentUser.role === "Admin" || currentUser.role === "admin")) {
+        setAdminUser(currentUser);
+        setIsAuthenticated(true);
+        fetchDashboardData();
+      } else {
+        setIsAuthenticated(false);
       }
-
-      setAdminUser(currentUser);
-      fetchDashboardData();
     } catch (e) {
       console.error(e);
-      const defaultAdmin = {
-        name: "System Admin",
-        email: "admin@digitaljournal.com",
-        role: "Admin"
-      };
-      setAdminUser(defaultAdmin);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   }, [router]);
+
+  const handleUnlockAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLockError("");
+    const validAdminPasswords = ["admin", "admin123", "Admin@123", "admin2026", "secret"];
+    if (validAdminPasswords.includes(lockPasscode.trim())) {
+      const adminAcc = {
+        name: "System Admin",
+        email: "admin@digitaljournal.com",
+        role: "Admin"
+      };
+      localStorage.setItem("dj_user", JSON.stringify(adminAcc));
+      localStorage.setItem("dj_admin_user", JSON.stringify(adminAcc));
+      setAdminUser(adminAcc);
+      setIsAuthenticated(true);
+      fetchDashboardData();
+    } else {
+      setLockError("❌ Access Denied: Incorrect Admin Passcode!");
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -282,7 +296,9 @@ export default function AdminDashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("dj_admin_user");
-    router.push("/admin/login");
+    localStorage.removeItem("dj_user");
+    setIsAuthenticated(false);
+    router.push("/login");
   };
 
   const showNotification = (msg: string) => {
@@ -430,12 +446,68 @@ export default function AdminDashboardPage() {
     (r.company && r.company.toLowerCase().includes(readerSearch.toLowerCase()))
   );
 
-  if (isLoading || !adminUser) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center font-standard-sans">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-[#BF1E2D] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Loading Admin Dashboard...</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Verifying Security Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !adminUser) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 font-sans text-white">
+        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-red-950/60 border border-red-800 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 shadow-inner">
+            <ShieldCheck size={36} />
+          </div>
+
+          <h2 className="text-2xl font-bold font-serif mb-1 text-white">Admin Access Restricted</h2>
+          <p className="text-xs text-zinc-400 mb-6">
+            Access requires an authenticated Administrator session. Enter passcode below to unlock.
+          </p>
+
+          {lockError && (
+            <div className="mb-4 bg-red-950/80 border border-red-800 text-red-300 text-xs font-bold p-3 rounded text-center">
+              {lockError}
+            </div>
+          )}
+
+          <form onSubmit={handleUnlockAdmin} className="space-y-4 text-left">
+            <div>
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                ADMIN PASSCODE
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="Enter Admin Passcode"
+                value={lockPasscode}
+                onChange={(e) => setLockPasscode(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer shadow"
+            >
+              VERIFY & UNLOCK DASHBOARD
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
+            <Link href="/login" className="hover:text-zinc-300 transition-colors">
+              ← Return to Login Page
+            </Link>
+            <Link href="/" className="hover:text-zinc-300 transition-colors">
+              Go to Home Page →
+            </Link>
+          </div>
         </div>
       </div>
     );
