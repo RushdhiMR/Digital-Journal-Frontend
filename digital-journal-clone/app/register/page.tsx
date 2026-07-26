@@ -42,6 +42,20 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+
+    // Save user to registered user accounts registry in localStorage
+    try {
+      const registeredStr = localStorage.getItem("dj_registered_users");
+      const registeredList = registeredStr ? JSON.parse(registeredStr) : [];
+      const newUserObj = { name: fullName, email: email.toLowerCase().trim(), password, role: "Reader" };
+      if (!registeredList.some((u: any) => u.email.toLowerCase() === email.toLowerCase().trim())) {
+        registeredList.push(newUserObj);
+        localStorage.setItem("dj_registered_users", JSON.stringify(registeredList));
+      }
+    } catch (e) {
+      console.warn("Could not persist registered user local state:", e);
+    }
+
     try {
       let res;
       try {
@@ -57,11 +71,13 @@ export default function RegisterPage() {
           body: JSON.stringify({ name: fullName, email, password }),
         });
       }
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setErrorMessage(data.error || "Registration failed. Please try again.");
-        setIsSubmitting(false);
-        return;
+      if (res) {
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setErrorMessage(data.error || "Registration failed. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
       }
       setSuccessMessage("Account created successfully! Redirecting to login...");
       setTimeout(() => {

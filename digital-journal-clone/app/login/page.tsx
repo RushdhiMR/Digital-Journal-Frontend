@@ -72,39 +72,82 @@ export default function LoginPage() {
     }
     setIsSubmitting(true);
 
-    let roleName: "Admin" | "Writer" | "Reader" = selectedRole;
-    let userName = email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-
     const lowerEmail = email.toLowerCase().trim();
     const lowerPass = password.trim();
 
-    if (lowerEmail.includes("admin")) {
-      roleName = "Admin";
-      userName = "System Administrator";
+    // Defined System Role Accounts
+    const KNOWN_ACCOUNTS: Record<string, { pass: string[]; name: string; role: "Admin" | "Writer" | "Reader" }> = {
+      "admin@digitaljournal.com": {
+        pass: ["admin", "admin123", "Admin@123", "admin2026", "secret"],
+        name: "System Administrator",
+        role: "Admin"
+      },
+      "admin": {
+        pass: ["admin", "admin123", "Admin@123", "admin2026", "secret"],
+        name: "System Administrator",
+        role: "Admin"
+      },
+      "writer@digitaljournal.com": {
+        pass: ["writer", "writer123", "writer2026"],
+        name: "Jennifer Friesen",
+        role: "Writer"
+      },
+      "writer": {
+        pass: ["writer", "writer123", "writer2026"],
+        name: "Jennifer Friesen",
+        role: "Writer"
+      },
+      "reader@digitaljournal.com": {
+        pass: ["reader", "reader123", "reader2026"],
+        name: "Alex Reader",
+        role: "Reader"
+      },
+      "reader": {
+        pass: ["reader", "reader123", "reader2026"],
+        name: "Alex Reader",
+        role: "Reader"
+      }
+    };
 
-      // STRICT ADMIN SECURITY CHECK: Verify Admin Passcode
-      const validAdminPasswords = ["admin", "admin123", "Admin@123", "admin2026", "secret"];
-      if (!validAdminPasswords.includes(lowerPass)) {
-        setErrorMessage("❌ Access Denied: Invalid Admin passcode. Incorrect password entered.");
-        setIsSubmitting(false);
-        return;
-      }
-    } else if (lowerEmail.includes("writer")) {
-      roleName = "Writer";
-      userName = "Jennifer Friesen";
-      const validWriterPasswords = ["writer", "writer123", "writer2026"];
-      if (!validWriterPasswords.includes(lowerPass)) {
-        setErrorMessage("❌ Access Denied: Invalid Writer passcode. Incorrect password entered.");
-        setIsSubmitting(false);
-        return;
-      }
-    } else if (lowerEmail.includes("reader")) {
-      roleName = "Reader";
-      userName = userName || "Alex Reader";
+    // Check registered accounts from localStorage
+    let registeredUsers: any[] = [];
+    try {
+      const regStr = localStorage.getItem("dj_registered_users");
+      if (regStr) registeredUsers = JSON.parse(regStr);
+    } catch (err) {
+      console.warn("Could not read local registered users:", err);
     }
 
-    const targetDestination = roleName === "Admin" ? "/admin" : roleName === "Writer" ? "/writer" : "/reader";
+    let authenticatedAccount: { name: string; email: string; role: "Admin" | "Writer" | "Reader" } | null = null;
 
+    // Check if email matches system accounts
+    if (KNOWN_ACCOUNTS[lowerEmail]) {
+      const acc = KNOWN_ACCOUNTS[lowerEmail];
+      if (!acc.pass.includes(lowerPass)) {
+        setErrorMessage(`❌ Access Denied: Incorrect password for account '${lowerEmail}'.`);
+        setIsSubmitting(false);
+        return;
+      }
+      authenticatedAccount = { name: acc.name, email: lowerEmail.includes("@") ? lowerEmail : `${lowerEmail}@digitaljournal.com`, role: acc.role };
+    } else {
+      // Check registered users list
+      const matchedUser = registeredUsers.find((u: any) => u.email && u.email.toLowerCase() === lowerEmail);
+      if (matchedUser) {
+        if (matchedUser.password && matchedUser.password !== lowerPass) {
+          setErrorMessage(`❌ Access Denied: Incorrect password entered for '${lowerEmail}'.`);
+          setIsSubmitting(false);
+          return;
+        }
+        authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: matchedUser.role || "Reader" };
+      } else {
+        // STRICT CHECK: Reject unrecognized / wrong email addresses!
+        setErrorMessage(`❌ Access Denied: Unrecognized email '${lowerEmail}'. Account does not exist. Please check email or register.`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Attempt backend sync
     try {
       let res;
       try {
@@ -128,32 +171,20 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
-        const loggedUser = data.user ? { ...data.user, role: roleName } : { name: userName, email: lowerEmail, role: roleName };
-        localStorage.setItem("dj_user", JSON.stringify(loggedUser));
-        if (roleName === "Admin") {
-          localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
-        }
-        localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
-
-        setSuccessMessage(`✓ Security Verified! Signed in as ${roleName}. Redirecting...`);
-        setTimeout(() => {
-          router.push(targetDestination);
-        }, 800);
-        return;
       }
     } catch (err) {
-      console.warn("Local authentication active:", err);
+      console.warn("Backend auth sync offline:", err);
     }
 
-    // Local authentication fallback after passcode verification
-    const loggedUser = { name: userName, email: lowerEmail, role: roleName };
-    localStorage.setItem("dj_user", JSON.stringify(loggedUser));
-    if (roleName === "Admin") {
-      localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
+    // Authenticated successfully! Save session and redirect to role destination
+    const targetDestination = authenticatedAccount.role === "Admin" ? "/admin" : authenticatedAccount.role === "Writer" ? "/writer" : "/reader";
+    localStorage.setItem("dj_user", JSON.stringify(authenticatedAccount));
+    if (authenticatedAccount.role === "Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(authenticatedAccount));
     }
-    localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
+    localStorage.setItem("dj_toast", `Welcome back, ${authenticatedAccount.name}! Signed in as ${authenticatedAccount.role}.`);
 
-    setSuccessMessage(`✓ Security Verified! Signed in as ${roleName}. Opening ${targetDestination}...`);
+    setSuccessMessage(`✓ Security Verified! Signed in as ${authenticatedAccount.role}. Opening ${targetDestination}...`);
     setTimeout(() => {
       router.push(targetDestination);
     }, 800);
