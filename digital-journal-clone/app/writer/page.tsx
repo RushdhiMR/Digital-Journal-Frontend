@@ -5,71 +5,131 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { PenTool, FileText, Send, CheckCircle2, Eye, Clock, Sparkles } from "lucide-react";
+import {
+  PenTool,
+  FileText,
+  Send,
+  CheckCircle2,
+  Eye,
+  Clock,
+  Sparkles,
+  ShieldCheck,
+  TrendingUp,
+  BarChart3,
+  BookOpen,
+  Trash2,
+  ExternalLink,
+  X
+} from "lucide-react";
 
 interface DraftArticle {
   id: string;
   title: string;
   category: string;
+  subcategory?: string;
   summary: string;
   content: string;
   imageUrl: string;
   status: "Draft" | "Submitted" | "Published";
   date: string;
+  reads: number;
 }
 
 export default function WriterStudioPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string } | null>(null);
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lockPasscode, setLockPasscode] = useState("");
+  const [lockError, setLockError] = useState("");
+
   // New article form states
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("NEWS");
+  const [subcategory, setSubcategory] = useState("world");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Preview Modal state
+  const [previewArticle, setPreviewArticle] = useState<DraftArticle | null>(null);
+
   const [drafts, setDrafts] = useState<DraftArticle[]>([
     {
       id: "draft-1",
       title: "Quantum Computing preview clusters open to enterprise developer beta",
       category: "TECHNOLOGY",
+      subcategory: "space-technology",
       summary: "Cloud providers roll out 100-qubit developer environments for financial telemetry research.",
-      content: "Distributed quantum algorithms are establishing new benchmarks in cryptanalysis and high-frequency portfolio optimization...",
+      content: "Distributed quantum algorithms are establishing new benchmarks in cryptanalysis and high-frequency portfolio optimization. Developers across enterprise software firms are testing real-time execution environments.",
       imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=350&fit=crop",
       status: "Published",
-      date: "July 24, 2026"
+      date: "July 24, 2026",
+      reads: 14200
     },
     {
       id: "draft-2",
       title: "Canadian biotech consortium publishes open-access genome study",
       category: "INNOVATION",
+      subcategory: "health",
       summary: "Open science initiative releases 10,000 sequenced genomes for public medical research.",
-      content: "By removing proprietary licensing barriers, researchers aim to accelerate rare disease treatment discovery...",
+      content: "By removing proprietary licensing barriers, researchers aim to accelerate rare disease treatment discovery across international academic and commercial research centers.",
       imageUrl: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600&h=350&fit=crop",
       status: "Submitted",
-      date: "July 25, 2026"
+      date: "July 25, 2026",
+      reads: 3890
     }
   ]);
 
+  // Auth & Session Check
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem("dj_user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setCurrentUser(parsed);
+      const savedUserStr = localStorage.getItem("dj_user");
+      let activeUser = null;
+      if (savedUserStr) {
+        activeUser = JSON.parse(savedUserStr);
+      }
+
+      // Check for saved submitted drafts
+      const localDrafts = localStorage.getItem("dj_writer_submitted_articles");
+      if (localDrafts) {
+        setDrafts(JSON.parse(localDrafts));
+      }
+
+      // Require active Writer or Admin session
+      if (activeUser && (activeUser.role === "Writer" || activeUser.role === "Admin" || activeUser.email.toLowerCase().includes("writer") || activeUser.email.toLowerCase().includes("admin"))) {
+        setCurrentUser(activeUser);
+        setIsAuthenticated(true);
       } else {
-        // Default Writer session if accessed directly
-        const writerUser = { name: "Jennifer Friesen", email: "writer@digitaljournal.com", role: "Writer" };
-        localStorage.setItem("dj_user", JSON.stringify(writerUser));
-        setCurrentUser(writerUser);
+        setIsAuthenticated(false);
       }
     } catch (e) {
       console.error(e);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
+
+  const handleUnlockWriter = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLockError("");
+    const validWriterPasswords = ["writer", "writer123", "writer2026", "admin", "admin123"];
+    if (validWriterPasswords.includes(lockPasscode.trim())) {
+      const writerAcc = {
+        name: "Jennifer Friesen",
+        email: "writer@digitaljournal.com",
+        role: "Writer"
+      };
+      localStorage.setItem("dj_user", JSON.stringify(writerAcc));
+      setCurrentUser(writerAcc);
+      setIsAuthenticated(true);
+    } else {
+      setLockError("❌ Access Denied: Incorrect Writer Passcode!");
+    }
+  };
 
   const handleCreateArticle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,26 +140,94 @@ export default function WriterStudioPage() {
 
     const newDraft: DraftArticle = {
       id: `draft-${Date.now()}`,
-      title,
+      title: title.trim(),
       category,
-      summary: summary || title,
-      content,
-      imageUrl: imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
+      subcategory,
+      summary: summary.trim() || title.trim(),
+      content: content.trim(),
+      imageUrl: imageUrl.trim() || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
       status: "Submitted",
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      reads: 0
     };
 
     setTimeout(() => {
-      setDrafts([newDraft, ...drafts]);
+      const updatedList = [newDraft, ...drafts];
+      setDrafts(updatedList);
+      localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedList));
+
       setTitle("");
       setSummary("");
       setContent("");
       setImageUrl("");
       setIsSubmitting(false);
-      setSuccessMsg("🎉 Article successfully submitted for editorial review!");
-      setTimeout(() => setSuccessMsg(""), 4000);
-    }, 800);
+      setSuccessMsg("🎉 Story successfully submitted to Editorial Bureau for live publishing!");
+      setTimeout(() => setSuccessMsg(""), 4500);
+    }, 700);
   };
+
+  const handleDeleteDraft = (id: string) => {
+    const updated = drafts.filter(d => d.id !== id);
+    setDrafts(updated);
+    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
+  };
+
+  // Render Writer Security Lock Screen if unauthorized
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 font-sans text-white">
+        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-blue-950/60 border border-blue-800 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-400 shadow-inner">
+            <PenTool size={32} />
+          </div>
+
+          <h2 className="text-2xl font-bold font-serif mb-1 text-white">Writer Studio Restricted</h2>
+          <p className="text-xs text-zinc-400 mb-6">
+            Access requires an authenticated Writer credentials session. Enter passcode below to unlock.
+          </p>
+
+          {lockError && (
+            <div className="mb-4 bg-red-950/80 border border-red-800 text-red-300 text-xs font-bold p-3 rounded text-center">
+              {lockError}
+            </div>
+          )}
+
+          <form onSubmit={handleUnlockWriter} className="space-y-4 text-left">
+            <div>
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                WRITER PASSCODE
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="Enter Writer Passcode (e.g. writer123)"
+                value={lockPasscode}
+                onChange={(e) => setLockPasscode(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-blue-600 transition-colors"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer shadow"
+            >
+              VERIFY & UNLOCK WRITER STUDIO
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
+            <Link href="/login" className="hover:text-zinc-300 transition-colors">
+              ← Return to Login Page
+            </Link>
+            <Link href="/" className="hover:text-zinc-300 transition-colors">
+              Go to Home Page →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-standard-sans">
@@ -121,7 +249,7 @@ export default function WriterStudioPage() {
                 </span>
               </div>
               <p className="text-zinc-400 text-sm mt-1">
-                Signed in as <span className="text-white font-medium">{currentUser?.name || "Writer"}</span> ({currentUser?.email})
+                Signed in as <span className="text-white font-medium">{currentUser?.name || "Jennifer Friesen"}</span> ({currentUser?.email || "writer@digitaljournal.com"})
               </p>
             </div>
           </div>
@@ -142,14 +270,59 @@ export default function WriterStudioPage() {
           </div>
         </div>
 
+        {/* Writer Performance Analytics Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-zinc-500 mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Total Stories</span>
+              <FileText size={18} className="text-[#BF1E2D]" />
+            </div>
+            <p className="text-2xl font-bold text-black font-serif">{drafts.length}</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1">Active author pipeline</p>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-zinc-500 mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Published</span>
+              <CheckCircle2 size={18} className="text-emerald-600" />
+            </div>
+            <p className="text-2xl font-bold text-black font-serif">
+              {drafts.filter(d => d.status === "Published").length}
+            </p>
+            <p className="text-[11px] text-zinc-500 mt-1">Live on Digital Journal</p>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-zinc-500 mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Total Reader Impressions</span>
+              <BarChart3 size={18} className="text-blue-600" />
+            </div>
+            <p className="text-2xl font-bold text-black font-serif">
+              {(drafts.reduce((acc, curr) => acc + (curr.reads || 0), 0) + 18090).toLocaleString()}
+            </p>
+            <p className="text-[11px] text-blue-600 font-medium mt-1">↑ 14% this month</p>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-zinc-500 mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Author Bureau</span>
+              <ShieldCheck size={18} className="text-amber-500" />
+            </div>
+            <p className="text-lg font-bold text-black font-serif">Senior Reporter</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1">Verified Press Badge</p>
+          </div>
+        </div>
+
         {/* Studio Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Create New Article Form */}
           <div className="lg:col-span-7 bg-white rounded-xl border border-zinc-200 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-2.5 pb-4 mb-6 border-b border-zinc-200">
-              <Sparkles size={20} className="text-[#BF1E2D]" />
-              <h2 className="text-xl font-bold text-black font-serif">Submit New Article Story</h2>
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-zinc-200">
+              <div className="flex items-center gap-2.5">
+                <Sparkles size={20} className="text-[#BF1E2D]" />
+                <h2 className="text-xl font-bold text-black font-serif">Submit New Article Story</h2>
+              </div>
             </div>
 
             {successMsg && (
@@ -167,7 +340,7 @@ export default function WriterStudioPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Next-generation AI models reshape enterprise supply chains"
+                  placeholder="e.g. Silicon Valley chip manufacturers announce breakthrough architectural updates"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-4 py-3 border border-zinc-200 rounded text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors bg-white font-serif font-bold text-[16px]"
@@ -233,7 +406,30 @@ export default function WriterStudioPage() {
                 />
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (title && content) {
+                      setPreviewArticle({
+                        id: "preview",
+                        title,
+                        category,
+                        summary: summary || title,
+                        content,
+                        imageUrl: imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
+                        status: "Draft",
+                        date: new Date().toLocaleDateString(),
+                        reads: 0
+                      });
+                    }
+                  }}
+                  disabled={!title || !content}
+                  className="border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-bold text-xs py-3 px-5 rounded transition-all uppercase tracking-wider cursor-pointer font-sans disabled:opacity-40"
+                >
+                  👁️ Preview Story
+                </button>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -258,16 +454,25 @@ export default function WriterStudioPage() {
 
               <div className="space-y-4">
                 {drafts.map((draft) => (
-                  <div key={draft.id} className="p-4 border border-zinc-100 rounded-lg hover:border-zinc-300 transition-colors bg-zinc-50/50">
+                  <div key={draft.id} className="p-4 border border-zinc-100 rounded-lg hover:border-zinc-300 transition-colors bg-zinc-50/50 group">
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="text-[9px] font-bold text-[#1D9BF0] bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
                         {draft.category}
                       </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        draft.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
-                      }`}>
-                        ● {draft.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          draft.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+                        }`}>
+                          ● {draft.status}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteDraft(draft.id)}
+                          className="text-zinc-400 hover:text-red-600 transition-colors p-1"
+                          title="Delete draft"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
                     <h4 className="text-[14px] font-bold font-serif leading-snug text-black mb-1.5 line-clamp-2">
@@ -282,9 +487,12 @@ export default function WriterStudioPage() {
                       <span className="flex items-center gap-1">
                         <Clock size={12} /> {draft.date}
                       </span>
-                      <Link href="/news" className="text-blue-600 font-bold hover:underline flex items-center gap-1">
-                        <Eye size={12} /> View Live
-                      </Link>
+                      <button
+                        onClick={() => setPreviewArticle(draft)}
+                        className="text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Eye size={12} /> Preview
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -295,6 +503,56 @@ export default function WriterStudioPage() {
         </div>
 
       </main>
+
+      {/* Live Preview Modal */}
+      {previewArticle && (
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-standard-sans">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setPreviewArticle(null)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-black text-xl font-bold cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mb-4">
+              <span className="text-[10px] font-bold text-[#1D9BF0] bg-blue-50 px-2.5 py-1 rounded uppercase tracking-wider">
+                {previewArticle.category}
+              </span>
+              <h2 className="text-2xl font-bold font-serif text-black mt-2 leading-tight">
+                {previewArticle.title}
+              </h2>
+              <p className="text-xs text-zinc-500 font-sans mt-2">
+                By <span className="font-semibold text-black">{currentUser?.name || "Jennifer Friesen"}</span> • {previewArticle.date}
+              </p>
+            </div>
+
+            {previewArticle.imageUrl && (
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-4 bg-zinc-100 border border-zinc-200">
+                <img src={previewArticle.imageUrl} alt={previewArticle.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            <div className="prose prose-sm font-sans text-zinc-800 leading-relaxed space-y-3">
+              <p className="font-bold text-zinc-700 italic border-l-2 border-[#BF1E2D] pl-3 py-1 bg-zinc-50 rounded-r">
+                {previewArticle.summary}
+              </p>
+              {previewArticle.content.split("\n\n").map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-zinc-200 flex justify-end">
+              <button
+                onClick={() => setPreviewArticle(null)}
+                className="bg-zinc-900 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
