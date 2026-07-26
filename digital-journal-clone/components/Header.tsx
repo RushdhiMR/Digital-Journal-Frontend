@@ -86,7 +86,7 @@ export default function Header() {
   const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
@@ -126,6 +126,35 @@ export default function Header() {
     "INNOVATION",
     "EVENTS",
   ];
+
+  const handleSwitchRole = (newRole: "Admin" | "Writer" | "Reader") => {
+    if (!currentUser) return;
+    const nameMap = {
+      Admin: "System Admin",
+      Writer: "Jennifer Friesen",
+      Reader: currentUser.name || "Alex Reader"
+    };
+    const emailMap = {
+      Admin: "admin@digitaljournal.com",
+      Writer: "writer@digitaljournal.com",
+      Reader: currentUser.email || "reader@digitaljournal.com"
+    };
+
+    const updatedUser = {
+      name: nameMap[newRole],
+      email: emailMap[newRole],
+      role: newRole
+    };
+    localStorage.setItem("dj_user", JSON.stringify(updatedUser));
+    if (newRole === "Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(updatedUser));
+    }
+    setCurrentUser(updatedUser);
+    setIsUserDropdownOpen(false);
+
+    setToastMessage(`Switched active view to ${newRole} mode.`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   return (
     <header
@@ -224,30 +253,98 @@ export default function Header() {
                   <span className="hidden md:inline font-sans font-medium text-[13px]">
                     {currentUser.name}
                   </span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 uppercase">
+                    {currentUser.role || "User"}
+                  </span>
                   <span className="text-[9px] text-zinc-400">▼</span>
                 </button>
 
                 {/* Logged in User Dropdown Menu */}
                 {isUserDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl text-left z-50 overflow-hidden font-standard-sans">
+                  <div className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl text-left z-50 overflow-hidden font-standard-sans">
                     <div className="p-3.5 border-b border-zinc-800 bg-zinc-950">
-                      <p className="text-[13px] font-bold text-white truncate">{currentUser.name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[13px] font-bold text-white truncate">{currentUser.name}</p>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                          currentUser.role === "Admin" ? "bg-red-950 text-red-400 border border-red-800" :
+                          currentUser.role === "Writer" ? "bg-blue-950 text-blue-400 border border-blue-800" :
+                          "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                        }`}>
+                          {currentUser.role || "Reader"}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-zinc-400 truncate mt-0.5">{currentUser.email}</p>
                     </div>
-                    <div className="py-1 border-b border-zinc-800">
+
+                    {/* Role Pages Links */}
+                    <div className="py-1.5 border-b border-zinc-800 space-y-0.5">
+                      <p className="px-3.5 py-1 text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                        PORTAL PAGES
+                      </p>
                       <Link
                         href="/admin"
                         onClick={() => setIsUserDropdownOpen(false)}
-                        className="w-full px-4 py-2 text-[13px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center gap-2"
+                        className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
                       >
-                        <span className="w-2 h-2 rounded-full bg-[#BF1E2D]"></span>
-                        Admin Dashboard
+                        <span className="flex items-center gap-2">
+                          <span>🛡️</span> Admin Dashboard
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">/admin</span>
+                      </Link>
+                      <Link
+                        href="/writer"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>✍️</span> Writer Studio
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">/writer</span>
+                      </Link>
+                      <Link
+                        href="/reader"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>📖</span> Reader Hub
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">/reader</span>
                       </Link>
                     </div>
+
+                    {/* Switch Active Role */}
+                    <div className="p-2.5 bg-zinc-950 border-b border-zinc-800">
+                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                        SWITCH ACTIVE ROLE
+                      </p>
+                      <div className="grid grid-cols-3 gap-1 text-[10px] font-bold text-center">
+                        <button
+                          onClick={() => handleSwitchRole("Admin")}
+                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Admin" ? "bg-red-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                        >
+                          Admin
+                        </button>
+                        <button
+                          onClick={() => handleSwitchRole("Writer")}
+                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Writer" ? "bg-blue-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                        >
+                          Writer
+                        </button>
+                        <button
+                          onClick={() => handleSwitchRole("Reader")}
+                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Reader" ? "bg-emerald-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                        >
+                          Reader
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sign Out */}
                     <div className="py-1">
                       <button
                         onClick={handleSignOut}
-                        className="w-full px-4 py-2.5 text-[13px] text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 text-left transition-colors font-medium flex items-center gap-2 cursor-pointer"
+                        className="w-full px-4 py-2 text-[12.5px] text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 text-left transition-colors font-medium flex items-center gap-2 cursor-pointer"
                       >
                         Sign Out
                       </button>

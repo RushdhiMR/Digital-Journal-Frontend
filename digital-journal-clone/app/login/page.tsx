@@ -17,6 +17,34 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showGoogleChooser, setShowGoogleChooser] = useState(false);
 
+  const handleQuickLogin = (userEmail: string, userPass: string, userName: string, roleName: string) => {
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const loggedUser = {
+      name: userName,
+      email: userEmail,
+      role: roleName
+    };
+
+    localStorage.setItem("dj_user", JSON.stringify(loggedUser));
+    if (roleName === "Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
+    }
+    localStorage.setItem("dj_toast", `Welcome back, ${userName}! Signed in as ${roleName}.`);
+
+    setSuccessMessage(`Signed in as ${userName} (${roleName})! Redirecting...`);
+    setTimeout(() => {
+      if (roleName === "Admin") {
+        router.push("/admin");
+      } else if (roleName === "Writer") {
+        router.push("/writer");
+      } else {
+        router.push("/reader");
+      }
+    }, 800);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -25,6 +53,18 @@ export default function LoginPage() {
       return;
     }
     setIsSubmitting(true);
+
+    let roleName = "Reader";
+    let userName = email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+    if (email.toLowerCase().includes("admin")) {
+      roleName = "Admin";
+      userName = "System Administrator";
+    } else if (email.toLowerCase().includes("writer")) {
+      roleName = "Writer";
+      userName = "Jennifer Friesen";
+    }
+
     try {
       let res;
       try {
@@ -46,23 +86,33 @@ export default function LoginPage() {
         setIsSubmitting(false);
         return;
       }
-      const loggedUser = data.user || { name: email.split('@')[0], email };
+      const loggedUser = data.user ? { ...data.user, role: roleName } : { name: userName, email, role: roleName };
       localStorage.setItem("dj_user", JSON.stringify(loggedUser));
-      localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! You are successfully signed in.`);
+      if (roleName === "Admin") {
+        localStorage.setItem("dj_admin_user", JSON.stringify(loggedUser));
+      }
+      localStorage.setItem("dj_toast", `Welcome back, ${loggedUser.name}! Signed in as ${roleName}.`);
 
-      setSuccessMessage(`Successfully signed in as ${loggedUser.name}! Redirecting...`);
+      setSuccessMessage(`Successfully signed in as ${loggedUser.name} (${roleName})! Redirecting...`);
       setTimeout(() => {
-        router.push("/");
+        if (roleName === "Admin") router.push("/admin");
+        else if (roleName === "Writer") router.push("/writer");
+        else router.push("/reader");
       }, 1000);
     } catch (err) {
       console.warn("Login API error:", err);
-      const fallbackUser = { name: email.split('@')[0], email };
+      const fallbackUser = { name: userName, email, role: roleName };
       localStorage.setItem("dj_user", JSON.stringify(fallbackUser));
-      localStorage.setItem("dj_toast", `Welcome back, ${fallbackUser.name}! You are successfully signed in.`);
+      if (roleName === "Admin") {
+        localStorage.setItem("dj_admin_user", JSON.stringify(fallbackUser));
+      }
+      localStorage.setItem("dj_toast", `Welcome back, ${fallbackUser.name}! Signed in as ${roleName}.`);
 
-      setSuccessMessage("Successfully signed in! Redirecting to home...");
+      setSuccessMessage(`Successfully signed in as ${roleName}! Redirecting...`);
       setTimeout(() => {
-        router.push("/");
+        if (roleName === "Admin") router.push("/admin");
+        else if (roleName === "Writer") router.push("/writer");
+        else router.push("/reader");
       }, 1000);
     } finally {
       setIsSubmitting(false);
@@ -158,6 +208,39 @@ export default function LoginPage() {
             <p className="text-[10px] text-zinc-400 font-bold tracking-[1px] mt-2 uppercase font-standard-sans">
               SIGN IN TO YOUR ACCOUNT
             </p>
+          </div>
+
+          {/* Quick Role Demo Logins */}
+          <div className="mb-6 bg-zinc-50 border border-zinc-200 rounded-lg p-3">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 text-center">
+              1-CLICK DEMO LOGIN ACCOUNTS
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin("admin@digitaljournal.com", "admin123", "System Admin", "Admin")}
+                className="flex flex-col items-center justify-center py-2 px-1 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
+              >
+                <span className="text-[14px] mb-0.5">🛡️</span>
+                <span>ADMIN</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin("writer@digitaljournal.com", "writer123", "Jennifer Friesen", "Writer")}
+                className="flex flex-col items-center justify-center py-2 px-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
+              >
+                <span className="text-[14px] mb-0.5">✍️</span>
+                <span>WRITER</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin("reader@digitaljournal.com", "reader123", "Alex Reader", "Reader")}
+                className="flex flex-col items-center justify-center py-2 px-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded transition-colors text-[10px] font-bold cursor-pointer"
+              >
+                <span className="text-[14px] mb-0.5">📖</span>
+                <span>READER</span>
+              </button>
+            </div>
           </div>
 
           {/* Success Banner */}
