@@ -1,23 +1,25 @@
+"use client";
+
 export default function TechnologyGrid() {
   const technologyArticles = [
     {
       title: "Silicon Valley chip manufacturers announce breakthrough architectural updates",
-      image: "https://images.unsplash.com/photo-1601524909162-be87252be298?w=350&h=220&fit=crop",
+      image: "/ai_chip.png",
       description: "New nanometer transistor architectures are set to double computing speeds while reducing power requirements..."
     },
     {
       title: "New quantum computing clusters open to public cloud developer preview",
-      image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=280&fit=crop",
       description: "Developers can now run quantum algorithms directly on secure cloud nodes powered by next-gen cooling systems..."
     },
     {
       title: "Open-source database platform raises record funding round for scaling",
-      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=400&h=280&fit=crop",
       description: "The open-source ecosystem gains support with a massive funding round targeted at global replication modules..."
     },
     {
       title: "How edge computing is transforming real-time telemetry processing",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=280&fit=crop",
       description: "Processing data closer to the source decreases latency and allows immediate feedback in remote sensor arrays..."
     }
   ];
@@ -40,6 +42,7 @@ export default function TechnologyGrid() {
               <img
                 src={article.image}
                 alt={article.title}
+                onError={(e) => { e.currentTarget.src = "/ai_chip.png"; }}
                 className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
               />
             </div>

@@ -1,23 +1,25 @@
+"use client";
+
 export default function BusinessGrid() {
   const businessArticles = [
     {
       title: "Canada's Conexiom bets that the future of AI lies in automation, not experimentation",
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=280&fit=crop",
       description: "Conexiom's CEO discusses how automating key transactional data is the key to enterprise growth..."
     },
     {
       title: "Canada's AI adoption problem meets its youth employment problem",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=280&fit=crop",
       description: "A new study outlines how integrating AI training into entry-level roles could solve both problems..."
     },
     {
       title: "Op-Ed: Rethinking humanity as automation rewrites human realities",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=280&fit=crop",
       description: "Automation is not just about replacing jobs; it's about redefining what it means to be human..."
     },
     {
       title: "Lightworks, Scotiabank, Sun Life and TELUS launch AI Consortium",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=350&h=220&fit=crop",
+      image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=280&fit=crop",
       description: "Major financial and telecom leaders collaborate to invest in and govern ethical AI models..."
     }
   ];
@@ -40,6 +42,7 @@ export default function BusinessGrid() {
               <img
                 src={article.image}
                 alt={article.title}
+                onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                 className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
               />
             </div>

@@ -2,10 +2,10 @@ import CategoryPageLayout from '@/components/CategoryPageLayout';
 
 export default function EventsPage() {
   const featured = {
-    category: "CONFERENCES & MEETUPS • NETWORK SCHEDULING",
-    title: "Global developer summits announce main tracks",
-    description: "Annual engineering forums set agendas for upcoming hybrid tracks, prioritizing artificial intelligence ethics and secure supply chains.",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=800&fit=crop",
+    category: "CONFERENCES & MEETUPS • NETWORK SCHEDULING • GLOBAL TRACKS",
+    title: "Global developer summits announce main tracks for hybrid engineering forums",
+    description: "Annual engineering forums set agendas for upcoming hybrid tracks, prioritizing artificial intelligence ethics, quantum key distribution, and secure supply chains.",
+    image: "/ai_events.png",
     author: "Chris Hogg",
     date: "1 day ago"
   };
@@ -61,25 +61,25 @@ export default function EventsPage() {
       title: "AI Ethics Panel brings together global industry policy leaders",
       description: "Major software giants align keynotes on quantum computing architectures and secure automated pipelines.",
       date: "By Chris Hogg • 1 day ago",
-      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=220&h=150&fit=crop"
+      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=220&h=150&fit=crop"
     },
     {
       title: "Open Source Summit highlights security in containerized builds",
       description: "Over 50,000 developers register online to follow deep learning model pruning and continuous deployment tracks.",
       date: "By Agil Riaz • 2 days ago",
-      image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=220&h=150&fit=crop"
+      image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=220&h=150&fit=crop"
     },
     {
       title: "Quantum Computing Symposium sets date for international keynotes",
       description: "Teams compete for $100k in prizes building open-source database scaling models and secure developer telemetry.",
       date: "By Jessica Lee • 3 days ago",
-      image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=220&h=150&fit=crop"
+      image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=220&h=150&fit=crop"
     },
     {
       title: "Industrial automation roundtable scheduled for next quarter",
       description: "Manufacturing leaders prepare panels on edge telemetry and smart energy grid logistics.",
       date: "By Pramod Asu • 4 days ago",
-      image: "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=220&h=150&fit=crop"
+      image: "https://images.unsplash.com/photo-1591115765373-5207764f72e4?w=220&h=150&fit=crop"
     }
   ];
 

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface CategoryHeroProps {
   categoryName: string;
   categoryColor: string; // Tailwind class, e.g. "bg-[#BEEDF7]" or "bg-[#FFE9D6]"
@@ -17,6 +19,8 @@ export default function CategoryHero({
   articleAuthor,
   articleDate
 }: CategoryHeroProps) {
+  const authorSlug = articleAuthor.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-8 py-8">
       {/* Category Header Title */}
@@ -50,7 +54,7 @@ export default function CategoryHero({
             {articleDescription}
           </p>
           <p className="text-[11px] text-gray-400">
-            By <span className="text-black font-semibold">{articleAuthor}</span> • {articleDate}
+            By <Link href={`/author/${authorSlug}`} className="text-black font-semibold hover:text-[#BF1E2D] hover:underline cursor-pointer transition-colors">{articleAuthor}</Link> • {articleDate}
           </p>
         </div>
       </div>

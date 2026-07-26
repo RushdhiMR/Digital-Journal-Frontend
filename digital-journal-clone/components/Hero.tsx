@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Hero() {
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-8 py-8">
@@ -22,7 +24,7 @@ export default function Hero() {
             A massive security breach has exposed vulnerable systems. Experts suggest key tools businesses should implement to prevent future data theft and secure infrastructure.
           </p>
           <p className="text-[11px] text-gray-400">
-            By <span className="text-black font-semibold">John Doe</span> • July 13, 2026
+            By <Link href="/author/john-doe" className="text-black font-semibold hover:text-[#BF1E2D] hover:underline cursor-pointer transition-colors">John Doe</Link> • July 13, 2026
           </p>
         </div>
       </div>

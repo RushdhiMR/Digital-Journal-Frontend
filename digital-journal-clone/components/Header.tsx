@@ -83,6 +83,7 @@ const megaMenuData: Record<string, {
 export default function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
@@ -321,7 +322,7 @@ export default function Header() {
 
       {/* MOBILE DROPDOWN DRAWER */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-zinc-950 text-white w-full border-t border-zinc-800 py-6 px-4 z-40 transition-all font-standard-sans">
+        <div className="lg:hidden bg-zinc-950 text-white w-full border-t border-zinc-800 py-6 px-4 z-40 transition-all font-standard-sans max-h-[80vh] overflow-y-auto">
           <ul className="space-y-4">
             {navItems.map((item) => {
               const pathMap: Record<string, string> = {
@@ -333,15 +334,93 @@ export default function Header() {
                 "EVENTS": "/events"
               };
               const href = pathMap[item] || "#";
+              const hasSubData = !!megaMenuData[item];
+              const isExpanded = expandedMobileCategory === item;
+
               return (
                 <li key={item} className="flex flex-col border-b border-zinc-900 pb-3">
-                  <Link
-                    href={href}
-                    className="text-[14px] font-bold tracking-wider hover:text-[#BF1E2D] uppercase block"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item}
-                  </Link>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={href}
+                      className="text-[14px] font-bold tracking-wider hover:text-[#BF1E2D] uppercase block py-1"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item}
+                    </Link>
+                    {hasSubData && (
+                      <button
+                        onClick={() => setExpandedMobileCategory(isExpanded ? null : item)}
+                        className="p-2 text-zinc-400 hover:text-white flex items-center gap-1 text-[12px] font-semibold cursor-pointer"
+                        aria-label={`Toggle ${item} sub-menu`}
+                      >
+                        <span className="text-[10px] text-zinc-400">
+                          {isExpanded ? "Hide Latest" : "Show Latest"}
+                        </span>
+                        <ChevronDown
+                          size={14}
+                          className={`transition-transform duration-200 ${isExpanded ? "rotate-180 text-[#BF1E2D]" : ""}`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Expanded Sub-menu for Mobile */}
+                  {hasSubData && isExpanded && (
+                    <div className="mt-3 pl-3 border-l-2 border-[#BF1E2D] space-y-4 bg-zinc-900/60 p-3 rounded">
+                      {/* LATEST NEWS */}
+                      <div>
+                        <h4 className="text-[11px] font-extrabold tracking-wider text-[#BF1E2D] uppercase mb-2">
+                          LATEST NEWS
+                        </h4>
+                        <ul className="space-y-2.5">
+                          {megaMenuData[item].latestNews.map((newsTitle, i) => {
+                            const parentSlug = item.toLowerCase().replace(/\s+/g, "-");
+                            const articleSlug = newsTitle
+                              .toLowerCase()
+                              .replace(/[^a-z0-9\s]+/g, "")
+                              .trim()
+                              .replace(/\s+/g, "-");
+                            return (
+                              <li key={i}>
+                                <Link
+                                  href={`/${parentSlug}/${articleSlug}`}
+                                  className="text-[12.5px] font-medium text-zinc-200 hover:text-white hover:underline block leading-snug"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  • {newsTitle}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+
+                      {/* DIVE DEEPER */}
+                      {megaMenuData[item].diveDeeper && megaMenuData[item].diveDeeper.length > 0 && (
+                        <div className="pt-2 border-t border-zinc-800">
+                          <h4 className="text-[11px] font-extrabold tracking-wider text-zinc-400 uppercase mb-2">
+                            DIVE DEEPER
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {megaMenuData[item].diveDeeper.map((subCat) => {
+                              const parentSlug = item.toLowerCase().replace(/\s+/g, "-");
+                              const subSlug = subCat.toLowerCase().replace(/\s+/g, "-");
+                              return (
+                                <Link
+                                  key={subCat}
+                                  href={`/${parentSlug}/${subSlug}`}
+                                  className="text-[11px] bg-zinc-800 hover:bg-[#BF1E2D] text-zinc-200 hover:text-white px-2.5 py-1 rounded transition-colors font-medium"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  {subCat}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </li>
               );
             })}

@@ -131,6 +131,7 @@ export default function CategoryPageLayout({
               <img
                 src={featured.image}
                 alt={featured.title}
+                onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                 className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
               />
             </div>
@@ -169,6 +170,7 @@ export default function CategoryPageLayout({
                 <img
                   src={article.image}
                   alt={article.title}
+                  onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                   className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                 />
               </div>
@@ -327,6 +329,7 @@ export default function CategoryPageLayout({
                     <img
                       src={article.image}
                       alt={article.title}
+                      onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                       className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                     />
                   </div>

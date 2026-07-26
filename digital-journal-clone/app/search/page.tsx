@@ -115,7 +115,14 @@ function SearchResultsContent() {
           {results.map((art, idx) => (
             <article key={idx} className="flex flex-col border border-zinc-200 p-4 rounded-lg hover:shadow-md transition-shadow bg-white">
               <div className="aspect-video w-full overflow-hidden bg-zinc-100 mb-4 rounded">
-                <img src={art.image} alt={art.title} className="w-full h-full object-cover" />
+                <img 
+                  src={art.image} 
+                  alt={art.title} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    e.currentTarget.src = "/argentina_vs_switzerland.png";
+                  }}
+                />
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 mb-2">
                 {art.category}

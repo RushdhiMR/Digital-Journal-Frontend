@@ -36,27 +36,32 @@ export default function EditorsPicks() {
     {
       title: "Canadian mathematician honoured for reshaping how the world moves resources and data",
       date: "July 18, 2026",
-      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=120&h=120&fit=crop"
+      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=120&h=120&fit=crop",
+      href: "/news/world/argentina-edge-switzerland-in-extra-time-to-set-up-world-cup-semi-final-clash-with-england"
     },
     {
       title: "Space data centres: Can orbiting AI infrastructure solve Earth's computing crisis?",
       date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=120&h=120&fit=crop"
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=120&h=120&fit=crop",
+      href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets"
     },
     {
       title: "China's Kimi K3 rattles US AI industry",
       date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&h=120&fit=crop"
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&h=120&fit=crop",
+      href: "/news/politics/trumps-hormuz-retreat-highlights-struggles-to-end-iran-conflict"
     },
     {
       title: "Startups bet on AI, and a leaner future",
       date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=120&h=120&fit=crop"
+      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=120&h=120&fit=crop",
+      href: "/business/companies/new-exclusive-decoration-design-fit-out-llc-structural-acrylic-pioneers-in-the-uae"
     },
     {
       title: "What Alberta found when it pointed 50 agents at its own code",
       date: "July 16, 2026",
-      image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=120&h=120&fit=crop"
+      image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=120&h=120&fit=crop",
+      href: "/business/corporate-news/ice-suspends-most-vehicle-stops-after-fatal-shootings-in-texas-and-maine"
     }
   ];
 
@@ -106,7 +111,7 @@ export default function EditorsPicks() {
         {/* Right Sidebar Stack */}
         <div className="space-y-6">
           {sidebarPicks.map((article, index) => (
-            <div key={index} className="flex gap-4 items-start cursor-pointer group">
+            <Link key={index} href={article.href} className="flex gap-4 items-start cursor-pointer group">
               <div className="relative w-[75px] h-[75px] flex-shrink-0 overflow-hidden bg-gray-100">
                 <img
                   src={article.image}
@@ -120,7 +125,7 @@ export default function EditorsPicks() {
                 </h4>
                 <p className="text-[11px] text-zinc-400 font-normal">{article.date}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

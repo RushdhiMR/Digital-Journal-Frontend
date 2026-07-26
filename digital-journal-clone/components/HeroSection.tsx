@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+
 export default function HeroSection() {
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-8 py-8">
@@ -5,8 +9,9 @@ export default function HeroSection() {
         {/* Main Hero Image */}
         <div className="relative w-full h-[320px] md:h-[400px] lg:h-[480px] overflow-hidden bg-gray-100">
           <img
-            src="https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1200&h=800&fit=crop"
-            alt="Security breach on smartphone"
+            src="/ai_hero.png"
+            alt="Security breach and high tech digital infrastructure"
+            onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1200&h=800&fit=crop"; }}
             className="w-full h-full object-cover"
           />
         </div>
@@ -27,7 +32,7 @@ export default function HeroSection() {
             A massive security breach has exposed vulnerable systems. Experts suggest key tools businesses should implement to prevent future data theft and secure infrastructure.
           </p>
           <p className="text-[11.5px] text-gray-400 font-medium">
-            By <span className="text-black font-semibold">John Doe</span> • July 13, 2026
+            By <Link href="/author/john-doe" className="text-black font-semibold hover:text-[#BF1E2D] hover:underline cursor-pointer transition-colors">John Doe</Link> • July 13, 2026
           </p>
         </div>
       </div>

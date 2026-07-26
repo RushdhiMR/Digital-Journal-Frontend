@@ -1,3 +1,5 @@
+"use client";
+
 export default function IndustryInsightsGrid() {
   const industryInsightsArticles = [
     {
@@ -40,6 +42,7 @@ export default function IndustryInsightsGrid() {
               <img
                 src={article.image}
                 alt={article.title}
+                onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                 className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
               />
             </div>

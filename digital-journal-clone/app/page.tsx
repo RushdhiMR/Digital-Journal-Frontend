@@ -7,7 +7,6 @@ import TechnologyGrid from '@/components/TechnologyGrid';
 import IndustryInsightsGrid from '@/components/IndustryInsightsGrid';
 import PeopleBehindStories from '@/components/PeopleBehindStories';
 import MoreNews from '@/components/MoreNews';
-import NewsletterBanner from '@/components/NewsletterBanner';
 import Footer from '@/components/Footer';
 
 export default function Home() {
@@ -22,9 +21,6 @@ export default function Home() {
       <IndustryInsightsGrid />
       <PeopleBehindStories />
       <MoreNews />
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8">
-        <NewsletterBanner />
-      </div>
       <Footer />
     </main>
   );

@@ -550,6 +550,131 @@ const customNewsDatabase: Record<string, {
         ]
       }
     ]
+  },
+  "us-announces-civilian-nuclear-deal-with-saudi-arabia": {
+    title: "US announces civilian nuclear deal with Saudi Arabia",
+    authorName: "Frank Morgan",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop",
+    authorBio: "Frank Morgan is Digital Journal's senior political correspondent covering transatlantic diplomacy.",
+    date: "July 22, 2026 5:25 PM EDT",
+    image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=750&fit=crop",
+    caption: "U.S. and international diplomats announce bilateral civilian energy agreement terms. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "WASHINGTON — The United States and Saudi Arabia have finalized terms for a strategic civilian nuclear cooperation agreement, establishing non-proliferation frameworks and tech exchanges.",
+          "The deal permits Saudi Arabia to develop civilian nuclear power infrastructure under strict International Atomic Energy Agency (IAEA) oversight and safety standards."
+        ]
+      },
+      {
+        heading: "Bilateral Cooperation & Non-Proliferation Safeguards",
+        paragraphs: [
+          "State Department officials confirmed that the bilateral accord includes binding non-proliferation protocols, ensuring all enriched material remains monitored.",
+          "Energy experts believe the project will diversify Middle Eastern energy production while accelerating clean energy transitions across the region."
+        ]
+      }
+    ]
+  },
+  "as-canadians-turn-to-ai-for-mortgage-advice-experts-warn-about-privacy-risks": {
+    title: "As Canadians turn to AI for mortgage advice, experts warn about privacy risks and inaccurate guidance",
+    authorName: "Sarah Miller",
+    authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop",
+    authorBio: "Sarah Miller covers international data privacy regulations, cross-border compliance, and digital rights.",
+    date: "July 22, 2026 5:17 PM EDT",
+    image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=750&fit=crop",
+    caption: "Canadian homeowners consult digital AI financial advice apps. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "TORONTO — Financial advisors and consumer privacy advocates warn that generative AI financial chatbots can produce inaccurate rate calculations and mishandle confidential financial data.",
+          "A growing number of Canadians are relying on artificial intelligence tools to model mortgage refinancing and interest rate forecasts, prompting regulatory scrutiny."
+        ]
+      },
+      {
+        heading: "Data Governance & Consumer Protection Warnings",
+        paragraphs: [
+          "Financial regulators advise consumers never to upload confidential bank statements or personal identity numbers into unverified public AI models.",
+          "Major Canadian financial institutions are rolling out verified, encrypted financial AI assistants to ensure consumer safety and compliance."
+        ]
+      }
+    ]
+  },
+  "tesla-shares-dip-after-profit-misses-expectations": {
+    title: "Tesla shares dip after profit misses expectations",
+    authorName: "David Chen",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop",
+    authorBio: "David Chen covers market shifts, automotive technology, and enterprise cloud infrastructure.",
+    date: "July 22, 2026 5:10 PM EDT",
+    image: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=750&fit=crop",
+    caption: "Tesla electric vehicles lined up for delivery. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "AUSTIN — Tesla stock dropped 4.5% in after-hours trading after quarterly earnings fell short of Wall Street estimates due to price cuts and increased R&D spending on AI and autonomous robotics.",
+          "Operating margins narrowed as global EV market competition intensified across North America, Europe, and Asian automotive hubs."
+        ]
+      },
+      {
+        heading: "Automotive Margins & AI Capital Investment",
+        paragraphs: [
+          "Despite short-term profit pressures, executive leadership reiterated full commitment to scaling full self-driving (FSD) chips and next-gen Robotaxi production fleets.",
+          "Institutional investors remain focused on long-term software licensing revenue and energy storage segment growth."
+        ]
+      }
+    ]
+  },
+  "your-ai-made-a-decision-and-canadian-regulators-want-to-know-how": {
+    title: "Your AI made a decision, and Canadian regulators want to know how",
+    authorName: "Dr. Tim Sandle",
+    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop",
+    authorBio: "Dr. Tim Sandle is a London-based science journalist covering biotechnology, AI in healthcare, and digital transformation.",
+    date: "July 21, 2026",
+    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=750&fit=crop",
+    caption: "Canadian regulatory leads evaluate algorithmic decision auditing protocols. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "OTTAWA — Canadian regulatory agencies are introducing mandatory transparency audits requiring companies to explain automated decisions in banking, hiring, and insurance.",
+          "Under proposed enforcement rules, algorithms impacting consumer credit scores or employment candidates must maintain explainable decision logs."
+        ]
+      },
+      {
+        heading: "Algorithmic Transparency & Model Auditing Standards",
+        paragraphs: [
+          "Compliance officers will evaluate automated models for bias, data lineage, and decision reproducibility.",
+          "Tech firms operating in Canada are deploying explainable AI (XAI) frameworks to meet upcoming legislative benchmarks."
+        ]
+      }
+    ]
+  },
+  "dutch-students-unveil-world-first-solar-powered-ambulance": {
+    title: "Dutch students unveil 'world-first' solar-powered ambulance",
+    authorName: "April Hicke",
+    authorAvatar: "/author_glasses.jpg",
+    authorBio: "April Hicke reports on biotechnology, scientific research, and clean tech innovation.",
+    date: "July 21, 2026",
+    image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&h=750&fit=crop",
+    caption: "Dutch engineering team demonstrates solar-powered emergency ambulance prototype. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "EINDHOVEN — Engineering students from the Netherlands have built a zero-emission emergency response vehicle equipped with rooftop solar panels and lightweight battery cells.",
+          "The solar ambulance can generate sufficient daily power to operate medical equipment and extend driving range by up to 120 kilometers."
+        ]
+      },
+      {
+        heading: "Clean Mobility & Emergency Response Technology",
+        paragraphs: [
+          "Medical first responders tested the vehicle during simulated emergency trials in Eindhoven, praising its silent operation and zero direct emissions.",
+          "Commercial manufacturers are evaluating the prototype for potential deployment in eco-conscious municipal hospital fleets across Europe."
+        ]
+      }
+    ]
   }
 };
 
@@ -730,27 +855,32 @@ export default async function SubcategoryPage({ params }: PageProps) {
       {
         title: "US announces civilian nuclear deal with Saudi Arabia",
         date: "July 22, 2026 5:25 PM EDT",
-        image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150&h=150&fit=crop"
+        image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150&h=150&fit=crop",
+        href: "/news/world/us-announces-civilian-nuclear-deal-with-saudi-arabia"
       },
       {
         title: "As Canadians turn to AI for mortgage advice, experts warn about privacy risks and inaccurate guidance",
         date: "July 22, 2026 5:17 PM EDT",
-        image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=150&h=150&fit=crop"
+        image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=150&h=150&fit=crop",
+        href: "/news/markets/as-canadians-turn-to-ai-for-mortgage-advice-experts-warn-about-privacy-risks"
       },
       {
         title: "Tesla shares dip after profit misses expectations",
         date: "July 22, 2026 5:10 PM EDT",
-        image: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=150&h=150&fit=crop"
+        image: "https://images.unsplash.com/photo-1563720223185-11003d516935?w=150&h=150&fit=crop",
+        href: "/news/markets/tesla-shares-dip-after-profit-misses-expectations"
       },
       {
         title: "Your AI made a decision, and Canadian regulators want to know how",
         date: "July 21, 2026",
-        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=150&h=150&fit=crop"
+        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=150&h=150&fit=crop",
+        href: "/industry-insights/health/your-ai-made-a-decision-and-canadian-regulators-want-to-know-how"
       },
       {
         title: "Dutch students unveil 'world-first' solar-powered ambulance",
         date: "July 21, 2026",
-        image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&h=150&fit=crop"
+        image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&h=150&fit=crop",
+        href: "/news/world/dutch-students-unveil-world-first-solar-powered-ambulance"
       }
     ];
 
@@ -759,25 +889,29 @@ export default async function SubcategoryPage({ params }: PageProps) {
         title: "Farnborough to survey the state of Boeing's comeback",
         desc: "The aviation industry gathers for its flagship air show with Boeing's recovery under scrutiny by customers, regulators and leadership shakeups.",
         date: "By AFP • July 18, 2026",
-        image: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&h=250&fit=crop"
+        image: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&h=250&fit=crop",
+        href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets"
       },
       {
         title: "Boeing to expand 737 MAX output as aviation giant targets comeback",
         desc: "The plane maker plans to increase narrowbody production volumes as it seeks to rebuild trust and address safety audits.",
         date: "By AFP • July 18, 2026",
-        image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=250&fit=crop"
+        image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=250&fit=crop",
+        href: "/business/companies/new-exclusive-decoration-design-fit-out-llc-structural-acrylic-pioneers-in-the-uae"
       },
       {
         title: "US jury finds Boeing guilty in 737 MAX grounding lawsuit",
         desc: "A federal jury has ordered Boeing to pay damages to families of victims, holding the company liable for safety gaps.",
         date: "By Reuters • July 15, 2026",
-        image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=400&h=250&fit=crop"
+        image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=400&h=250&fit=crop",
+        href: "/news/politics/trump-declares-iran-ceasefire-over-raising-questions-about-the-next-phase-of-the-conflict"
       },
       {
         title: "Boeing confirms China commitment to buy 200 aircraft",
         desc: "Aerospace giant says commitment remains active, with first deliveries expected in late 2026.",
         date: "By Bloomberg • July 15, 2026",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=250&fit=crop"
+        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=250&fit=crop",
+        href: "/news/markets/crypto-market-overview-bitcoin-stabilizes-zcash-targets-new-highs"
       }
     ];
 
@@ -941,7 +1075,11 @@ export default async function SubcategoryPage({ params }: PageProps) {
               {/* Sidebar Items Stack (Matching Image 2 Right Column) */}
               <div className="space-y-5 font-sans">
                 {sidebarPicks.map((item, idx) => (
-                  <div key={idx} className="flex gap-3.5 items-start cursor-pointer group pb-4 border-b border-zinc-100 last:border-none">
+                  <Link
+                    key={idx}
+                    href={item.href}
+                    className="flex gap-3.5 items-start cursor-pointer group pb-4 border-b border-zinc-100 last:border-none"
+                  >
                     <div className="relative w-[75px] h-[65px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200">
                       <img
                         src={item.image}
@@ -955,7 +1093,7 @@ export default async function SubcategoryPage({ params }: PageProps) {
                       </h4>
                       <p className="text-[11px] text-zinc-500 font-normal font-sans">{item.date}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -972,7 +1110,11 @@ export default async function SubcategoryPage({ params }: PageProps) {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {relatedNewsList.map((item, idx) => (
-                <div key={idx} className="flex flex-col font-standard-sans group cursor-pointer">
+                <Link
+                  key={idx}
+                  href={item.href}
+                  className="flex flex-col font-standard-sans group cursor-pointer"
+                >
                   <div className="relative w-full aspect-video overflow-hidden mb-3 bg-gray-100 rounded border border-zinc-200">
                     <img
                       src={item.image}
@@ -984,17 +1126,14 @@ export default async function SubcategoryPage({ params }: PageProps) {
                       {idx % 2 === 0 ? parent.name.toUpperCase() : 'WORLD'}
                     </span>
                   </div>
-                  <Link
-                    href="#"
-                    className="text-[13.5px] font-serif font-bold leading-snug text-black group-hover:text-[#BF1E2D] transition-colors mb-1.5"
-                  >
+                  <h4 className="text-[13.5px] font-serif font-bold leading-snug text-black group-hover:text-[#BF1E2D] transition-colors mb-1.5">
                     {item.title}
-                  </Link>
+                  </h4>
                   <p className="text-[11.5px] text-zinc-600 leading-relaxed mb-2 font-normal font-sans line-clamp-2">
                     {item.desc}
                   </p>
                   <span className="text-[10.5px] text-zinc-400 font-normal font-sans">{item.date}</span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

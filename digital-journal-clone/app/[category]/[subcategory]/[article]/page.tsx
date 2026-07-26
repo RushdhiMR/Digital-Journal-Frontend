@@ -54,6 +54,31 @@ export async function generateStaticParams() {
       category: "news",
       subcategory: "markets",
       article: "crypto-market-overview-bitcoin-stabilizes-zcash-targets-new-highs"
+    },
+    {
+      category: "news",
+      subcategory: "world",
+      article: "us-announces-civilian-nuclear-deal-with-saudi-arabia"
+    },
+    {
+      category: "news",
+      subcategory: "markets",
+      article: "as-canadians-turn-to-ai-for-mortgage-advice-experts-warn-about-privacy-risks"
+    },
+    {
+      category: "news",
+      subcategory: "markets",
+      article: "tesla-shares-dip-after-profit-misses-expectations"
+    },
+    {
+      category: "industry-insights",
+      subcategory: "health",
+      article: "your-ai-made-a-decision-and-canadian-regulators-want-to-know-how"
+    },
+    {
+      category: "news",
+      subcategory: "world",
+      article: "dutch-students-unveil-world-first-solar-powered-ambulance"
     }
   ];
 }

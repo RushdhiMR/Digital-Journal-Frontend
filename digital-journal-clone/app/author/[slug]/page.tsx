@@ -160,7 +160,7 @@ export default async function AuthorProfilePage({ params }: AuthorPageProps) {
       title: "Argentina Edge Switzerland in Extra Time to Set Up World Cup Semi-Final Clash With England",
       desc: "After defeating Switzerland 3-1 following extra time in an intense quarter-final that featured controversy, drama, and a stunning winning goal from Julián Álvarez. The reigning world champions will...",
       date: `BY ${author.name.toUpperCase()} • JUL 12, 2026`,
-      image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&h=350&fit=crop"
+      image: "/argentina_vs_switzerland.png"
     },
     {
       category: "POLITICS",

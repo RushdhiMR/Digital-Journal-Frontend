@@ -87,6 +87,30 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     setErrorMessage("");
 
+    // Persist selected Google account to device accounts list
+    try {
+      const existingStr = localStorage.getItem("dj_device_google_accounts");
+      const existingList = existingStr ? JSON.parse(existingStr) : [];
+      if (!existingList.some((a: any) => a.email.toLowerCase() === acc.email.toLowerCase())) {
+        const initials = acc.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2) || "GA";
+        existingList.unshift({
+          name: acc.name,
+          email: acc.email,
+          avatar: initials,
+          status: "Device Account",
+          isDevice: true,
+        });
+        localStorage.setItem("dj_device_google_accounts", JSON.stringify(existingList));
+      }
+    } catch (e) {
+      console.warn("Could not persist device google account:", e);
+    }
+
     // Trigger backend login endpoint to dispatch email notification
     try {
       await fetch("http://localhost:5000/api/auth/login", {
