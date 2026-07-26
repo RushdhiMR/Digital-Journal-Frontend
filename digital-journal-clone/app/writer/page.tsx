@@ -86,10 +86,17 @@ export default function WriterStudioPage() {
   // Auth & Session Check
   useEffect(() => {
     try {
+      const savedWriterStr = localStorage.getItem("dj_writer_user");
       const savedUserStr = localStorage.getItem("dj_user");
+      
       let activeUser = null;
-      if (savedUserStr) {
-        activeUser = JSON.parse(savedUserStr);
+      if (savedWriterStr) {
+        activeUser = JSON.parse(savedWriterStr);
+      } else if (savedUserStr) {
+        const parsed = JSON.parse(savedUserStr);
+        if (parsed.role === "Writer" || parsed.role === "Admin" || parsed.email?.toLowerCase().includes("writer") || parsed.email?.toLowerCase().includes("admin")) {
+          activeUser = parsed;
+        }
       }
 
       // Check for saved submitted drafts
@@ -99,7 +106,7 @@ export default function WriterStudioPage() {
       }
 
       // Require active Writer or Admin session
-      if (activeUser && (activeUser.role === "Writer" || activeUser.role === "Admin" || activeUser.email.toLowerCase().includes("writer") || activeUser.email.toLowerCase().includes("admin"))) {
+      if (activeUser && (activeUser.role === "Writer" || activeUser.role === "Admin" || activeUser.email?.toLowerCase().includes("writer") || activeUser.email?.toLowerCase().includes("admin"))) {
         setCurrentUser(activeUser);
         setIsAuthenticated(true);
       } else {

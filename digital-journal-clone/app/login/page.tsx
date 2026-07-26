@@ -138,7 +138,17 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
-        authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: matchedUser.role || "Reader" };
+        const userRole = matchedUser.role || (lowerEmail.includes("writer") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
+        authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: userRole };
+      } else if (lowerEmail.includes("writer")) {
+        // Explicit Writer email match check
+        const validWriterPasswords = ["writer", "writer123", "writer2026"];
+        if (!validWriterPasswords.includes(lowerPass)) {
+          setErrorMessage(`❌ Access Denied: Incorrect password for Writer account '${lowerEmail}'.`);
+          setIsSubmitting(false);
+          return;
+        }
+        authenticatedAccount = { name: "Jennifer Friesen", email: lowerEmail, role: "Writer" };
       } else {
         // STRICT CHECK: Reject unrecognized / wrong email addresses!
         setErrorMessage(`❌ Access Denied: Unrecognized email '${lowerEmail}'. Account does not exist. Please check email or register.`);
@@ -181,6 +191,9 @@ export default function LoginPage() {
     localStorage.setItem("dj_user", JSON.stringify(authenticatedAccount));
     if (authenticatedAccount.role === "Admin") {
       localStorage.setItem("dj_admin_user", JSON.stringify(authenticatedAccount));
+    }
+    if (authenticatedAccount.role === "Writer") {
+      localStorage.setItem("dj_writer_user", JSON.stringify(authenticatedAccount));
     }
     localStorage.setItem("dj_toast", `Welcome back, ${authenticatedAccount.name}! Signed in as ${authenticatedAccount.role}.`);
 
