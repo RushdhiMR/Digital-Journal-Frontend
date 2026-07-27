@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, CheckCircle2, Lock, ArrowLeft, KeyRound, Sparkles } from "lucide-react";
+import { KeyRound, CheckCircle2, ArrowLeft, ShieldCheck } from "lucide-react";
 
 export interface Account {
   name: string;
@@ -15,20 +15,14 @@ interface GoogleAccountChooserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectAccount: (account: Account) => void;
+  requirePasswordSetup?: boolean;
 }
-
-// Pre-verified system default accounts
-const PRE_VERIFIED_EMAILS = [
-  "admin@digitaljournal.com",
-  "coadmin@digitaljournal.com",
-  "writer@digitaljournal.com",
-  "reader@digitaljournal.com",
-];
 
 export default function GoogleAccountChooserModal({
   isOpen,
   onClose,
   onSelectAccount,
+  requirePasswordSetup = false,
 }: GoogleAccountChooserModalProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
@@ -37,22 +31,22 @@ export default function GoogleAccountChooserModal({
   const [customName, setCustomName] = useState("");
   const [emailError, setEmailError] = useState("");
 
-  // One-time OTP verification state for new emails
-  const [verifyingAccount, setVerifyingAccount] = useState<Account | null>(null);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("849201");
-  const [verificationError, setVerificationError] = useState("");
+  // Password Setup State (Triggered ONLY when requirePasswordSetup is true for new registrations)
+  const [pendingAccount, setPendingAccount] = useState<Account | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-  // Load device accounts
   useEffect(() => {
     if (!isOpen) return;
 
     setCustomEmail("");
     setCustomName("");
     setEmailError("");
-    setVerifyingAccount(null);
-    setVerificationCode("");
-    setVerificationError("");
+    setPendingAccount(null);
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError("");
 
     try {
       const savedAccountsStr = localStorage.getItem("dj_device_google_accounts");
@@ -99,53 +93,89 @@ export default function GoogleAccountChooserModal({
 
   if (!isOpen) return null;
 
-  // Check if an email has already been verified once on this device
-  const isEmailVerified = (email: string): boolean => {
+  // Helper to check if an email is already registered in local user registry
+  const isEmailRegistered = (email: string): boolean => {
     const lower = email.trim().toLowerCase();
-    if (PRE_VERIFIED_EMAILS.includes(lower)) return true;
+    const systemAccounts = [
+      "admin@digitaljournal.com",
+      "coadmin@digitaljournal.com",
+      "writer@digitaljournal.com",
+      "reader@digitaljournal.com",
+    ];
+    if (systemAccounts.includes(lower)) return true;
 
     try {
-      const verifiedStr = localStorage.getItem("dj_verified_emails");
-      if (verifiedStr) {
-        const list: string[] = JSON.parse(verifiedStr);
-        return list.some((e) => e.toLowerCase() === lower);
+      const regStr = localStorage.getItem("dj_registered_users");
+      if (regStr) {
+        const regList: any[] = JSON.parse(regStr);
+        return regList.some((u) => u.email && u.email.toLowerCase() === lower);
       }
-    } catch (err) {
-      console.warn(err);
+    } catch (e) {
+      console.warn(e);
     }
+
     return false;
   };
 
   const processAccountSelection = (acc: Account) => {
-    // Check if email has been verified once
-    if (isEmailVerified(acc.email)) {
-      completeSignIn(acc);
+    // If requirePasswordSetup is true (on Register page) AND account is NOT registered yet -> Prompt to set password
+    if (requirePasswordSetup && !isEmailRegistered(acc.email)) {
+      setPendingAccount(acc);
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordError("");
     } else {
-      // Trigger one-time OTP verification screen for newly signed-in email
-      const randomOTP = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedCode(randomOTP);
-      setVerifyingAccount(acc);
-      setVerificationCode("");
-      setVerificationError("");
+      completeSignIn(acc);
     }
   };
 
+  const handlePasswordSetupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    if (!pendingAccount) return;
+    if (!newPassword || newPassword.length < 4) {
+      setPasswordError("Password must be at least 4 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match. Please re-enter.");
+      return;
+    }
+
+    // Register user with password in localStorage
+    try {
+      const regStr = localStorage.getItem("dj_registered_users");
+      const regList: any[] = regStr ? JSON.parse(regStr) : [];
+      
+      const newUser = {
+        name: pendingAccount.name,
+        email: pendingAccount.email.toLowerCase().trim(),
+        password: newPassword.trim(),
+        role: "Reader",
+        registeredAt: new Date().toISOString(),
+      };
+
+      if (!regList.some((u) => u.email.toLowerCase() === newUser.email)) {
+        regList.push(newUser);
+        localStorage.setItem("dj_registered_users", JSON.stringify(regList));
+      }
+    } catch (err) {
+      console.warn("Could not save new user registration:", err);
+    }
+
+    completeSignIn(pendingAccount);
+  };
+
   const completeSignIn = (acc: Account) => {
-    // Save to local device accounts
+    // Save to local device google accounts
     try {
       const existingStr = localStorage.getItem("dj_device_google_accounts");
       const existingList: Account[] = existingStr ? JSON.parse(existingStr) : [];
       if (!existingList.some((a) => a.email.toLowerCase() === acc.email.toLowerCase())) {
         existingList.unshift(acc);
         localStorage.setItem("dj_device_google_accounts", JSON.stringify(existingList));
-      }
-
-      // Mark email as verified once in localStorage
-      const verifiedStr = localStorage.getItem("dj_verified_emails");
-      const verifiedList: string[] = verifiedStr ? JSON.parse(verifiedStr) : [];
-      if (!verifiedList.includes(acc.email.toLowerCase())) {
-        verifiedList.push(acc.email.toLowerCase());
-        localStorage.setItem("dj_verified_emails", JSON.stringify(verifiedList));
       }
     } catch (err) {
       console.warn("Failed to persist device account:", err);
@@ -189,20 +219,6 @@ export default function GoogleAccountChooserModal({
     };
 
     processAccountSelection(newAcc);
-  };
-
-  const handleVerifyCodeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setVerificationError("");
-
-    if (!verifyingAccount) return;
-    if (verificationCode.trim() !== generatedCode) {
-      setVerificationError("❌ Invalid verification code. Please check and re-enter.");
-      return;
-    }
-
-    // Successfully verified!
-    completeSignIn(verifyingAccount);
   };
 
   const handleRemoveAccount = (e: React.MouseEvent, emailToRemove: string) => {
@@ -249,71 +265,69 @@ export default function GoogleAccountChooserModal({
         {/* Body */}
         <div className="p-7 md:p-8 flex-1">
 
-          {/* ONE-TIME OTP VERIFICATION SCREEN FOR NEW SIGN-INS */}
-          {verifyingAccount ? (
-            <form onSubmit={handleVerifyCodeSubmit} className="space-y-4">
+          {/* PASSWORD SETUP SCREEN FOR NEW GOOGLE REGISTRATIONS ON REGISTER PAGE */}
+          {pendingAccount ? (
+            <form onSubmit={handlePasswordSetupSubmit} className="space-y-4">
               <div>
-                <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-flex items-center gap-1">
-                  <ShieldCheck size={12} /> ONE-TIME VERIFICATION
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-flex items-center gap-1">
+                  <KeyRound size={12} /> ACCOUNT PASSWORD SETUP
                 </span>
                 <h2 className="text-[22px] font-medium text-white mb-1 tracking-tight font-sans">
-                  Verify your new account
+                  Set Account Password
                 </h2>
                 <p className="text-[12.5px] text-zinc-400 font-sans leading-relaxed">
-                  To complete your first sign in for <span className="text-white font-medium">{verifyingAccount.email}</span>, enter the security verification code below.
+                  Welcome <span className="text-white font-medium">{pendingAccount.name}</span> (<span className="text-white font-medium">{pendingAccount.email}</span>)! Set a password for your new Digital Journal account.
                 </p>
               </div>
 
-              {verificationError && (
+              {passwordError && (
                 <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded font-medium">
-                  {verificationError}
+                  {passwordError}
                 </div>
               )}
 
-              {/* Demo OTP Display Box */}
-              <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">YOUR SECURITY VERIFICATION CODE</p>
-                  <p className="text-xl font-mono font-bold text-blue-400 tracking-widest mt-0.5">{generatedCode}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setVerificationCode(generatedCode)}
-                  className="bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 text-[11px] font-bold px-2.5 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Sparkles size={13} /> Auto-Fill Code
-                </button>
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 font-sans">
+                  Create Account Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 4 chars)"
+                  autoFocus
+                  required
+                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                />
               </div>
 
               <div>
                 <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 font-sans">
-                  Enter 6-Digit Code
+                  Confirm Account Password
                 </label>
                 <input
-                  type="text"
-                  maxLength={6}
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="e.g. 849201"
-                  autoFocus
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
                   required
-                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-center tracking-[4px] font-mono text-base focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
-                  onClick={() => setVerifyingAccount(null)}
+                  onClick={() => setPendingAccount(null)}
                   className="text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors cursor-pointer shadow flex items-center gap-1.5"
+                  className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow flex items-center gap-1.5"
                 >
-                  <CheckCircle2 size={15} /> Verify & Activate
+                  <CheckCircle2 size={15} /> Create Password & Register
                 </button>
               </div>
             </form>

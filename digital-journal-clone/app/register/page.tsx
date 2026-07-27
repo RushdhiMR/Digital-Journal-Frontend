@@ -389,6 +389,7 @@ export default function RegisterPage() {
         isOpen={showGoogleChooser}
         onClose={() => setShowGoogleChooser(false)}
         onSelectAccount={handleSelectGoogleAccount}
+        requirePasswordSetup={true}
       />
     </div>
   );
