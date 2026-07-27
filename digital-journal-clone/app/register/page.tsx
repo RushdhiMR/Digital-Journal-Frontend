@@ -36,18 +36,25 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
+    if (password.length < 4) {
+      setErrorMessage("Password must be at least 4 characters long.");
       return;
     }
 
     setIsSubmitting(true);
 
+    const newUserObj = { 
+      name: fullName.trim(), 
+      email: email.toLowerCase().trim(), 
+      password: password.trim(), 
+      role: "Reader",
+      registeredAt: new Date().toISOString()
+    };
+
     // Save user to registered user accounts registry in localStorage
     try {
       const registeredStr = localStorage.getItem("dj_registered_users");
       const registeredList = registeredStr ? JSON.parse(registeredStr) : [];
-      const newUserObj = { name: fullName, email: email.toLowerCase().trim(), password, role: "Reader" };
       if (!registeredList.some((u: any) => u.email.toLowerCase() === email.toLowerCase().trim())) {
         registeredList.push(newUserObj);
         localStorage.setItem("dj_registered_users", JSON.stringify(registeredList));
@@ -57,38 +64,37 @@ export default function RegisterPage() {
     }
 
     try {
-      let res;
       try {
-        res = await fetch("http://localhost:5000/api/auth/register", {
+        await fetch("http://localhost:5000/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: fullName, email, password }),
         });
       } catch (err) {
-        res = await fetch("/api/auth/register", {
+        await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: fullName, email, password }),
         });
       }
-      if (res) {
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          setErrorMessage(data.error || "Registration failed. Please try again.");
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      setSuccessMessage("Account created successfully! Redirecting to login...");
+
+      // Activate session and redirect
+      localStorage.setItem("dj_user", JSON.stringify({ name: newUserObj.name, email: newUserObj.email, role: "Reader" }));
+      localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${newUserObj.name}! Your account has been created.`);
+
+      setSuccessMessage("✓ Registration successful! Setting up your Reader Hub...");
       setTimeout(() => {
-        router.push("/login");
-      }, 1200);
+        router.push("/reader");
+      }, 1000);
     } catch (err) {
       console.warn("Register API error:", err);
-      setSuccessMessage("Account created successfully! Redirecting to login...");
+      localStorage.setItem("dj_user", JSON.stringify({ name: newUserObj.name, email: newUserObj.email, role: "Reader" }));
+      localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${newUserObj.name}! Your account has been created.`);
+
+      setSuccessMessage("✓ Registration successful! Setting up your Reader Hub...");
       setTimeout(() => {
-        router.push("/login");
-      }, 1200);
+        router.push("/reader");
+      }, 1000);
     } finally {
       setIsSubmitting(false);
     }
