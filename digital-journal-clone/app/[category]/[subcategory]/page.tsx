@@ -709,6 +709,71 @@ const authorAvatarMap: Record<string, { avatar: string; bio: string }> = {
   }
 };
 
+function getTopicMatchingImage(slug: string, title: string): string {
+  const lower = (slug + " " + title).toLowerCase();
+
+  if (lower.includes("space") || lower.includes("orbital") || lower.includes("satellite") || lower.includes("spacex") || lower.includes("starship")) {
+    return "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("meta") || lower.includes("facebook") || lower.includes("instagram") || lower.includes("addictive") || lower.includes("social")) {
+    return "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("semiconductor") || lower.includes("chip") || lower.includes("silicon") || lower.includes("quantum") || lower.includes("hardware")) {
+    return "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("privacy") || lower.includes("security") || lower.includes("cybersecurity") || lower.includes("audit") || lower.includes("gdpr")) {
+    return "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("solar") || lower.includes("clean energy") || lower.includes("wind") || lower.includes("power grid") || lower.includes("energy")) {
+    return "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("logistics") || lower.includes("fleet") || lower.includes("transit") || lower.includes("truck") || lower.includes("supply")) {
+    return "https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("music") || lower.includes("song") || lower.includes("label") || lower.includes("audio") || lower.includes("streaming")) {
+    return "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("cio") || lower.includes("cloud") || lower.includes("data center") || lower.includes("infrastructure") || lower.includes("server")) {
+    return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("aid") || lower.includes("humanitarian") || lower.includes("disaster") || lower.includes("relief")) {
+    return "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("crop") || lower.includes("genetics") || lower.includes("agricultural") || lower.includes("farm") || lower.includes("seed")) {
+    return "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("rail") || lower.includes("ticket") || lower.includes("transportation") || lower.includes("train") || lower.includes("ambulance")) {
+    return "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("school") || lower.includes("education") || lower.includes("curriculum") || lower.includes("student") || lower.includes("literacy")) {
+    return "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("journalist") || lower.includes("verifying") || lower.includes("source") || lower.includes("press") || lower.includes("media")) {
+    return "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("statistic") || lower.includes("research") || lower.includes("report") || lower.includes("analysis") || lower.includes("study")) {
+    return "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("policy") || lower.includes("engineering") || lower.includes("standard") || lower.includes("compliance")) {
+    return "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("stock") || lower.includes("market") || lower.includes("wall street") || lower.includes("invest") || lower.includes("financial")) {
+    return "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("trump") || lower.includes("iran") || lower.includes("politics") || lower.includes("ceasefire") || lower.includes("hormuz")) {
+    return "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("argentina") || lower.includes("switzerland") || lower.includes("world cup") || lower.includes("semi-final") || lower.includes("soccer") || lower.includes("england")) {
+    return "/argentina_vs_switzerland.png";
+  }
+  if (lower.includes("airbus") || lower.includes("jet") || lower.includes("aviation") || lower.includes("plane") || lower.includes("boeing")) {
+    return "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=750&fit=crop";
+  }
+
+  // General tech & news high quality editorial fallback
+  return "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=750&fit=crop";
+}
+
 function getNewsContent(slug: string) {
   const existing = customNewsDatabase[slug];
   const title = existing ? existing.title : formatTitleFromSlug(slug);
@@ -724,7 +789,7 @@ function getNewsContent(slug: string) {
   const authorBio = existing?.authorBio || mappedAuthor?.bio || `${authorName} is a dedicated journalist for Digital Journal covering breaking news, enterprise technology, and policy developments.`;
 
   const date = existing ? existing.date : "July 22, 2026 6:08 PM EDT";
-  const image = existing ? existing.image : "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=750&fit=crop";
+  const image = (existing && existing.image) ? existing.image : getTopicMatchingImage(slug, title);
   const caption = existing ? existing.caption : `Comprehensive analysis and latest updates regarding ${title.toLowerCase()}. (Photo courtesy of Digital Journal)`;
 
   // Generate big, multi-section in-depth long-form article for all news pages
