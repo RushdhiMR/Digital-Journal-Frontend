@@ -37,11 +37,8 @@ export default function ReaderHubPage() {
         setProfileEmail(parsed.email || "reader@digitaljournal.com");
         if (parsed.bio) setProfileBio(parsed.bio);
       } else {
-        const readerUser = { name: "Alex Reader", email: "reader@digitaljournal.com", role: "Reader" };
-        localStorage.setItem("dj_user", JSON.stringify(readerUser));
-        setCurrentUser(readerUser);
-        setProfileName(readerUser.name);
-        setProfileEmail(readerUser.email);
+        window.location.href = "/login";
+        return;
       }
 
       // Load Saved Bookmarks from LocalStorage

@@ -112,10 +112,12 @@ export default function Header() {
 
   const handleSignOut = () => {
     localStorage.removeItem("dj_user");
+    localStorage.removeItem("dj_admin_user");
+    localStorage.removeItem("dj_writer_user");
     setCurrentUser(null);
     setIsUserDropdownOpen(false);
-    setToastMessage("You have been signed out.");
-    setTimeout(() => setToastMessage(null), 3500);
+    localStorage.setItem("dj_toast", "You have successfully signed out.");
+    window.location.href = "/";
   };
 
   const navItems = [
