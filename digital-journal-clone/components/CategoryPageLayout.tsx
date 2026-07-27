@@ -105,6 +105,20 @@ export default function CategoryPageLayout({
     };
   });
 
+  const getArticleSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/'s/g, 's')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const getArticleHref = (title: string, overrideCategory?: string) => {
+    const cat = (overrideCategory || categoryName || "news").toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const artSlug = getArticleSlug(title);
+    return `/${cat}/world/${artSlug}`;
+  };
+
   const scrollLeft = () => {
     if (guidesRef.current) {
       guidesRef.current.scrollBy({ left: -320, behavior: "smooth" });
@@ -126,18 +140,20 @@ export default function CategoryPageLayout({
         {/* HERO SECTION + CATEGORY INFO BOX */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12 items-stretch">
           {/* Left Column (8 cols): Big Featured Image with Title, Excerpt & Byline Below */}
-          <div className="lg:col-span-8 flex flex-col cursor-pointer group">
-            <div className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 mb-4">
-              <img
-                src={featured.image}
-                alt={featured.title}
-                onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
-                className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
-              />
-            </div>
-            <h2 className="text-[22px] md:text-[25px] font-bold leading-snug text-black group-hover:text-[#BF1E2D] transition-colors mb-2 font-standard-sans">
-              {featured.title}
-            </h2>
+          <div className="lg:col-span-8 flex flex-col group">
+            <Link href={getArticleHref(featured.title)} className="block">
+              <div className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 mb-4">
+                <img
+                  src={featured.image}
+                  alt={featured.title}
+                  onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
+                  className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
+                />
+              </div>
+              <h2 className="text-[22px] md:text-[25px] font-bold leading-snug text-black group-hover:text-[#BF1E2D] transition-colors mb-2 font-standard-sans">
+                {featured.title}
+              </h2>
+            </Link>
             <p className="text-[13px] md:text-[13.5px] text-zinc-700 leading-relaxed font-sans mb-3">
               {featured.description}
             </p>
@@ -164,7 +180,7 @@ export default function CategoryPageLayout({
         {/* Secondary Articles: 2x2 Compact Horizontal Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 border-t border-b border-zinc-200 py-8 my-8 font-standard-sans max-w-[1000px]">
           {secondaryArticles.slice(0, 4).map((article, index) => (
-            <article key={index} className="flex gap-4 items-start cursor-pointer group">
+            <Link key={index} href={getArticleHref(article.title)} className="flex gap-4 items-start cursor-pointer group">
               {/* Square Thumbnail */}
               <div className="relative w-[85px] h-[85px] md:w-[95px] md:h-[95px] flex-shrink-0 overflow-hidden bg-gray-100">
                 <img
@@ -183,7 +199,7 @@ export default function CategoryPageLayout({
                   {article.date}
                 </p>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
 
@@ -265,9 +281,11 @@ export default function CategoryPageLayout({
                 {guides.map((guide, index) => (
                   <div key={index} className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px] flex flex-col justify-between">
                     <div>
-                      <h3 className="text-[15px] md:text-[16px] font-bold leading-[1.25] text-black hover:text-[#BF1E2D] transition-colors cursor-pointer mb-2.5">
-                        {guide.title}
-                      </h3>
+                      <Link href={getArticleHref(guide.title, "news")}>
+                        <h3 className="text-[15px] md:text-[16px] font-bold leading-[1.25] text-black hover:text-[#BF1E2D] transition-colors cursor-pointer mb-2.5">
+                          {guide.title}
+                        </h3>
+                      </Link>
                       <p className="text-[12.5px] text-zinc-700 leading-relaxed mb-4 font-sans">
                         {guide.description}
                       </p>
@@ -323,20 +341,24 @@ export default function CategoryPageLayout({
                 dateStr = parts.slice(1).join('•').trim() || "";
               }
 
+              const articleHref = getArticleHref(article.title);
+
               return (
-                <article key={index} className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start pb-8 border-b border-zinc-100 last:border-b-0 last:pb-0 cursor-pointer group">
-                  <div className="relative w-full sm:w-[220px] md:w-[240px] aspect-[16/10] flex-shrink-0 overflow-hidden bg-gray-100">
+                <article key={index} className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start pb-8 border-b border-zinc-100 last:border-b-0 last:pb-0 group">
+                  <Link href={articleHref} className="relative w-full sm:w-[220px] md:w-[240px] aspect-[16/10] flex-shrink-0 overflow-hidden bg-gray-100 block">
                     <img
                       src={article.image}
                       alt={article.title}
                       onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
                       className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                     />
-                  </div>
+                  </Link>
                   <div className="flex flex-col flex-grow">
-                    <h3 className="text-[17px] md:text-[18px] font-bold leading-[1.25] text-black group-hover:text-[#BF1E2D] transition-colors mb-2">
-                      {article.title}
-                    </h3>
+                    <Link href={articleHref} className="block">
+                      <h3 className="text-[17px] md:text-[18px] font-bold leading-[1.25] text-black group-hover:text-[#BF1E2D] transition-colors mb-2">
+                        {article.title}
+                      </h3>
+                    </Link>
                     <p className="text-[13px] md:text-[13.5px] text-zinc-700 leading-relaxed mb-2.5 font-sans">
                       {article.description}
                     </p>
@@ -349,7 +371,7 @@ export default function CategoryPageLayout({
             })}
           </div>
 
-          {/* Pagination */}
+          {/* Category News Feed Pagination */}
           <div className="flex items-center gap-2 mt-10 pt-4 border-t border-gray-100 text-xs font-bold text-gray-500 uppercase select-none">
             {currentPage > 1 && (
               <button
