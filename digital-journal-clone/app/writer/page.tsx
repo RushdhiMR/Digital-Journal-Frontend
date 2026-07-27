@@ -262,12 +262,14 @@ export default function WriterStudioPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <Link
-              href="/admin"
-              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
-            >
-              Admin Dashboard
-            </Link>
+            {(currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
+              <Link
+                href="/admin"
+                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+              >
+                Admin Dashboard
+              </Link>
+            )}
             <Link
               href="/reader"
               className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"

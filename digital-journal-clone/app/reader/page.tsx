@@ -75,17 +75,31 @@ export default function ReaderHubPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+            {/* Show Writer Studio ONLY to Writers & Admins */}
+            {(currentUser?.role === "Writer" || currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
+              <Link
+                href="/writer"
+                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+              >
+                Writer Studio
+              </Link>
+            )}
+
+            {/* Show Admin Dashboard ONLY to Admins & Co-Admins */}
+            {(currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
+              <Link
+                href="/admin"
+                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
             <Link
-              href="/writer"
-              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+              href="/news"
+              className="flex-1 md:flex-none text-center bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer shadow"
             >
-              Writer Studio
-            </Link>
-            <Link
-              href="/admin"
-              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
-            >
-              Admin Dashboard
+              Browse Latest News
             </Link>
           </div>
         </div>
