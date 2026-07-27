@@ -113,6 +113,9 @@ export default function WriterStudioPage() {
           (w) => (w.email && w.email.toLowerCase() === activeUser.email?.toLowerCase()) || activeUser.email?.toLowerCase().includes("writer")
         );
         if (matchedWriter && matchedWriter.status === "Deactivated") {
+          localStorage.removeItem("dj_writer_user");
+          localStorage.removeItem("dj_user");
+          setCurrentUser(null);
           setIsAuthenticated(false);
           setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin. Contact Main Admin to request access.");
           return;
@@ -145,6 +148,9 @@ export default function WriterStudioPage() {
         const writerList: any[] = JSON.parse(savedWritersStr);
         const matchedWriter = writerList.find((w) => w.status === "Deactivated");
         if (matchedWriter) {
+          localStorage.removeItem("dj_writer_user");
+          localStorage.removeItem("dj_user");
+          setCurrentUser(null);
           setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin.");
           return;
         }
@@ -166,6 +172,20 @@ export default function WriterStudioPage() {
     } else {
       setLockError("❌ Access Denied: Incorrect Writer Passcode!");
     }
+  };
+
+  const handleExitToHome = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem("dj_writer_user");
+    localStorage.removeItem("dj_user");
+    window.location.href = "/";
+  };
+
+  const handleExitToLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem("dj_writer_user");
+    localStorage.removeItem("dj_user");
+    window.location.href = "/login";
   };
 
   const handleCreateArticle = (e: React.FormEvent) => {
@@ -269,12 +289,18 @@ export default function WriterStudioPage() {
           </form>
 
           <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
-            <Link href="/login" className="hover:text-zinc-300 transition-colors">
+            <button
+              onClick={handleExitToLogin}
+              className="hover:text-zinc-300 transition-colors cursor-pointer text-left"
+            >
               ← Return to Login Page
-            </Link>
-            <Link href="/" className="hover:text-zinc-300 transition-colors">
+            </button>
+            <button
+              onClick={handleExitToHome}
+              className="hover:text-zinc-300 transition-colors cursor-pointer text-right"
+            >
               Go to Home Page →
-            </Link>
+            </button>
           </div>
         </div>
       </div>

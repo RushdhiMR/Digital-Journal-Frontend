@@ -94,7 +94,43 @@ export default function Header() {
     try {
       const savedUser = localStorage.getItem("dj_user");
       if (savedUser) {
-        setCurrentUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        
+        // Check if Writer account is deactivated
+        if (parsed.role === "Writer" || parsed.email?.toLowerCase().includes("writer")) {
+          const writerListStr = localStorage.getItem("dj_writers_list");
+          if (writerListStr) {
+            const writerList: any[] = JSON.parse(writerListStr);
+            const matched = writerList.find(
+              (w) => (w.email && w.email.toLowerCase() === parsed.email?.toLowerCase()) || parsed.email?.toLowerCase().includes("writer")
+            );
+            if (matched && matched.status === "Deactivated") {
+              localStorage.removeItem("dj_user");
+              localStorage.removeItem("dj_writer_user");
+              setCurrentUser(null);
+              return;
+            }
+          }
+        }
+
+        // Check if Co-Admin account is deactivated
+        if (parsed.role === "Co-Admin" || parsed.email?.toLowerCase().includes("coadmin")) {
+          const coListStr = localStorage.getItem("dj_co_admins_list");
+          if (coListStr) {
+            const coList: any[] = JSON.parse(coListStr);
+            const matched = coList.find(
+              (c) => (c.email && c.email.toLowerCase() === parsed.email?.toLowerCase()) || parsed.email?.toLowerCase().includes("coadmin")
+            );
+            if (matched && matched.status === "Deactivated") {
+              localStorage.removeItem("dj_user");
+              localStorage.removeItem("dj_admin_user");
+              setCurrentUser(null);
+              return;
+            }
+          }
+        }
+
+        setCurrentUser(parsed);
       }
       const savedToast = localStorage.getItem("dj_toast");
       if (savedToast) {
