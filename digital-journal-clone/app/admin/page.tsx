@@ -674,9 +674,21 @@ export default function AdminDashboardPage() {
           </div>
 
           <h2 className="text-2xl font-bold font-serif mb-1 text-white">Admin Access Restricted</h2>
-          <p className="text-xs text-zinc-400 mb-6">
+          <p className="text-xs text-zinc-400 mb-4">
             Access requires an authenticated Administrator session. Enter passcode below to unlock.
           </p>
+
+          {/* DEFAULT ADMIN ACCOUNT CREDS INFO BOX */}
+          <div className="mb-6 p-3.5 bg-zinc-950 border border-zinc-800 rounded-lg text-left text-xs space-y-1 font-mono">
+            <div className="flex items-center justify-between text-amber-400 font-bold text-[11px] font-sans uppercase mb-1">
+              <span>🛡️ DEFAULT ADMIN ACCOUNT</span>
+              <span className="bg-amber-950/80 text-amber-300 text-[9px] px-1.5 py-0.5 rounded border border-amber-800">
+                SYSTEM DEFAULT
+              </span>
+            </div>
+            <p className="text-zinc-300"><span className="text-zinc-500">Email:</span> admin@digitaljournal.com</p>
+            <p className="text-zinc-300"><span className="text-zinc-500">Passcode:</span> admin123 <span className="text-zinc-500">(or admin)</span></p>
+          </div>
 
           {lockError && (
             <div className="mb-4 bg-red-950/80 border border-red-800 text-red-300 text-xs font-bold p-3 rounded text-center">
@@ -692,7 +704,7 @@ export default function AdminDashboardPage() {
               <input
                 type="password"
                 required
-                placeholder="Enter Admin Passcode"
+                placeholder="Enter Admin Passcode (e.g. admin123)"
                 value={lockPasscode}
                 onChange={(e) => setLockPasscode(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
@@ -705,6 +717,26 @@ export default function AdminDashboardPage() {
               className="w-full bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer shadow"
             >
               VERIFY & UNLOCK DASHBOARD
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setLockPasscode("admin123");
+                const adminAcc = {
+                  name: "System Admin",
+                  email: "admin@digitaljournal.com",
+                  role: "Admin"
+                };
+                localStorage.setItem("dj_user", JSON.stringify(adminAcc));
+                localStorage.setItem("dj_admin_user", JSON.stringify(adminAcc));
+                setAdminUser(adminAcc);
+                setIsAuthenticated(true);
+                fetchDashboardData();
+              }}
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold py-2.5 rounded transition-all cursor-pointer border border-zinc-700 mt-2 flex items-center justify-center gap-2"
+            >
+              ⚡ 1-Click Unlock with Default Admin Account
             </button>
           </form>
 
@@ -741,7 +773,7 @@ export default function AdminDashboardPage() {
             <span className="h-5 w-[1px] bg-zinc-700 hidden sm:block"></span>
             <div className="hidden sm:flex items-center gap-1.5 bg-[#BF1E2D] text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
               <ShieldCheck className="w-3 h-3" />
-              ADMIN CONTROL CENTER
+              DEFAULT ADMIN CONTROL CENTER
             </div>
           </div>
 
