@@ -91,7 +91,7 @@ interface CoAdmin {
   email: string;
   role: "Co-Admin";
   assignedDate: string;
-  status: "Active" | "Inactive";
+  status: "Active" | "Deactivated";
 }
 
 interface Stats {
@@ -417,6 +417,21 @@ export default function AdminDashboardPage() {
       setIsAuthenticated(true);
       fetchDashboardData();
     } else if (validCoAdminPasswords.includes(pass)) {
+      // Check if Co-Admin account status is Deactivated or suspended
+      try {
+        const savedCoAdmins = localStorage.getItem("dj_co_admins_list");
+        if (savedCoAdmins) {
+          const coList: any[] = JSON.parse(savedCoAdmins);
+          const coEntry = coList.find((c) => c.status === "Deactivated");
+          if (coEntry) {
+            setLockError("❌ Access Denied: Your Co-Admin account has been deactivated by the Main Admin.");
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+
       const coAdminAcc = {
         name: "Operations Co-Admin",
         email: "coadmin@digitaljournal.com",
@@ -698,12 +713,25 @@ export default function AdminDashboardPage() {
     showNotification(`✓ New Co-Admin "${newCA.name}" granted administrative access!`);
   };
 
+  const handleToggleCoAdminStatus = (id: number, name: string) => {
+    const updated = coAdmins.map((c) => {
+      if (c.id === id) {
+        const nextStatus = c.status === "Active" ? ("Deactivated" as const) : ("Active" as const);
+        showNotification(`✓ Co-Admin "${name}" account status updated to ${nextStatus.toUpperCase()}.`);
+        return { ...c, status: nextStatus };
+      }
+      return c;
+    });
+    setCoAdmins(updated);
+    localStorage.setItem("dj_co_admins_list", JSON.stringify(updated));
+  };
+
   const handleDeleteCoAdmin = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to remove Co-Admin privileges for "${name}"?`)) {
+    if (confirm(`Are you sure you want to remove Co-Admin privileges for "${name}"? Access will be revoked immediately.`)) {
       const updatedList = coAdmins.filter(c => c.id !== id);
       setCoAdmins(updatedList);
       localStorage.setItem("dj_co_admins_list", JSON.stringify(updatedList));
-      showNotification(`Co-Admin "${name}" removed from staff roster.`);
+      showNotification(`Co-Admin "${name}" removed. Account access revoked.`);
     }
   };
 
@@ -1701,17 +1729,33 @@ export default function AdminDashboardPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {coAdmins.map((ca) => (
-                        <div key={ca.id} className="p-5 border border-amber-200 rounded-xl bg-amber-50/40 hover:bg-white hover:shadow-sm transition-all flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white font-bold flex items-center justify-center text-base uppercase shadow-sm">
+                        <div key={ca.id} className={`p-5 border rounded-xl transition-all flex items-start gap-4 ${
+                          ca.status === "Active" ? "border-amber-200 bg-amber-50/40 hover:bg-white" : "border-rose-200 bg-rose-50/40 opacity-80"
+                        }`}>
+                          <div className={`w-12 h-12 rounded-full font-bold flex items-center justify-center text-base uppercase shadow-sm ${
+                            ca.status === "Active" ? "bg-gradient-to-br from-amber-500 to-amber-700 text-white" : "bg-zinc-600 text-zinc-200"
+                          }`}>
                             {ca.name.charAt(0)}
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <h3 className="font-bold text-zinc-900 font-serif text-sm">{ca.name}</h3>
-                              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300">
-                                ● Co-Admin
-                              </span>
+                              
+                              {/* ACTIVATE / DEACTIVATE ACCOUNT STATUS TOGGLE */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCoAdminStatus(ca.id, ca.name)}
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-colors ${
+                                  ca.status === "Active"
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                                    : "bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200 font-extrabold"
+                                }`}
+                                title="Click to toggle active status"
+                              >
+                                {ca.status === "Active" ? "● Active (Deactivate)" : "🚫 Deactivated (Activate)"}
+                              </button>
                             </div>
+
                             <p className="text-xs text-zinc-500 font-medium mt-0.5">{ca.email}</p>
 
                             <div className="mt-4 pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-400">

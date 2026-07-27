@@ -175,6 +175,24 @@ export default function LoginPage() {
       }
     }
 
+    // CHECK IF CO-ADMIN ACCOUNT IS DEACTIVATED OR SUSPENDED BY MAIN ADMIN
+    if (authenticatedAccount && (authenticatedAccount.role === "Co-Admin" || lowerEmail.includes("coadmin"))) {
+      try {
+        const coListStr = localStorage.getItem("dj_co_admins_list");
+        if (coListStr) {
+          const coList: any[] = JSON.parse(coListStr);
+          const coEntry = coList.find((c: any) => c.email.toLowerCase() === authenticatedAccount!.email.toLowerCase() || lowerEmail.includes("coadmin"));
+          if (coEntry && coEntry.status === "Deactivated") {
+            setErrorMessage("❌ Access Denied: Your Co-Admin account has been deactivated by the Main Admin. Contact Main Admin for access.");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not check Co-Admin status:", e);
+      }
+    }
+
     // Attempt backend sync
     try {
       let res;
