@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Lock, ShieldCheck, CheckCircle2, ArrowLeft, KeyRound } from "lucide-react";
 
 export interface Account {
   name: string;
@@ -9,7 +8,6 @@ export interface Account {
   avatar?: string;
   status?: string;
   isDevice?: boolean;
-  password?: string;
 }
 
 interface GoogleAccountChooserModalProps {
@@ -18,41 +16,24 @@ interface GoogleAccountChooserModalProps {
   onSelectAccount: (account: Account) => void;
 }
 
-const KNOWN_PASSWORDS: Record<string, string[]> = {
-  "admin@digitaljournal.com": ["admin", "admin123", "admin2026"],
-  "coadmin@digitaljournal.com": ["coadmin", "coadmin123", "coadmin2026"],
-  "writer@digitaljournal.com": ["writer", "writer123", "writer2026"],
-  "reader@digitaljournal.com": ["reader", "reader123", "reader2026"],
-};
-
 export default function GoogleAccountChooserModal({
   isOpen,
   onClose,
   onSelectAccount,
 }: GoogleAccountChooserModalProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [mode, setMode] = useState<"choose" | "email_input" | "password_verify" | "password_create">("choose");
-  
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [customEmail, setCustomEmail] = useState("");
   const [customName, setCustomName] = useState("");
-  
-  const [pendingAccount, setPendingAccount] = useState<Account | null>(null);
-  
-  // Password states
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const [formError, setFormError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
+  // Load ONLY accounts saved on this specific device
   useEffect(() => {
     if (!isOpen) return;
 
     setCustomEmail("");
     setCustomName("");
-    setPassword("");
-    setConfirmPassword("");
-    setFormError("");
-    setPendingAccount(null);
+    setEmailError("");
 
     try {
       const savedAccountsStr = localStorage.getItem("dj_device_google_accounts");
@@ -86,66 +67,26 @@ export default function GoogleAccountChooserModal({
       setAccounts(deviceList);
 
       if (deviceList.length === 0) {
-        setMode("email_input");
+        setIsAddingAccount(true);
       } else {
-        setMode("choose");
+        setIsAddingAccount(false);
       }
     } catch (e) {
       console.warn("Error reading local device google accounts:", e);
       setAccounts([]);
-      setMode("email_input");
+      setIsAddingAccount(true);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Helper to check if an email already exists in system registry or local registered accounts
-  const checkAccountExistence = (email: string) => {
-    const lower = email.trim().toLowerCase();
-    
-    // Check known system accounts
-    if (KNOWN_PASSWORDS[lower]) {
-      return { exists: true, isSystem: true, validPasswords: KNOWN_PASSWORDS[lower] };
-    }
-
-    // Check locally registered accounts
-    try {
-      const regStr = localStorage.getItem("dj_registered_users");
-      if (regStr) {
-        const regList: any[] = JSON.parse(regStr);
-        const match = regList.find((u) => u.email && u.email.toLowerCase() === lower);
-        if (match) {
-          return { exists: true, isSystem: false, matchUser: match };
-        }
-      }
-    } catch (e) {
-      console.warn(e);
-    }
-
-    return { exists: false, isSystem: false };
-  };
-
-  const handleSelectDeviceAccount = (acc: Account) => {
-    setFormError("");
-    setPassword("");
-    setConfirmPassword("");
-    setPendingAccount(acc);
-
-    const check = checkAccountExistence(acc.email);
-    if (check.exists) {
-      setMode("password_verify");
-    } else {
-      setMode("password_create");
-    }
-  };
-
-  const handleEmailInputNext = (e: React.FormEvent) => {
+  const handleAddCustomAccountSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError("");
+    setEmailError("");
 
     const trimmedEmail = customEmail.trim();
     if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setFormError("Please enter a valid Google email address.");
+      setEmailError("Please enter a valid Google email address.");
       return;
     }
 
@@ -165,7 +106,7 @@ export default function GoogleAccountChooserModal({
         .toUpperCase()
         .slice(0, 2) || "GA";
 
-    const acc: Account = {
+    const newAcc: Account = {
       name: nameFromEmail,
       email: trimmedEmail,
       avatar: initials,
@@ -173,99 +114,19 @@ export default function GoogleAccountChooserModal({
       isDevice: true,
     };
 
-    setPendingAccount(acc);
-    setPassword("");
-    setConfirmPassword("");
-
-    const check = checkAccountExistence(trimmedEmail);
-    if (check.exists) {
-      setMode("password_verify");
-    } else {
-      setMode("password_create");
-    }
-  };
-
-  const handleVerifyPasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError("");
-
-    if (!pendingAccount) return;
-    if (!password.trim()) {
-      setFormError("Please enter your account password.");
-      return;
-    }
-
-    const check = checkAccountExistence(pendingAccount.email);
-    const entered = password.trim().toLowerCase();
-
-    if (check.isSystem && check.validPasswords) {
-      if (!check.validPasswords.includes(entered)) {
-        setFormError(`❌ Incorrect password for '${pendingAccount.email}'.`);
-        return;
-      }
-    } else if (check.matchUser) {
-      if (check.matchUser.password && check.matchUser.password.toLowerCase() !== entered) {
-        setFormError(`❌ Incorrect password for '${pendingAccount.email}'.`);
-        return;
-      }
-    }
-
-    // Password verified! Complete sign-in
-    completeAccountSignIn(pendingAccount);
-  };
-
-  const handleCreatePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError("");
-
-    if (!pendingAccount) return;
-    if (!password || password.length < 4) {
-      setFormError("Password must be at least 4 characters long.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setFormError("Passwords do not match. Please re-enter.");
-      return;
-    }
-
-    // Save new account with created password into dj_registered_users registry
-    try {
-      const regStr = localStorage.getItem("dj_registered_users");
-      const regList: any[] = regStr ? JSON.parse(regStr) : [];
-      
-      const newUser = {
-        name: pendingAccount.name,
-        email: pendingAccount.email,
-        password: password.trim(),
-        role: "Reader",
-        createdAt: new Date().toISOString(),
-      };
-
-      regList.unshift(newUser);
-      localStorage.setItem("dj_registered_users", JSON.stringify(regList));
-    } catch (err) {
-      console.warn("Could not save new user registration:", err);
-    }
-
-    // Complete sign-in
-    completeAccountSignIn(pendingAccount);
-  };
-
-  const completeAccountSignIn = (acc: Account) => {
-    // Save to local device google accounts
+    // Save to this device's browser storage
     try {
       const existingStr = localStorage.getItem("dj_device_google_accounts");
       const existingList: Account[] = existingStr ? JSON.parse(existingStr) : [];
-      if (!existingList.some((a) => a.email.toLowerCase() === acc.email.toLowerCase())) {
-        existingList.unshift(acc);
+      if (!existingList.some((a) => a.email.toLowerCase() === trimmedEmail.toLowerCase())) {
+        existingList.unshift(newAcc);
         localStorage.setItem("dj_device_google_accounts", JSON.stringify(existingList));
       }
     } catch (err) {
       console.warn("Failed to persist device account:", err);
     }
 
-    onSelectAccount(acc);
+    onSelectAccount(newAcc);
   };
 
   const handleRemoveAccount = (e: React.MouseEvent, emailToRemove: string) => {
@@ -278,7 +139,7 @@ export default function GoogleAccountChooserModal({
       console.warn("Failed to update device accounts list:", err);
     }
     if (updated.length === 0) {
-      setMode("email_input");
+      setIsAddingAccount(true);
     }
   };
 
@@ -311,22 +172,20 @@ export default function GoogleAccountChooserModal({
 
         {/* Body */}
         <div className="p-7 md:p-8 flex-1">
-
-          {/* MODE 1: CHOOSE ACCOUNT */}
-          {mode === "choose" && (
+          {!isAddingAccount && accounts.length > 0 ? (
             <>
-              <h2 className="text-[26px] font-normal text-white mb-1 tracking-tight font-sans">
+              <h2 className="text-[28px] md:text-[32px] font-normal text-white mb-1.5 tracking-tight font-sans">
                 Choose an account
               </h2>
-              <p className="text-[13.5px] text-zinc-400 mb-6 font-sans">
-                to continue to <span className="text-blue-400 font-medium hover:underline">digital-journal.com</span>
+              <p className="text-[14px] md:text-[15px] text-zinc-300 mb-6 font-sans">
+                to continue to <span className="text-blue-400 font-medium hover:underline cursor-pointer">digital-journal.com</span>
               </p>
 
               <div className="space-y-1 divide-y divide-zinc-800/80 max-h-[260px] overflow-y-auto pr-1">
                 {accounts.map((acc, index) => (
                   <div
                     key={index}
-                    onClick={() => handleSelectDeviceAccount(acc)}
+                    onClick={() => onSelectAccount(acc)}
                     className="flex items-center justify-between py-3.5 px-3 rounded-lg hover:bg-zinc-800/70 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
@@ -334,9 +193,16 @@ export default function GoogleAccountChooserModal({
                         {acc.avatar}
                       </div>
                       <div>
-                        <h3 className="text-[15px] font-medium text-zinc-100 group-hover:text-white">
-                          {acc.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[15px] font-medium text-zinc-100 group-hover:text-white">
+                            {acc.name}
+                          </h3>
+                          {acc.isDevice && (
+                            <span className="text-[9px] bg-blue-500/20 text-blue-300 font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              Device
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[13px] text-zinc-400 font-normal">
                           {acc.email}
                         </p>
@@ -344,6 +210,11 @@ export default function GoogleAccountChooserModal({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {acc.status && (
+                        <span className="text-[12px] text-zinc-500 font-normal">
+                          {acc.status}
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => handleRemoveAccount(e, acc.email)}
@@ -357,12 +228,7 @@ export default function GoogleAccountChooserModal({
                 ))}
 
                 <div
-                  onClick={() => {
-                    setMode("email_input");
-                    setCustomEmail("");
-                    setCustomName("");
-                    setFormError("");
-                  }}
+                  onClick={() => setIsAddingAccount(true)}
                   className="flex items-center gap-4 py-3.5 px-3 rounded-lg hover:bg-zinc-800/70 transition-colors cursor-pointer group pt-4"
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center flex-shrink-0 border border-zinc-700">
@@ -376,11 +242,8 @@ export default function GoogleAccountChooserModal({
                 </div>
               </div>
             </>
-          )}
-
-          {/* MODE 2: EMAIL INPUT */}
-          {mode === "email_input" && (
-            <form onSubmit={handleEmailInputNext} className="space-y-4">
+          ) : (
+            <form onSubmit={handleAddCustomAccountSubmit} className="space-y-4">
               <div>
                 <h2 className="text-[24px] font-medium text-white mb-1 tracking-tight font-sans">
                   Sign in with Google
@@ -390,9 +253,9 @@ export default function GoogleAccountChooserModal({
                 </p>
               </div>
 
-              {formError && (
+              {emailError && (
                 <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded">
-                  {formError}
+                  {emailError}
                 </div>
               )}
 
@@ -428,7 +291,7 @@ export default function GoogleAccountChooserModal({
                 {accounts.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setMode("choose")}
+                    onClick={() => setIsAddingAccount(false)}
                     className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
                   >
                     Back
@@ -438,130 +301,11 @@ export default function GoogleAccountChooserModal({
                   type="submit"
                   className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors cursor-pointer shadow"
                 >
-                  Next
+                  Continue with Google
                 </button>
               </div>
             </form>
           )}
-
-          {/* MODE 3: PASSWORD VERIFY (For Existing Accounts) */}
-          {mode === "password_verify" && pendingAccount && (
-            <form onSubmit={handleVerifyPasswordSubmit} className="space-y-4">
-              <div>
-                <h2 className="text-[22px] font-medium text-white mb-1 tracking-tight font-sans flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-blue-400" />
-                  Enter Account Password
-                </h2>
-                <p className="text-[13px] text-zinc-400 font-sans">
-                  Enter password for <span className="text-white font-medium">{pendingAccount.email}</span>
-                </p>
-              </div>
-
-              {formError && (
-                <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded">
-                  {formError}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 font-sans">
-                  Account Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your account password"
-                  autoFocus
-                  required
-                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode(accounts.length > 0 ? "choose" : "email_input")}
-                  className="text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors cursor-pointer shadow"
-                >
-                  Verify & Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* MODE 4: PASSWORD CREATE (For New Accounts) */}
-          {mode === "password_create" && pendingAccount && (
-            <form onSubmit={handleCreatePasswordSubmit} className="space-y-4">
-              <div>
-                <h2 className="text-[22px] font-medium text-white mb-1 tracking-tight font-sans flex items-center gap-2">
-                  <KeyRound className="w-5 h-5 text-emerald-400" />
-                  Set New Account Password
-                </h2>
-                <p className="text-[12.5px] text-zinc-400 font-sans">
-                  Since <span className="text-white font-medium">{pendingAccount.email}</span> is a new account, set a password to protect your sign in.
-                </p>
-              </div>
-
-              {formError && (
-                <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded">
-                  {formError}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 font-sans">
-                  Create Account Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter a new password (min 4 chars)"
-                  autoFocus
-                  required
-                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 font-sans">
-                  Confirm Account Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  required
-                  className="w-full bg-[#1A1B1E] border border-zinc-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode(accounts.length > 0 ? "choose" : "email_input")}
-                  className="text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow"
-                >
-                  Create Password & Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
         </div>
 
         {/* Footer */}
