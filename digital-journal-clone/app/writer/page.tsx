@@ -190,14 +190,14 @@ export default function WriterStudioPage() {
       if (savedWritersStr && activeUser && activeUser.role !== "Admin") {
         const writerList: any[] = JSON.parse(savedWritersStr);
         const matchedWriter = writerList.find(
-          (w) => (w.email && w.email.toLowerCase() === activeUser.email?.toLowerCase()) || activeUser.email?.toLowerCase().includes("writer")
+          (w) => w.email && w.email.toLowerCase() === activeUser.email?.toLowerCase()
         );
         if (matchedWriter && matchedWriter.status === "Deactivated") {
           localStorage.removeItem("dj_writer_user");
           localStorage.removeItem("dj_user");
           setCurrentUser(null);
           setIsAuthenticated(false);
-          setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin. Contact Main Admin to request access.");
+          setLockError(`❌ Access Suspended: Your Writer publishing account '${activeUser.email}' has been deactivated by the Main Admin.`);
           return;
         }
       }
@@ -220,18 +220,35 @@ export default function WriterStudioPage() {
   const handleUnlockWriter = (e: React.FormEvent) => {
     e.preventDefault();
     setLockError("");
+    const pass = lockPasscode.trim().toLowerCase();
 
-    // Check if Writer account status is Deactivated
+    // Check if passcode matches any writer's email or password in dj_writers_list
     try {
       const savedWritersStr = localStorage.getItem("dj_writers_list");
       if (savedWritersStr) {
         const writerList: any[] = JSON.parse(savedWritersStr);
-        const matchedWriter = writerList.find((w) => w.status === "Deactivated");
+        const matchedWriter = writerList.find(
+          (w) => (w.email && w.email.toLowerCase() === pass) || (w.password && w.password === lockPasscode.trim())
+        );
+
         if (matchedWriter) {
-          localStorage.removeItem("dj_writer_user");
-          localStorage.removeItem("dj_user");
-          setCurrentUser(null);
-          setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin.");
+          if (matchedWriter.status === "Deactivated") {
+            localStorage.removeItem("dj_writer_user");
+            localStorage.removeItem("dj_user");
+            setCurrentUser(null);
+            setLockError(`❌ Access Suspended: Writer account '${matchedWriter.email}' is deactivated by the Main Admin.`);
+            return;
+          }
+
+          const writerAcc = {
+            name: matchedWriter.name,
+            email: matchedWriter.email || "writer@digitaljournal.com",
+            role: "Writer"
+          };
+          localStorage.setItem("dj_user", JSON.stringify(writerAcc));
+          localStorage.setItem("dj_writer_user", JSON.stringify(writerAcc));
+          setCurrentUser(writerAcc);
+          setIsAuthenticated(true);
           return;
         }
       }
@@ -247,10 +264,11 @@ export default function WriterStudioPage() {
         role: "Writer"
       };
       localStorage.setItem("dj_user", JSON.stringify(writerAcc));
+      localStorage.setItem("dj_writer_user", JSON.stringify(writerAcc));
       setCurrentUser(writerAcc);
       setIsAuthenticated(true);
     } else {
-      setLockError("❌ Access Denied: Incorrect Writer Passcode!");
+      setLockError("❌ Access Denied: Incorrect Writer Passcode or Email!");
     }
   };
 
