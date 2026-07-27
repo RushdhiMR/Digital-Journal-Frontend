@@ -105,6 +105,20 @@ export default function WriterStudioPage() {
         setDrafts(JSON.parse(localDrafts));
       }
 
+      // Check if Writer account is Deactivated by Main Admin
+      const savedWritersStr = localStorage.getItem("dj_writers_list");
+      if (savedWritersStr && activeUser && activeUser.role !== "Admin") {
+        const writerList: any[] = JSON.parse(savedWritersStr);
+        const matchedWriter = writerList.find(
+          (w) => (w.email && w.email.toLowerCase() === activeUser.email?.toLowerCase()) || activeUser.email?.toLowerCase().includes("writer")
+        );
+        if (matchedWriter && matchedWriter.status === "Deactivated") {
+          setIsAuthenticated(false);
+          setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin. Contact Main Admin to request access.");
+          return;
+        }
+      }
+
       // Require active Writer or Admin session
       if (activeUser && (activeUser.role === "Writer" || activeUser.role === "Admin" || activeUser.email?.toLowerCase().includes("writer") || activeUser.email?.toLowerCase().includes("admin"))) {
         setCurrentUser(activeUser);
@@ -123,6 +137,22 @@ export default function WriterStudioPage() {
   const handleUnlockWriter = (e: React.FormEvent) => {
     e.preventDefault();
     setLockError("");
+
+    // Check if Writer account status is Deactivated
+    try {
+      const savedWritersStr = localStorage.getItem("dj_writers_list");
+      if (savedWritersStr) {
+        const writerList: any[] = JSON.parse(savedWritersStr);
+        const matchedWriter = writerList.find((w) => w.status === "Deactivated");
+        if (matchedWriter) {
+          setLockError("❌ Access Suspended: Your Writer publishing account has been deactivated by the Main Admin.");
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+
     const validWriterPasswords = ["writer", "writer123", "writer2026", "admin", "admin123"];
     if (validWriterPasswords.includes(lockPasscode.trim())) {
       const writerAcc = {
@@ -141,6 +171,21 @@ export default function WriterStudioPage() {
   const handleCreateArticle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) return;
+
+    // Verify writer status before publishing
+    try {
+      const savedWritersStr = localStorage.getItem("dj_writers_list");
+      if (savedWritersStr && currentUser && currentUser.role !== "Admin") {
+        const writerList: any[] = JSON.parse(savedWritersStr);
+        const matchedWriter = writerList.find((w) => w.status === "Deactivated");
+        if (matchedWriter) {
+          alert("❌ Publishing Suspended: Your publishing privileges have been deactivated by the Main Admin.");
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+    }
 
     setIsSubmitting(true);
     setSuccessMsg("");

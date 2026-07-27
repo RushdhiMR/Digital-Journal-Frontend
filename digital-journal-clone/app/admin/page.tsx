@@ -60,7 +60,8 @@ interface Writer {
   articlesCount: number;
   avatar: string;
   bio: string;
-  status: "Active" | "On Leave";
+  status: "Active" | "On Leave" | "Deactivated";
+  email?: string;
 }
 
 interface Reader {
@@ -376,6 +377,12 @@ export default function AdminDashboardPage() {
         setCoAdmins(JSON.parse(savedCoAdmins));
       }
 
+      // Check saved Writers roster list
+      const savedWriters = localStorage.getItem("dj_writers_list");
+      if (savedWriters) {
+        setWriters(JSON.parse(savedWriters));
+      }
+
       // Check saved breaking news ticker
       const savedTicker = localStorage.getItem("dj_breaking_news_ticker");
       if (savedTicker) {
@@ -613,27 +620,45 @@ export default function AdminDashboardPage() {
 
     const newW: Writer = {
       id: Date.now(),
-      name: newWriterName,
+      name: newWriterName.trim(),
       role: newWriterRole,
       articlesCount: 0,
       avatar: "/author_woman.jpg",
       bio: newWriterBio || `${newWriterName} is an accredited journalist for Digital Journal.`,
-      status: "Active"
+      status: "Active",
+      email: `${newWriterName.toLowerCase().replace(/\s+/g, '.')}@digitaljournal.com`
     };
 
-    setWriters([newW, ...writers]);
+    const updatedList = [newW, ...writers];
+    setWriters(updatedList);
+    localStorage.setItem("dj_writers_list", JSON.stringify(updatedList));
     setStats(prev => ({ ...prev, totalAuthors: prev.totalAuthors + 1 }));
     setIsWriterModalOpen(false);
     setNewWriterName("");
     setNewWriterBio("");
-    showNotification(`New writer "${newW.name}" added to staff roster!`);
+    showNotification(`New writer "${newW.name}" added with publishing access!`);
+  };
+
+  const handleToggleWriterStatus = (id: number, name: string) => {
+    const updated = writers.map((w) => {
+      if (w.id === id) {
+        const nextStatus = w.status === "Active" ? ("Deactivated" as const) : ("Active" as const);
+        showNotification(`✓ Writer "${name}" publishing access updated to ${nextStatus.toUpperCase()}.`);
+        return { ...w, status: nextStatus };
+      }
+      return w;
+    });
+    setWriters(updated);
+    localStorage.setItem("dj_writers_list", JSON.stringify(updated));
   };
 
   const handleDeleteWriter = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to remove writer "${name}"?`)) {
-      setWriters(writers.filter(w => w.id !== id));
+    if (confirm(`Are you sure you want to remove writer "${name}"? Access will be revoked.`)) {
+      const updatedList = writers.filter(w => w.id !== id);
+      setWriters(updatedList);
+      localStorage.setItem("dj_writers_list", JSON.stringify(updatedList));
       setStats(prev => ({ ...prev, totalAuthors: Math.max(0, prev.totalAuthors - 1) }));
-      showNotification(`Writer "${name}" removed.`);
+      showNotification(`Writer "${name}" removed. Access revoked.`);
     }
   };
 
@@ -1534,19 +1559,35 @@ export default function AdminDashboardPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {writers.map((w) => (
-                    <div key={w.id} className="p-5 border border-zinc-200 rounded-xl bg-zinc-50/50 hover:bg-white hover:shadow-sm transition-all flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#BF1E2D] text-white font-bold flex items-center justify-center text-base uppercase shadow-sm">
+                    <div key={w.id} className={`p-5 border rounded-xl transition-all flex items-start gap-4 ${
+                      w.status === "Active" ? "border-zinc-200 bg-zinc-50/50 hover:bg-white" : "border-rose-200 bg-rose-50/40 opacity-80"
+                    }`}>
+                      <div className={`w-12 h-12 rounded-full font-bold flex items-center justify-center text-base uppercase shadow-sm ${
+                        w.status === "Active" ? "bg-[#BF1E2D] text-white" : "bg-zinc-600 text-zinc-200"
+                      }`}>
                         {w.name.charAt(0)}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <h3 className="font-bold text-zinc-900 font-serif text-sm">{w.name}</h3>
-                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-                            ● {w.status}
-                          </span>
+                          
+                          {/* ACTIVATE / DEACTIVATE PUBLISHING ACCESS BUTTON */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleWriterStatus(w.id, w.name)}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-colors ${
+                              w.status === "Active"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                                : "bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200 font-extrabold"
+                            }`}
+                            title="Click to toggle writer publishing access"
+                          >
+                            {w.status === "Active" ? "● Active (Deactivate)" : "🚫 Deactivated (Activate)"}
+                          </button>
                         </div>
+
                         <p className="text-xs text-blue-600 font-medium mt-0.5">{w.role}</p>
-                        <p className="text-[11px] text-zinc-500 mt-2 line-clamp-2">{w.bio}</p>
+                        <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2">{w.bio}</p>
 
                         <div className="mt-3 pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-400">
                           <span>Articles Published: <strong className="text-zinc-800">{w.articlesCount}</strong></span>
