@@ -4,11 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { BookOpen, Bookmark, Bell, History, ArrowRight, Star, User, Settings, Lock, CheckCircle2, ShieldCheck, Mail, Sparkles } from "lucide-react";
+import { BookOpen, Bookmark, Bell, History, ArrowRight, Star, User, Settings, Lock, CheckCircle2, ShieldCheck, Mail, Sparkles, Trash2 } from "lucide-react";
 
 export default function ReaderHubPage() {
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; bio?: string } | null>(null);
   const [activeTab, setActiveTab] = useState<"saved" | "settings">("saved");
+
+  // Dynamic Saved Bookmarks state
+  const [savedArticles, setSavedArticles] = useState<any[]>([]);
 
   // Profile Settings Form State
   const [profileName, setProfileName] = useState("");
@@ -23,30 +26,6 @@ export default function ReaderHubPage() {
   const [publicHistory, setPublicHistory] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const savedArticles = [
-    {
-      title: "Argentina Edge Switzerland in Extra Time to Set Up World Cup Semi-Final Clash With England",
-      category: "SPORTS",
-      href: "/news/world/argentina-edge-switzerland-in-extra-time-to-set-up-world-cup-semi-final-clash-with-england",
-      date: "Jul 12, 2026",
-      image: "/argentina_vs_switzerland.png"
-    },
-    {
-      title: "U.S. Stocks End Higher as SK Hynix's Wall Street Debut and Meta's AI Momentum Lift Markets",
-      category: "BUSINESS",
-      href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets",
-      date: "Jul 18, 2026",
-      image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=350&fit=crop"
-    },
-    {
-      title: "Trump's Hormuz Retreat Highlights Struggles to End Iran Conflict",
-      category: "POLITICS",
-      href: "/news/politics/trumps-hormuz-retreat-highlights-struggles-to-end-iran-conflict",
-      date: "Jul 15, 2026",
-      image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&h=350&fit=crop"
-    }
-  ];
 
   useEffect(() => {
     try {
@@ -64,10 +43,49 @@ export default function ReaderHubPage() {
         setProfileName(readerUser.name);
         setProfileEmail(readerUser.email);
       }
+
+      // Load Saved Bookmarks from LocalStorage
+      const savedBookmarksStr = localStorage.getItem("dj_saved_bookmarks");
+      if (savedBookmarksStr) {
+        setSavedArticles(JSON.parse(savedBookmarksStr));
+      } else {
+        const initialBookmarks = [
+          {
+            title: "Argentina Edge Switzerland in Extra Time to Set Up World Cup Semi-Final Clash With England",
+            category: "SPORTS",
+            href: "/news/world/argentina-edge-switzerland-in-extra-time-to-set-up-world-cup-semi-final-clash-with-england",
+            date: "Jul 12, 2026",
+            image: "/argentina_vs_switzerland.png"
+          },
+          {
+            title: "U.S. Stocks End Higher as SK Hynix's Wall Street Debut and Meta's AI Momentum Lift Markets",
+            category: "BUSINESS",
+            href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets",
+            date: "Jul 18, 2026",
+            image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=350&fit=crop"
+          },
+          {
+            title: "Trump's Hormuz Retreat Highlights Struggles to End Iran Conflict",
+            category: "POLITICS",
+            href: "/news/politics/trumps-hormuz-retreat-highlights-struggles-to-end-iran-conflict",
+            date: "Jul 15, 2026",
+            image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&h=350&fit=crop"
+          }
+        ];
+        localStorage.setItem("dj_saved_bookmarks", JSON.stringify(initialBookmarks));
+        setSavedArticles(initialBookmarks);
+      }
     } catch (e) {
       console.error(e);
     }
   }, []);
+
+  const handleRemoveBookmark = (titleToRemove: string) => {
+    const updated = savedArticles.filter((art) => art.title !== titleToRemove);
+    setSavedArticles(updated);
+    localStorage.setItem("dj_saved_bookmarks", JSON.stringify(updated));
+    showToast("Removed from Saved Reading List.");
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,24 +225,46 @@ export default function ReaderHubPage() {
                 </Link>
               </div>
 
-              <div className="space-y-6">
-                {savedArticles.map((art, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-zinc-100 last:border-none group">
-                    <Link href={art.href} className="relative w-full sm:w-[200px] h-[130px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200 block">
-                      <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </Link>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-[#1D9BF0] uppercase tracking-wider mb-1">
-                        {art.category}
-                      </span>
-                      <Link href={art.href} className="font-serif text-[18px] font-bold text-black group-hover:text-[#BF1E2D] transition-colors leading-snug mb-2">
-                        {art.title}
+              {savedArticles.length === 0 ? (
+                <div className="py-12 text-center text-zinc-500 font-sans">
+                  <Bookmark size={36} className="mx-auto mb-3 text-zinc-300" />
+                  <p className="text-sm font-medium mb-4">You have no saved articles in your reading list.</p>
+                  <Link
+                    href="/news"
+                    className="inline-flex items-center gap-2 bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2 rounded transition-colors shadow"
+                  >
+                    Explore Latest Stories <ArrowRight size={14} />
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {savedArticles.map((art, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-zinc-100 last:border-none group relative">
+                      <Link href={art.href} className="relative w-full sm:w-[200px] h-[130px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200 block">
+                        <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       </Link>
-                      <span className="text-[11px] text-zinc-400 font-sans mt-auto">{art.date}</span>
+                      <div className="flex flex-col flex-1 pr-8">
+                        <span className="text-[10px] font-bold text-[#1D9BF0] uppercase tracking-wider mb-1">
+                          {art.category}
+                        </span>
+                        <Link href={art.href} className="font-serif text-[18px] font-bold text-black group-hover:text-[#BF1E2D] transition-colors leading-snug mb-2">
+                          {art.title}
+                        </Link>
+                        <span className="text-[11px] text-zinc-400 font-sans mt-auto">{art.date}</span>
+                      </div>
+
+                      {/* Remove Bookmark Button */}
+                      <button
+                        onClick={() => handleRemoveBookmark(art.title)}
+                        className="absolute top-0 right-0 text-zinc-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-zinc-100 cursor-pointer"
+                        title="Remove from Saved List"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Reader Digest Sidebar */}
