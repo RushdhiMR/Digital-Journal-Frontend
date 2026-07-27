@@ -85,6 +85,15 @@ interface SubmittedDraft {
   reads: number;
 }
 
+interface CoAdmin {
+  id: number;
+  name: string;
+  email: string;
+  role: "Co-Admin";
+  assignedDate: string;
+  status: "Active" | "Inactive";
+}
+
 interface Stats {
   totalArticles: number;
   totalAuthors: number;
@@ -102,7 +111,7 @@ export default function AdminDashboardPage() {
   const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "articles" | "writers" | "readers" | "editorial_queue" | "analytics" | "settings"
+    "overview" | "articles" | "writers" | "readers" | "editorial_queue" | "analytics" | "settings" | "coadmins"
   >("overview");
 
   // Dashboard Metrics & Data
@@ -291,6 +300,22 @@ export default function AdminDashboardPage() {
   const [writerSearch, setWriterSearch] = useState("");
   const [readerSearch, setReaderSearch] = useState("");
 
+  // Co-Admins Roster State (Main Admin Only)
+  const [coAdmins, setCoAdmins] = useState<CoAdmin[]>([
+    {
+      id: 1,
+      name: "Operations Co-Admin",
+      email: "coadmin@digitaljournal.com",
+      role: "Co-Admin",
+      assignedDate: "2026-07-20",
+      status: "Active"
+    }
+  ]);
+  const [isCoAdminModalOpen, setIsCoAdminModalOpen] = useState(false);
+  const [newCoAdminName, setNewCoAdminName] = useState("");
+  const [newCoAdminEmail, setNewCoAdminEmail] = useState("");
+  const [newCoAdminPasscode, setNewCoAdminPasscode] = useState("");
+
   // Modals state
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -343,6 +368,12 @@ export default function AdminDashboardPage() {
       const localWriterSubs = localStorage.getItem("dj_writer_submitted_articles");
       if (localWriterSubs) {
         setWriterSubmissions(JSON.parse(localWriterSubs));
+      }
+
+      // Check saved Co-Admins list
+      const savedCoAdmins = localStorage.getItem("dj_co_admins_list");
+      if (savedCoAdmins) {
+        setCoAdmins(JSON.parse(savedCoAdmins));
       }
 
       // Check saved breaking news ticker
@@ -620,6 +651,59 @@ export default function AdminDashboardPage() {
       setReaders(readers.filter(r => r.id !== id));
       setStats(prev => ({ ...prev, totalSubscribers: Math.max(0, prev.totalSubscribers - 1) }));
       showNotification(`Reader "${email}" removed.`);
+    }
+  };
+
+  // Co-Admin Actions (Main Admin Only)
+  const handleAddCoAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCoAdminName.trim() || !newCoAdminEmail.trim()) return;
+
+    const newCA: CoAdmin = {
+      id: Date.now(),
+      name: newCoAdminName.trim(),
+      email: newCoAdminEmail.toLowerCase().trim(),
+      role: "Co-Admin",
+      assignedDate: new Date().toISOString().split('T')[0],
+      status: "Active"
+    };
+
+    const updatedList = [newCA, ...coAdmins];
+    setCoAdmins(updatedList);
+    localStorage.setItem("dj_co_admins_list", JSON.stringify(updatedList));
+
+    // Register in registered users list as Co-Admin so they can log in
+    try {
+      const regStr = localStorage.getItem("dj_registered_users");
+      const regList = regStr ? JSON.parse(regStr) : [];
+      const coAdminObj = {
+        name: newCA.name,
+        email: newCA.email,
+        password: newCoAdminPasscode.trim() || "coadmin123",
+        role: "Co-Admin",
+        registeredAt: new Date().toISOString()
+      };
+      if (!regList.some((u: any) => u.email.toLowerCase() === newCA.email)) {
+        regList.push(coAdminObj);
+        localStorage.setItem("dj_registered_users", JSON.stringify(regList));
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+
+    setIsCoAdminModalOpen(false);
+    setNewCoAdminName("");
+    setNewCoAdminEmail("");
+    setNewCoAdminPasscode("");
+    showNotification(`✓ New Co-Admin "${newCA.name}" granted administrative access!`);
+  };
+
+  const handleDeleteCoAdmin = (id: number, name: string) => {
+    if (confirm(`Are you sure you want to remove Co-Admin privileges for "${name}"?`)) {
+      const updatedList = coAdmins.filter(c => c.id !== id);
+      setCoAdmins(updatedList);
+      localStorage.setItem("dj_co_admins_list", JSON.stringify(updatedList));
+      showNotification(`Co-Admin "${name}" removed from staff roster.`);
     }
   };
 
@@ -947,6 +1031,26 @@ export default function AdminDashboardPage() {
                   {readers.length}
                 </span>
               </button>
+
+              {/* ONLY MAIN ADMIN CAN SEE & ACCESS CO-ADMINS ROSTER TAB */}
+              {(adminUser.role === "Admin" || adminUser.role === "admin") && (
+                <button
+                  onClick={() => setActiveTab("coadmins")}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                    activeTab === "coadmins"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "text-amber-800 bg-amber-50 hover:bg-amber-100"
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Co-Admins Roster
+                  <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${
+                    activeTab === "coadmins" ? "bg-white/20 text-white" : "bg-amber-200/80 text-amber-900 font-bold"
+                  }`}>
+                    {coAdmins.length}
+                  </span>
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab("analytics")}
@@ -1569,6 +1673,72 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* TAB 8: CO-ADMINS ROSTER (EXCLUSIVE TO MAIN ADMIN) */}
+          {activeTab === "coadmins" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                {(adminUser.role === "Admin" || adminUser.role === "admin") ? (
+                  <>
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5 text-amber-600" />
+                          <h2 className="text-xl font-bold text-zinc-900 font-serif">Co-Admins Roster & Privileges</h2>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          Main Admin Control: Grant and manage operational Co-Admin access.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setIsCoAdminModalOpen(true)}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Add Co-Admin
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {coAdmins.map((ca) => (
+                        <div key={ca.id} className="p-5 border border-amber-200 rounded-xl bg-amber-50/40 hover:bg-white hover:shadow-sm transition-all flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white font-bold flex items-center justify-center text-base uppercase shadow-sm">
+                            {ca.name.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-bold text-zinc-900 font-serif text-sm">{ca.name}</h3>
+                              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300">
+                                ● Co-Admin
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-500 font-medium mt-0.5">{ca.email}</p>
+
+                            <div className="mt-4 pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-400">
+                              <span>Assigned: <strong className="text-zinc-700">{ca.assignedDate}</strong></span>
+                              <button
+                                onClick={() => handleDeleteCoAdmin(ca.id, ca.name)}
+                                className="text-rose-600 hover:text-rose-800 text-[11px] font-bold cursor-pointer flex items-center gap-1"
+                              >
+                                <Trash2 size={13} /> Remove Co-Admin
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
+                    <h3 className="text-lg font-bold text-zinc-900">Access Restricted</h3>
+                    <p className="text-xs text-zinc-500 mt-1">Only Main Admin can view and manage Co-Admins.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </main>
 
       </div>
@@ -1776,6 +1946,81 @@ export default function AdminDashboardPage() {
                 Close Preview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD CO-ADMIN MODAL (MAIN ADMIN EXCLUSIVE) */}
+      {isCoAdminModalOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative font-sans">
+            <button
+              onClick={() => setIsCoAdminModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck className="w-5 h-5 text-amber-600" />
+              <h3 className="text-lg font-bold font-serif text-zinc-900">
+                Grant New Co-Admin Access
+              </h3>
+            </div>
+
+            <form onSubmit={handleAddCoAdmin} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">CO-ADMIN FULL NAME *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCoAdminName}
+                  onChange={(e) => setNewCoAdminName(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-amber-600 font-medium"
+                  placeholder="e.g. Operations Co-Admin"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">EMAIL ADDRESS *</label>
+                <input
+                  type="email"
+                  required
+                  value={newCoAdminEmail}
+                  onChange={(e) => setNewCoAdminEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-amber-600 font-medium"
+                  placeholder="e.g. coadmin@digitaljournal.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">ASSIGN LOGIN PASSCODE *</label>
+                <input
+                  type="password"
+                  required
+                  value={newCoAdminPasscode}
+                  onChange={(e) => setNewCoAdminPasscode(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-amber-600 font-medium"
+                  placeholder="e.g. coadmin123"
+                />
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCoAdminModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg cursor-pointer shadow"
+                >
+                  Add Co-Admin
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
