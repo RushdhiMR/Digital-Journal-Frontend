@@ -69,6 +69,17 @@ export default function WriterStudioPage() {
     setProfileMsg("");
     setProfileError("");
 
+    const email = currentUser?.email?.toLowerCase();
+    if (!email) {
+      setProfileError("❌ No active user email found.");
+      return;
+    }
+
+    if (!currentPasswordInput.trim()) {
+      setProfileError("❌ Please enter your current password.");
+      return;
+    }
+
     if (newPasswordInput !== confirmPasswordInput) {
       setProfileError("❌ New password and confirmation do not match!");
       return;
@@ -79,16 +90,24 @@ export default function WriterStudioPage() {
       return;
     }
 
-    const email = currentUser?.email?.toLowerCase();
-    if (!email) {
-      setProfileError("❌ No active user email found.");
+    // Retrieve writer's active password from dj_writers_list or dj_registered_users
+    const writersListStr = localStorage.getItem("dj_writers_list");
+    let wList: any[] = writersListStr ? JSON.parse(writersListStr) : [];
+    const matchedWriter = wList.find(w => w.email && w.email.toLowerCase() === email);
+
+    const regStr = localStorage.getItem("dj_registered_users");
+    let regList: any[] = regStr ? JSON.parse(regStr) : [];
+    const matchedUser = regList.find(u => u.email && u.email.toLowerCase() === email);
+
+    const activeStoredPassword = matchedWriter?.password || matchedUser?.password || "writer";
+
+    if (currentPasswordInput.trim() !== activeStoredPassword) {
+      setProfileError("❌ Incorrect current password. Please enter your existing password correctly.");
       return;
     }
 
     try {
       // 1. Update in dj_writers_list
-      const writersListStr = localStorage.getItem("dj_writers_list");
-      let wList: any[] = writersListStr ? JSON.parse(writersListStr) : [];
       let foundInWriterList = false;
       wList = wList.map(w => {
         if (w.email && w.email.toLowerCase() === email) {
@@ -110,8 +129,6 @@ export default function WriterStudioPage() {
       localStorage.setItem("dj_writers_list", JSON.stringify(wList));
 
       // 2. Update in dj_registered_users
-      const regStr = localStorage.getItem("dj_registered_users");
-      let regList: any[] = regStr ? JSON.parse(regStr) : [];
       const regIdx = regList.findIndex(u => u.email && u.email.toLowerCase() === email);
       if (regIdx >= 0) {
         regList[regIdx] = { ...regList[regIdx], password: newPasswordInput };
@@ -785,6 +802,20 @@ export default function WriterStudioPage() {
                   className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 rounded text-xs text-zinc-600 font-semibold cursor-not-allowed"
                 />
                 <p className="text-[10px] text-zinc-400 mt-1">Email address assigned by Main Admin for staff credentials.</p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                  CURRENT PASSWORD *
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter current password to verify"
+                  value={currentPasswordInput}
+                  onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
+                />
               </div>
 
               <div>
