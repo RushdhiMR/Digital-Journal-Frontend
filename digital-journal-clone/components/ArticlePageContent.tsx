@@ -39,20 +39,26 @@ interface ArticlePageContentProps {
   sidebarPicks: SidebarItem[];
 }
 
-const getUserBookmarkStorageKey = (): string => {
+const getLoggedInUser = (): any | null => {
   try {
     const userStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_admin_user");
     if (userStr) {
       const user = JSON.parse(userStr);
-      if (user?.email) {
-        const sanitizedEmail = user.email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
-        return `dj_bookmarks_${sanitizedEmail}`;
-      }
+      if (user?.email) return user;
     }
   } catch (e) {
     console.error(e);
   }
-  return "dj_bookmarks_guest";
+  return null;
+};
+
+const getUserBookmarkStorageKey = (): string | null => {
+  const user = getLoggedInUser();
+  if (user?.email) {
+    const sanitizedEmail = user.email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+    return `dj_bookmarks_${sanitizedEmail}`;
+  }
+  return null;
 };
 
 export default function ArticlePageContent({
@@ -65,12 +71,17 @@ export default function ArticlePageContent({
 }: ArticlePageContentProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const articleHref = `/${category}/${subcategory}`;
 
   useEffect(() => {
     try {
       const key = getUserBookmarkStorageKey();
+      if (!key) {
+        setIsBookmarked(false);
+        return;
+      }
       const savedStr = localStorage.getItem(key);
       if (savedStr) {
         const savedList: any[] = JSON.parse(savedStr);
@@ -87,8 +98,19 @@ export default function ArticlePageContent({
   }, [newsData.title]);
 
   const toggleBookmark = () => {
+    const activeUser = getLoggedInUser();
+    if (!activeUser) {
+      // NON-LOGGED IN USER: Require Sign Up / Login!
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     try {
       const key = getUserBookmarkStorageKey();
+      if (!key) {
+        setIsAuthModalOpen(true);
+        return;
+      }
       const savedStr = localStorage.getItem(key);
       let savedList: any[] = savedStr ? JSON.parse(savedStr) : [];
 
@@ -348,6 +370,46 @@ export default function ArticlePageContent({
         </div>
 
       </article>
+
+      {/* SIGN UP / LOGIN REQUIRED MODAL FOR GUESTS */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl relative font-sans text-center">
+            <button
+              onClick={() => setIsAuthModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer text-base"
+            >
+              ✕
+            </button>
+
+            <div className="w-14 h-14 bg-red-50 text-[#BF1E2D] rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 shadow-sm">
+              <Bookmark size={28} className="fill-[#BF1E2D]" />
+            </div>
+
+            <h3 className="text-xl font-bold font-serif text-zinc-900 mb-2">
+              Sign Up to Save Articles
+            </h3>
+            <p className="text-xs text-zinc-600 leading-relaxed mb-6">
+              Please sign up for a free account or sign in to save articles to your personal reading list and view your saved stories anytime.
+            </p>
+
+            <div className="space-y-3">
+              <Link
+                href="/register"
+                className="block w-full py-3.5 bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+              >
+                Create Free Account
+              </Link>
+              <Link
+                href="/login"
+                className="block w-full py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-xs rounded-xl uppercase tracking-wider transition-all cursor-pointer border border-zinc-200"
+              >
+                Sign In to Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </main>
