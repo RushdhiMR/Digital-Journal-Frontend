@@ -4,10 +4,25 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { BookOpen, Bookmark, Bell, History, ArrowRight, Star } from "lucide-react";
+import { BookOpen, Bookmark, Bell, History, ArrowRight, Star, User, Settings, Lock, CheckCircle2, ShieldCheck, Mail, Sparkles } from "lucide-react";
 
 export default function ReaderHubPage() {
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; bio?: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<"saved" | "settings">("saved");
+
+  // Profile Settings Form State
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileBio, setProfileBio] = useState("Avid reader of global economics, artificial intelligence, and clean energy innovation.");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Preference Toggles
+  const [notifyBreaking, setNotifyBreaking] = useState(true);
+  const [notifyWeekly, setNotifyWeekly] = useState(true);
+  const [publicHistory, setPublicHistory] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const savedArticles = [
     {
@@ -39,24 +54,69 @@ export default function ReaderHubPage() {
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
         setCurrentUser(parsed);
+        setProfileName(parsed.name || "Alex Reader");
+        setProfileEmail(parsed.email || "reader@digitaljournal.com");
+        if (parsed.bio) setProfileBio(parsed.bio);
       } else {
         const readerUser = { name: "Alex Reader", email: "reader@digitaljournal.com", role: "Reader" };
         localStorage.setItem("dj_user", JSON.stringify(readerUser));
         setCurrentUser(readerUser);
+        setProfileName(readerUser.name);
+        setProfileEmail(readerUser.email);
       }
     } catch (e) {
       console.error(e);
     }
   }, []);
 
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileName.trim() || !profileEmail.trim()) {
+      showToast("❌ Name and Email cannot be empty.");
+      return;
+    }
+
+    if (newPassword && newPassword !== confirmPassword) {
+      showToast("❌ New password and confirmation do not match.");
+      return;
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      name: profileName.trim(),
+      email: profileEmail.trim(),
+      bio: profileBio.trim(),
+      role: currentUser?.role || "Reader"
+    };
+
+    localStorage.setItem("dj_user", JSON.stringify(updatedUser));
+    setCurrentUser(updatedUser);
+    setNewPassword("");
+    setConfirmPassword("");
+
+    showToast("✓ Reader Profile Settings updated successfully!");
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-standard-sans">
       <Header />
 
+      {toastMessage && (
+        <div className="w-full bg-[#165c61] text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 shadow-md animate-fade-in z-50">
+          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-8 py-8">
         
         {/* Reader Header Card */}
-        <div className="bg-zinc-900 text-white rounded-xl p-6 md:p-8 mb-8 shadow-xl border border-zinc-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="bg-zinc-900 text-white rounded-xl p-6 md:p-8 mb-6 shadow-xl border border-zinc-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0 shadow-md">
               <BookOpen size={26} />
@@ -65,7 +125,7 @@ export default function ReaderHubPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-bold font-serif">Reader Preferences Hub</h1>
                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  READER ROLE
+                  {currentUser?.role || "READER ROLE"}
                 </span>
               </div>
               <p className="text-zinc-400 text-sm mt-1">
@@ -104,87 +164,270 @@ export default function ReaderHubPage() {
           </div>
         </div>
 
-        {/* Reader Features Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Saved Reading List */}
-          <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-zinc-200">
-              <h2 className="text-xl font-bold text-black font-serif flex items-center gap-2">
-                <Bookmark size={20} className="text-[#BF1E2D]" />
-                Saved Reading List ({savedArticles.length})
-              </h2>
-              <Link href="/news" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
-                Browse Latest Stories <ArrowRight size={14} />
-              </Link>
-            </div>
+        {/* Tab Navigation */}
+        <div className="flex border-b border-zinc-200 mb-8 font-sans">
+          <button
+            onClick={() => setActiveTab("saved")}
+            className={`px-6 py-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+              activeTab === "saved"
+                ? "border-[#BF1E2D] text-[#BF1E2D]"
+                : "border-transparent text-zinc-500 hover:text-zinc-900"
+            }`}
+          >
+            <Bookmark size={16} />
+            Saved Reading List ({savedArticles.length})
+          </button>
 
-            <div className="space-y-6">
-              {savedArticles.map((art, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-zinc-100 last:border-none group">
-                  <Link href={art.href} className="relative w-full sm:w-[200px] h-[130px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200 block">
-                    <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  </Link>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-[#1D9BF0] uppercase tracking-wider mb-1">
-                      {art.category}
-                    </span>
-                    <Link href={art.href} className="font-serif text-[18px] font-bold text-black group-hover:text-[#BF1E2D] transition-colors leading-snug mb-2">
-                      {art.title}
-                    </Link>
-                    <span className="text-[11px] text-zinc-400 font-sans mt-auto">{art.date}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-6 py-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+              activeTab === "settings"
+                ? "border-[#BF1E2D] text-[#BF1E2D]"
+                : "border-transparent text-zinc-500 hover:text-zinc-900"
+            }`}
+          >
+            <Settings size={16} />
+            Reader Profile & Settings
+          </button>
+        </div>
 
-          {/* Reader Preferences & Subscriptions */}
-          <div className="lg:col-span-4 space-y-6">
+        {/* TAB 1: SAVED READING LIST */}
+        {activeTab === "saved" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Newsletter Preferences Card */}
-            <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
-                <Bell size={18} className="text-zinc-700" />
-                <h3 className="text-base font-bold text-black font-serif">Newsletter Digest</h3>
+            {/* Saved Articles */}
+            <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200 p-6 md:p-8 shadow-sm">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-zinc-200">
+                <h2 className="text-xl font-bold text-black font-serif flex items-center gap-2">
+                  <Bookmark size={20} className="text-[#BF1E2D]" />
+                  Saved Reading List
+                </h2>
+                <Link href="/news" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                  Browse Latest Stories <ArrowRight size={14} />
+                </Link>
               </div>
-              <p className="text-xs text-zinc-600 mb-4 leading-relaxed">
-                Receive daily executive briefings and market summaries directly in your inbox.
-              </p>
-              <div className="space-y-2.5">
-                <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
-                  <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
-                  Daily Breaking News Digest
-                </label>
-                <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
-                  <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
-                  Technology & AI Weekly Analysis
-                </label>
-                <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
-                  <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
-                  Financial Markets Telemetry
-                </label>
-              </div>
-            </div>
 
-            {/* Favorite Topics */}
-            <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
-                <Star size={18} className="text-amber-500" />
-                <h3 className="text-base font-bold text-black font-serif">Favorite Topics</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {["Artificial Intelligence", "Markets", "Biotech", "Energy", "Politics", "Clean Tech"].map((topic, i) => (
-                  <span key={i} className="text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1 rounded-full cursor-pointer transition-colors">
-                    + {topic}
-                  </span>
+              <div className="space-y-6">
+                {savedArticles.map((art, idx) => (
+                  <div key={idx} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-zinc-100 last:border-none group">
+                    <Link href={art.href} className="relative w-full sm:w-[200px] h-[130px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200 block">
+                      <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    </Link>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-[#1D9BF0] uppercase tracking-wider mb-1">
+                        {art.category}
+                      </span>
+                      <Link href={art.href} className="font-serif text-[18px] font-bold text-black group-hover:text-[#BF1E2D] transition-colors leading-snug mb-2">
+                        {art.title}
+                      </Link>
+                      <span className="text-[11px] text-zinc-400 font-sans mt-auto">{art.date}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
 
-          </div>
+            {/* Reader Digest Sidebar */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
+                  <Bell size={18} className="text-zinc-700" />
+                  <h3 className="text-base font-bold text-black font-serif">Newsletter Digest</h3>
+                </div>
+                <p className="text-xs text-zinc-600 mb-4 leading-relaxed">
+                  Receive daily executive briefings and market summaries directly in your inbox.
+                </p>
+                <div className="space-y-2.5">
+                  <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
+                    <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
+                    Daily Breaking News Digest
+                  </label>
+                  <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
+                    <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
+                    Technology & AI Weekly Analysis
+                  </label>
+                </div>
+              </div>
 
-        </div>
+              <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
+                  <Star size={18} className="text-amber-500" />
+                  <h3 className="text-base font-bold text-black font-serif">Favorite Topics</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {["Artificial Intelligence", "Markets", "Biotech", "Energy", "Politics", "Clean Tech"].map((topic, i) => (
+                    <span key={i} className="text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1 rounded-full cursor-pointer transition-colors">
+                      + {topic}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 2: READER PROFILE SETTINGS */}
+        {activeTab === "settings" && (
+          <div className="max-w-4xl mx-auto bg-white rounded-xl border border-zinc-200 p-6 md:p-10 shadow-sm font-sans">
+            <div className="flex items-center justify-between pb-6 mb-8 border-b border-zinc-200">
+              <div>
+                <h2 className="text-2xl font-bold text-black font-serif flex items-center gap-2">
+                  <User size={24} className="text-[#BF1E2D]" />
+                  Reader Account & Profile Settings
+                </h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Manage your personal account details, reading bio, and security preferences.
+                </p>
+              </div>
+
+              <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded flex items-center gap-1.5">
+                <ShieldCheck size={14} /> Active Verified Reader
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-8">
+              
+              {/* Profile Information */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2">
+                  PERSONAL INFORMATION
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 mb-1">
+                      FULL NAME
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
+                      placeholder="Enter Full Name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 mb-1">
+                      EMAIL ADDRESS
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
+                      placeholder="Enter Email Address"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
+                    READING TAGLINE & BIO
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={profileBio}
+                    onChange={(e) => setProfileBio(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors resize-none"
+                    placeholder="Brief bio or topics you follow..."
+                  />
+                </div>
+              </div>
+
+              {/* Notification Preferences */}
+              <div className="space-y-4 pt-4 border-t border-zinc-200">
+                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2 flex items-center gap-2">
+                  <Bell size={16} /> NOTIFICATION PREFERENCES
+                </h3>
+
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded cursor-pointer hover:bg-zinc-100 transition-colors">
+                    <div>
+                      <p className="text-xs font-bold text-black">Breaking News Push Notifications</p>
+                      <p className="text-[11px] text-zinc-500">Receive instant alerts for major geopolitical and financial market developments.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={notifyBreaking}
+                      onChange={(e) => setNotifyBreaking(e.target.checked)}
+                      className="accent-[#BF1E2D] w-4 h-4 cursor-pointer"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded cursor-pointer hover:bg-zinc-100 transition-colors">
+                    <div>
+                      <p className="text-xs font-bold text-black">Weekly Analytical Digest</p>
+                      <p className="text-[11px] text-zinc-500">Receive a curated weekend summary of top long-form essays and technology reviews.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={notifyWeekly}
+                      onChange={(e) => setNotifyWeekly(e.target.checked)}
+                      className="accent-[#BF1E2D] w-4 h-4 cursor-pointer"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Security & Passcode */}
+              <div className="space-y-4 pt-4 border-t border-zinc-200">
+                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2 flex items-center gap-2">
+                  <Lock size={16} /> SECURITY & PASSWORD
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 mb-1">
+                      NEW PASSWORD (OPTIONAL)
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 mb-1">
+                      CONFIRM NEW PASSWORD
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("saved")}
+                  className="w-full sm:w-auto px-6 py-2.5 border border-zinc-300 text-zinc-700 hover:bg-zinc-100 font-bold text-xs rounded transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs rounded transition-colors shadow cursor-pointer uppercase tracking-wider"
+                >
+                  Save Profile Settings
+                </button>
+              </div>
+
+            </form>
+          </div>
+        )}
 
       </main>
 
