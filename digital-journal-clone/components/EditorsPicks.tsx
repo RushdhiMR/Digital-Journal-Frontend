@@ -7,28 +7,36 @@ export default function EditorsPicks() {
       description: "The essential question, then, is not whether machines can imitate people. Turing asked a brilliant question for the early age of computing. Denning asks a different question for the age of generative AI.",
       author: "Dr. Tim Sandle",
       date: "July 19, 2026 5:29 PM EDT",
-      image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop"
+      image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop",
+      category: "technology",
+      subcategory: "artificial-intelligence"
     },
     {
       title: "Silicon chips learn to write DNA: Research points to cleaner route for synthetic biology",
       description: "The Harvard chip is an early-stage demonstration rather than an industrial replacement for current DNA synthesis platforms. Nevertheless, the work establishes a new benchmark for parallel enzymatic DNA synthesis.",
       author: "Dr. Tim Sandle",
       date: "July 19, 2026 5:23 PM EDT",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=300&fit=crop"
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=300&fit=crop",
+      category: "technology",
+      subcategory: "innovations"
     },
     {
       title: "Canada's soft robotics research is moving from laboratory novelty to business tool",
       description: "Canada's advantage lies in combining engineering research, AI strength, materials science, medical technology and strong university-industry pathways. The challenge will be scale-up: moving devices from prototypes and laboratory demonstrations to manufacturable, validated, regulated and commercially supported products.",
       author: "Dr. Tim Sandle",
       date: "July 19, 2026 2:47 PM EDT",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=300&fit=crop"
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=300&fit=crop",
+      category: "technology",
+      subcategory: "innovations"
     },
     {
       title: "Pocket-size AI: Powerful phones star at China show",
       description: "Wide adoption of phones running on so-called AI agents would be a revolution, but would also take control away from major apps, which aren't always happy about it.",
       author: "AFP",
       date: "July 19, 2026",
-      image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=300&fit=crop"
+      image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=300&fit=crop",
+      category: "technology",
+      subcategory: "cybersecurity"
     }
   ];
 
@@ -86,26 +94,36 @@ export default function EditorsPicks() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         {/* Left Grid: 2x2 featured articles */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
-          {editorsPicks.map((article, index) => (
-            <article key={index} className="flex flex-col cursor-pointer group">
-              <div className="relative w-full aspect-video overflow-hidden mb-3 bg-gray-100">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
-                />
-              </div>
-              <h3 className="text-[16px] font-bold leading-snug text-black group-hover:text-[#CC3333] transition-colors mb-2">
-                {article.title}
-              </h3>
-              <p className="text-[13px] text-zinc-700 leading-relaxed mb-3">
-                {article.description}
-              </p>
-              <p className="text-[11px] text-zinc-500 font-normal">
-                By <Link href={`/author/${article.author.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} className="underline hover:text-[#CC3333] cursor-pointer">{article.author}</Link> {article.date}
-              </p>
-            </article>
-          ))}
+          {editorsPicks.map((article, index) => {
+            const slug = article.title
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '');
+            const articleUrl = `/${article.category}/${article.subcategory}/${slug}`;
+
+            return (
+              <article key={index} className="flex flex-col group">
+                <Link href={articleUrl} className="relative w-full aspect-video overflow-hidden mb-3 bg-gray-100 rounded-lg block">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </Link>
+                <h3 className="text-[16px] font-bold leading-snug text-black mb-2">
+                  <Link href={articleUrl} className="group-hover:text-[#CC3333] transition-colors">
+                    {article.title}
+                  </Link>
+                </h3>
+                <p className="text-[13px] text-zinc-700 leading-relaxed mb-3 font-sans">
+                  {article.description}
+                </p>
+                <p className="text-[11px] text-zinc-500 font-normal">
+                  By <Link href={`/author/${article.author.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} className="underline hover:text-[#CC3333] cursor-pointer">{article.author}</Link> {article.date}
+                </p>
+              </article>
+            );
+          })}
         </div>
 
         {/* Right Sidebar Stack */}
