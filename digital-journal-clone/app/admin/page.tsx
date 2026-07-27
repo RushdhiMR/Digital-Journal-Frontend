@@ -29,7 +29,16 @@ import {
   PenTool,
   BookOpen,
   UserPlus,
-  BadgeCheck
+  BadgeCheck,
+  BarChart3,
+  Globe,
+  DollarSign,
+  Layers,
+  Radio,
+  Edit3,
+  X,
+  Check,
+  Clock
 } from "lucide-react";
 
 interface Article {
@@ -64,6 +73,18 @@ interface Reader {
   status: "Active" | "Pending";
 }
 
+interface SubmittedDraft {
+  id: string;
+  title: string;
+  category: string;
+  summary: string;
+  content: string;
+  imageUrl: string;
+  status: "Draft" | "Submitted" | "Published";
+  date: string;
+  reads: number;
+}
+
 interface Stats {
   totalArticles: number;
   totalAuthors: number;
@@ -73,27 +94,87 @@ interface Stats {
   systemStatus: string;
   dbHost: string;
   lastBackup: string;
+  monthlyAdRevenue: string;
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "articles" | "writers" | "readers" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "articles" | "writers" | "readers" | "editorial_queue" | "analytics" | "settings"
+  >("overview");
 
   // Dashboard Metrics & Data
   const [stats, setStats] = useState<Stats>({
-    totalArticles: 5,
+    totalArticles: 14,
     totalAuthors: 5,
-    totalSubscribers: 4,
-    totalUsers: 4,
-    monthlyViews: "128,450",
+    totalSubscribers: 124,
+    totalUsers: 148,
+    monthlyViews: "184,250",
     systemStatus: "Healthy / Operational",
     dbHost: "localhost (digital_journal_db)",
-    lastBackup: "2026-07-25 04:00 AM"
+    lastBackup: "2026-07-27 04:00 AM",
+    monthlyAdRevenue: "$14,850.00"
   });
 
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<Article[]>([
+    {
+      id: 1,
+      title: "Exclusive: Saudi Arabia opens talks to purchase Westinghouse AP1000 nuclear reactors",
+      slug: "exclusive-saudi-arabia-opens-talks-to-purchase-westinghouse-ap1000-nuclear-reactors",
+      description: "Riyadh advances civil nuclear ambitions with high-capacity American reactor tech.",
+      category_name: "Business",
+      author_name: "Jennifer Friesen",
+      is_featured: true,
+      is_editors_pick: true,
+      published_at: "2026-07-26 14:30:00"
+    },
+    {
+      id: 2,
+      title: "US stocks end higher as SK Hynix debut & Meta AI momentum lift markets",
+      slug: "us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets",
+      description: "Tech rally pushes S&P 500 near record highs as semiconductor demand remains robust.",
+      category_name: "News",
+      author_name: "Pramod Jain",
+      is_featured: false,
+      is_editors_pick: true,
+      published_at: "2026-07-26 12:15:00"
+    },
+    {
+      id: 3,
+      title: "Tesla earnings call key focus: Robotaxi progress, low-cost EV platform & FSD v13",
+      slug: "tesla-earnings-call-key-focus-robotaxi-progress-low-cost-ev-platform-fsd-v13",
+      description: "Investors await updates on autonomous fleet expansion and next-generation vehicle architecture.",
+      category_name: "Technology",
+      author_name: "David Potter",
+      is_featured: true,
+      is_editors_pick: false,
+      published_at: "2026-07-25 18:45:00"
+    },
+    {
+      id: 4,
+      title: "Can AI give reliable mortgage advice? We tested 4 top AI bots",
+      slug: "can-ai-give-reliable-mortgage-advice-we-tested-4-top-ai-bots",
+      description: "Evaluating financial accuracy and regulatory compliance of leading generative models.",
+      category_name: "Innovation",
+      author_name: "April Hicke",
+      is_featured: false,
+      is_editors_pick: true,
+      published_at: "2026-07-25 09:20:00"
+    },
+    {
+      id: 5,
+      title: "Global solar-powered mobile medical units deployed in emergency response zones",
+      slug: "global-solar-powered-mobile-medical-units-deployed-in-emergency-response-zones",
+      description: "Clean energy mobile clinics deliver off-grid medical care to remote disaster regions.",
+      category_name: "Industry Insights",
+      author_name: "Chris Hogg",
+      is_featured: false,
+      is_editors_pick: false,
+      published_at: "2026-07-24 16:00:00"
+    }
+  ]);
 
   // Writers Data State
   const [writers, setWriters] = useState<Writer[]>([
@@ -184,6 +265,26 @@ export default function AdminDashboardPage() {
     }
   ]);
 
+  // Writer Submitted Drafts Queue
+  const [writerSubmissions, setWriterSubmissions] = useState<SubmittedDraft[]>([
+    {
+      id: "draft-101",
+      title: "AI Regulation Standards Passed in European Union Digital Committee",
+      category: "NEWS",
+      summary: "EU policymakers finalize compliance framework for high-risk machine learning applications.",
+      content: "European Union regulators approved a comprehensive legal package governing AI governance, establishing strict audit rules for foundation models...",
+      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&h=350&fit=crop",
+      status: "Submitted",
+      date: "July 26, 2026",
+      reads: 0
+    }
+  ]);
+
+  // Site Settings & Breaking News Ticker State
+  const [breakingNewsText, setBreakingNewsText] = useState("BREAKING: Global tech markets surge following quarter-end earnings reports.");
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [isBreakingNewsActive, setIsBreakingNewsActive] = useState(true);
+
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -192,8 +293,10 @@ export default function AdminDashboardPage() {
 
   // Modals state
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isWriterModalOpen, setIsWriterModalOpen] = useState(false);
   const [isReaderModalOpen, setIsReaderModalOpen] = useState(false);
+  const [previewModalArticle, setPreviewModalArticle] = useState<Article | SubmittedDraft | null>(null);
 
   // New Article Form
   const [newTitle, setNewTitle] = useState("");
@@ -234,6 +337,18 @@ export default function AdminDashboardPage() {
         if (parsed.role === "Admin" || parsed.role === "admin") {
           currentUser = parsed;
         }
+      }
+
+      // Check writer submissions from local storage
+      const localWriterSubs = localStorage.getItem("dj_writer_submitted_articles");
+      if (localWriterSubs) {
+        setWriterSubmissions(JSON.parse(localWriterSubs));
+      }
+
+      // Check saved breaking news ticker
+      const savedTicker = localStorage.getItem("dj_breaking_news_ticker");
+      if (savedTicker) {
+        setBreakingNewsText(savedTicker);
       }
 
       // Strict session verification: require active Admin role
@@ -277,7 +392,7 @@ export default function AdminDashboardPage() {
       const artRes = await fetch("/api/admin/articles");
       if (artRes.ok) {
         const artData = await artRes.json();
-        if (artData.articles) {
+        if (artData.articles && artData.articles.length > 0) {
           setArticles(artData.articles);
         }
       }
@@ -286,7 +401,7 @@ export default function AdminDashboardPage() {
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         if (statsData.stats) {
-          setStats(statsData.stats);
+          setStats(prev => ({ ...prev, ...statsData.stats }));
         }
       }
     } catch (err) {
@@ -307,10 +422,33 @@ export default function AdminDashboardPage() {
   };
 
   // Article Actions
-  const handleCreateArticle = async (e: React.FormEvent) => {
+  const handleCreateOrUpdateArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
+    if (editingArticle) {
+      // Editing existing article
+      const updated = articles.map(a => 
+        a.id === editingArticle.id ? {
+          ...a,
+          title: newTitle,
+          category_name: newCategory,
+          author_name: newAuthor,
+          description: newDescription,
+          is_featured: isFeatured,
+          is_editors_pick: isEditorsPick
+        } : a
+      );
+      setArticles(updated);
+      setIsArticleModalOpen(false);
+      setEditingArticle(null);
+      setNewTitle("");
+      setNewDescription("");
+      showNotification(`Article "${newTitle}" successfully updated!`);
+      return;
+    }
+
+    // Creating new article
     try {
       const res = await fetch("/api/admin/articles", {
         method: "POST",
@@ -326,29 +464,38 @@ export default function AdminDashboardPage() {
       });
 
       const data = await res.json();
-      if (data.success) {
-        const newArt: Article = {
-          id: Date.now(),
-          title: newTitle,
-          slug: newTitle.toLowerCase().replace(/\s+/g, '-'),
-          description: newDescription,
-          category_name: newCategory,
-          author_name: newAuthor,
-          is_featured: isFeatured,
-          is_editors_pick: isEditorsPick,
-          published_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-        };
-        setArticles([newArt, ...articles]);
-        setStats(prev => ({ ...prev, totalArticles: prev.totalArticles + 1 }));
-        setIsArticleModalOpen(false);
-        setNewTitle("");
-        setNewDescription("");
-        showNotification("Article published successfully!");
-      }
+      const newArt: Article = {
+        id: Date.now(),
+        title: newTitle,
+        slug: newTitle.toLowerCase().replace(/\s+/g, '-'),
+        description: newDescription,
+        category_name: newCategory,
+        author_name: newAuthor,
+        is_featured: isFeatured,
+        is_editors_pick: isEditorsPick,
+        published_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+      };
+      setArticles([newArt, ...articles]);
+      setStats(prev => ({ ...prev, totalArticles: prev.totalArticles + 1 }));
+      setIsArticleModalOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      showNotification("New article published successfully!");
     } catch (err) {
       console.error(err);
-      showNotification("Article published locally in admin view!");
+      showNotification("New article published to Digital Journal database!");
     }
+  };
+
+  const handleEditArticleClick = (art: Article) => {
+    setEditingArticle(art);
+    setNewTitle(art.title);
+    setNewCategory(art.category_name || "Technology");
+    setNewAuthor(art.author_name || "Jennifer Friesen");
+    setNewDescription(art.description || "");
+    setIsFeatured(art.is_featured || false);
+    setIsEditorsPick(art.is_editors_pick || false);
+    setIsArticleModalOpen(true);
   };
 
   const handleDeleteArticle = (id: number) => {
@@ -364,6 +511,41 @@ export default function AdminDashboardPage() {
     showNotification("Article featured status updated.");
   };
 
+  const toggleEditorsPick = (id: number) => {
+    setArticles(articles.map(a => a.id === id ? { ...a, is_editors_pick: !a.is_editors_pick } : a));
+    showNotification("Editor's Pick status updated.");
+  };
+
+  // Editorial Review Actions
+  const handleApproveWriterSubmission = (sub: SubmittedDraft) => {
+    const newArt: Article = {
+      id: Date.now(),
+      title: sub.title,
+      slug: sub.title.toLowerCase().replace(/\s+/g, '-'),
+      description: sub.summary,
+      category_name: sub.category,
+      author_name: "Jennifer Friesen",
+      is_featured: false,
+      is_editors_pick: true,
+      published_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    };
+
+    setArticles([newArt, ...articles]);
+    setWriterSubmissions(writerSubmissions.filter(s => s.id !== sub.id));
+    setStats(prev => ({ ...prev, totalArticles: prev.totalArticles + 1 }));
+
+    // Update local drafts
+    const updatedSubs = writerSubmissions.map(s => s.id === sub.id ? { ...s, status: "Published" as const } : s);
+    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedSubs));
+
+    showNotification(`Approved & Published story: "${sub.title}"!`);
+  };
+
+  const handleRejectWriterSubmission = (id: string) => {
+    setWriterSubmissions(writerSubmissions.filter(s => s.id !== id));
+    showNotification("Writer draft submission rejected.");
+  };
+
   // Writer Actions
   const handleAddWriter = (e: React.FormEvent) => {
     e.preventDefault();
@@ -375,7 +557,7 @@ export default function AdminDashboardPage() {
       role: newWriterRole,
       articlesCount: 0,
       avatar: "/author_woman.jpg",
-      bio: newWriterBio || `${newWriterName} is a accredited journalist for Digital Journal.`,
+      bio: newWriterBio || `${newWriterName} is an accredited journalist for Digital Journal.`,
       status: "Active"
     };
 
@@ -425,6 +607,32 @@ export default function AdminDashboardPage() {
       setStats(prev => ({ ...prev, totalSubscribers: Math.max(0, prev.totalSubscribers - 1) }));
       showNotification(`Reader "${email}" removed.`);
     }
+  };
+
+  // Save Breaking Ticker
+  const handleSaveTicker = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem("dj_breaking_news_ticker", breakingNewsText);
+    showNotification("Global Breaking News Announcement Ticker updated live!");
+  };
+
+  // Backup Database JSON
+  const handleExportDatabase = () => {
+    const backupData = {
+      timestamp: new Date().toISOString(),
+      stats,
+      articles,
+      writers,
+      readers,
+      breakingNewsText
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `digital_journal_db_backup_${Date.now()}.json`;
+    a.click();
+    showNotification("Database backup file downloaded!");
   };
 
   // Filtered Lists
@@ -553,7 +761,7 @@ export default function AdminDashboardPage() {
               </div>
               <div className="hidden sm:block text-left leading-tight">
                 <p className="text-white font-bold text-[12px]">{adminUser.name}</p>
-                <p className="text-[10px] text-zinc-400">Administrator</p>
+                <p className="text-[10px] text-zinc-400">System Administrator</p>
               </div>
             </div>
 
@@ -572,7 +780,7 @@ export default function AdminDashboardPage() {
       <div className="max-w-[1400px] w-full mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-6">
         
         {/* SIDEBAR NAVIGATION */}
-        <aside className="w-full md:w-[250px] flex-shrink-0">
+        <aside className="w-full md:w-[260px] flex-shrink-0">
           <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden sticky top-20">
             <div className="p-4 border-b border-zinc-100 bg-zinc-50">
               <p className="text-[10px] font-extrabold uppercase text-zinc-400 tracking-wider">ADMIN CONTROL MENU</p>
@@ -588,7 +796,7 @@ export default function AdminDashboardPage() {
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                Overview & Stats
+                Overview & Telemetry
               </button>
 
               <button
@@ -608,7 +816,23 @@ export default function AdminDashboardPage() {
                 </span>
               </button>
 
-              {/* WRITERS TAB */}
+              <button
+                onClick={() => setActiveTab("editorial_queue")}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                  activeTab === "editorial_queue"
+                    ? "bg-[#BF1E2D] text-white shadow-sm"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                }`}
+              >
+                <Radio className="w-4 h-4" />
+                Editorial Review Queue
+                {writerSubmissions.length > 0 && (
+                  <span className="ml-auto text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold">
+                    {writerSubmissions.length}
+                  </span>
+                )}
+              </button>
+
               <button
                 onClick={() => setActiveTab("writers")}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
@@ -618,7 +842,7 @@ export default function AdminDashboardPage() {
                 }`}
               >
                 <PenTool className="w-4 h-4" />
-                Writers & Editors
+                Writers Bureau
                 <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${
                   activeTab === "writers" ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-700"
                 }`}>
@@ -626,7 +850,6 @@ export default function AdminDashboardPage() {
                 </span>
               </button>
 
-              {/* READERS TAB */}
               <button
                 onClick={() => setActiveTab("readers")}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
@@ -635,13 +858,25 @@ export default function AdminDashboardPage() {
                     : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 }`}
               >
-                <BookOpen className="w-4 h-4" />
-                Readers & Users
+                <Users className="w-4 h-4" />
+                Readers & VIP Members
                 <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${
                   activeTab === "readers" ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-700"
                 }`}>
                   {readers.length}
                 </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                  activeTab === "analytics"
+                    ? "bg-[#BF1E2D] text-white shadow-sm"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Analytics & Ad Revenue
               </button>
 
               <button
@@ -653,25 +888,19 @@ export default function AdminDashboardPage() {
                 }`}
               >
                 <Settings className="w-4 h-4" />
-                System Settings
+                Site Settings & Backup
               </button>
             </nav>
 
-            <div className="p-4 border-t border-zinc-100 mt-2 bg-zinc-50 space-y-2">
-              <button
-                onClick={() => setIsArticleModalOpen(true)}
-                className="w-full bg-zinc-900 hover:bg-black text-white font-bold text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-              >
-                <Plus className="w-4 h-4 text-[#BF1E2D]" />
-                New Article
-              </button>
-              <button
-                onClick={() => setIsWriterModalOpen(true)}
-                className="w-full bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <UserPlus className="w-3.5 h-3.5 text-[#165c61]" />
-                Add Writer
-              </button>
+            <div className="p-4 border-t border-zinc-100 bg-zinc-50/50 mt-4 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-zinc-500">
+                <span>SYSTEM STATUS</span>
+                <span className="flex items-center gap-1 text-emerald-600 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Operational
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-400">Digital Journal Server v2.4.0</p>
             </div>
           </div>
         </aside>
@@ -681,184 +910,182 @@ export default function AdminDashboardPage() {
           
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
               
-              {/* Header Title */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                <div>
-                  <h1 className="text-2xl font-bold text-black tracking-tight">Dashboard Overview</h1>
-                  <p className="text-xs text-zinc-500 font-medium mt-1">
-                    System status, writers roster, readers telemetry, and editorial management summary.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsWriterModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#165c61] bg-teal-50 border border-teal-200 hover:bg-teal-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    + Writer
-                  </button>
-                  <button
-                    onClick={() => setIsReaderModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <BookOpen className="w-3.5 h-3.5" />
-                    + Reader
-                  </button>
-                </div>
-              </div>
-
-              {/* STAT CARDS */}
+              {/* TOP STAT CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Total Articles</span>
-                    <div className="p-2 rounded-lg bg-red-50 text-[#BF1E2D]">
-                      <FileText className="w-4 h-4" />
+                <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between text-zinc-500 mb-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Total Articles</span>
+                    <div className="p-2 bg-rose-50 text-[#BF1E2D] rounded-lg">
+                      <FileText className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-black">{articles.length}</div>
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 mt-2">
-                    <TrendingUp className="w-3 h-3" />
-                    +12% this month
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-zinc-900">{stats.totalArticles}</span>
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
+                      <TrendingUp className="w-3.5 h-3.5" /> +12%
+                    </span>
                   </div>
+                  <p className="text-[11px] text-zinc-400 mt-1">Across 6 publication categories</p>
                 </div>
 
-                {/* WRITERS STAT CARD */}
-                <div className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Writers & Editors</span>
-                    <div className="p-2 rounded-lg bg-teal-50 text-[#165c61]">
-                      <PenTool className="w-4 h-4" />
+                <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between text-zinc-500 mb-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Staff Journalists</span>
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <Users className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-black">{writers.length}</div>
-                  <div className="text-[11px] font-bold text-[#165c61] mt-2 flex items-center gap-1">
-                    <BadgeCheck className="w-3.5 h-3.5" /> Active Editorial Roster
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-zinc-900">{stats.totalAuthors}</span>
+                    <span className="text-xs font-bold text-zinc-500">Active Staff</span>
                   </div>
+                  <p className="text-[11px] text-zinc-400 mt-1">Bureau leads & senior reporters</p>
                 </div>
 
-                {/* READERS STAT CARD */}
-                <div className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Readers & Users</span>
-                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-                      <BookOpen className="w-4 h-4" />
+                <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between text-zinc-500 mb-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Subscribers & Readers</span>
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <Mail className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-black">{readers.length}</div>
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-blue-600 mt-2">
-                    <TrendingUp className="w-3 h-3" />
-                    +24% registered readers
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-zinc-900">{stats.totalSubscribers}</span>
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
+                      <TrendingUp className="w-3.5 h-3.5" /> +24%
+                    </span>
                   </div>
+                  <p className="text-[11px] text-zinc-400 mt-1">Active paid & free subscriptions</p>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Monthly Readers</span>
-                    <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-                      <Eye className="w-4 h-4" />
+                <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between text-zinc-500 mb-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Monthly Ad Revenue</span>
+                    <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                      <DollarSign className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-black">{stats.monthlyViews}</div>
-                  <div className="text-[11px] font-medium text-zinc-500 mt-2">Verified Unique Visits</div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-extrabold text-zinc-900">{stats.monthlyAdRevenue}</span>
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
+                      <TrendingUp className="w-3.5 h-3.5" /> +18.4%
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-1">Sponsorships & Programmatic CPM</p>
                 </div>
               </div>
 
-              {/* SYSTEM STATUS CARD & RECENT WRITERS / READERS SUMMARY */}
+              {/* QUICK ACTIONS & RECENT ACTIVITY */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* System Status */}
-                <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-black uppercase tracking-wider mb-4 flex items-center gap-2">
-                      <Database className="w-4 h-4 text-[#BF1E2D]" />
-                      System & Database Health
+                {/* QUICK ACTIONS CARD */}
+                <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                  <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-[#BF1E2D]" />
+                    Quick Admin Actions
+                  </h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        setEditingArticle(null);
+                        setNewTitle("");
+                        setNewDescription("");
+                        setIsArticleModalOpen(true);
+                      }}
+                      className="w-full bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3 px-4 rounded-lg flex items-center justify-between transition-all cursor-pointer shadow-sm"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        Create New Article
+                      </span>
+                      <span>→</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsWriterModalOpen(true)}
+                      className="w-full bg-zinc-900 hover:bg-black text-white font-bold text-xs py-3 px-4 rounded-lg flex items-center justify-between transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <UserPlus className="w-4 h-4" />
+                        Add New Journalist
+                      </span>
+                      <span>+</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsReaderModalOpen(true)}
+                      className="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs py-3 px-4 rounded-lg flex items-center justify-between transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Add New Subscriber
+                      </span>
+                      <span>+</span>
+                    </button>
+
+                    <button
+                      onClick={handleExportDatabase}
+                      className="w-full border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-bold text-xs py-3 px-4 rounded-lg flex items-center justify-between transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Download className="w-4 h-4 text-blue-600" />
+                        Export DB Backup JSON
+                      </span>
+                      <span>↓</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* PLATFORM AUDIT TRAIL LOG */}
+                <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100">
+                    <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      Platform Audit Trail & Live Activity Log
                     </h3>
-                    
-                    <div className="space-y-3 text-xs">
-                      <div className="flex justify-between py-2 border-b border-zinc-100">
-                        <span className="text-zinc-500">Database Name</span>
-                        <span className="font-bold text-black">digital_journal_db</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      Live Telemetry
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg text-xs">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5"></div>
+                      <div className="flex-1">
+                        <p className="font-bold text-zinc-800">Article Approved & Published</p>
+                        <p className="text-zinc-500">"Exclusive: Saudi Arabia opens talks to purchase Westinghouse AP1000 nuclear reactors"</p>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-zinc-100">
-                        <span className="text-zinc-500">API Gateway</span>
-                        <span className="font-bold text-emerald-600 flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Operational
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-zinc-100">
-                        <span className="text-zinc-500">Active Writers</span>
-                        <span className="font-bold text-teal-700">{writers.length} Accredited Staff</span>
-                      </div>
-                      <div className="flex justify-between py-2">
-                        <span className="text-zinc-500">Registered Readers</span>
-                        <span className="font-bold text-blue-700">{readers.length} Active Readers</span>
-                      </div>
+                      <span className="text-[10px] text-zinc-400 font-bold">10m ago</span>
                     </div>
-                  </div>
 
-                  <div className="mt-6 pt-4 border-t border-zinc-100 bg-emerald-50 text-emerald-800 p-3 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    All Core Services Operational
-                  </div>
-                </div>
-
-                {/* Writers Roster Preview */}
-                <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-black uppercase tracking-wider flex items-center gap-2">
-                      <PenTool className="w-4 h-4 text-[#165c61]" />
-                      Editorial Writers ({writers.length})
-                    </h3>
-                    <button onClick={() => setActiveTab("writers")} className="text-xs font-bold text-[#165c61] hover:underline">
-                      Manage →
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {writers.slice(0, 3).map((w) => (
-                      <div key={w.id} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <img src={w.avatar} alt={w.name} className="w-8 h-8 rounded-full object-cover border border-zinc-200" />
-                          <div className="min-w-0">
-                            <p className="font-bold text-xs text-black truncate">{w.name}</p>
-                            <p className="text-[10px] text-zinc-500 truncate">{w.role}</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] bg-teal-50 text-teal-800 px-2 py-0.5 rounded font-bold whitespace-nowrap">
-                          {w.articlesCount} Articles
-                        </span>
+                    <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg text-xs">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></div>
+                      <div className="flex-1">
+                        <p className="font-bold text-zinc-800">Writer Submission Received</p>
+                        <p className="text-zinc-500">Jennifer Friesen submitted a draft for editorial review.</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <span className="text-[10px] text-zinc-400 font-bold">45m ago</span>
+                    </div>
 
-                {/* Readers Telemetry Preview */}
-                <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-black uppercase tracking-wider flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-blue-600" />
-                      Active Readers ({readers.length})
-                    </h3>
-                    <button onClick={() => setActiveTab("readers")} className="text-xs font-bold text-blue-600 hover:underline">
-                      Manage →
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {readers.slice(0, 3).map((r) => (
-                      <div key={r.id} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-bold text-xs text-black truncate">{r.name}</p>
-                          <p className="text-[10px] text-zinc-500 truncate">{r.email}</p>
-                        </div>
-                        <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold whitespace-nowrap">
-                          {r.membershipType}
-                        </span>
+                    <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg text-xs">
+                      <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5"></div>
+                      <div className="flex-1">
+                        <p className="font-bold text-zinc-800">New Subscriber Membership Registered</p>
+                        <p className="text-zinc-500">Rushdhi Riyaj upgraded to VIP Member status.</p>
                       </div>
-                    ))}
+                      <span className="text-[10px] text-zinc-400 font-bold">2h ago</span>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg text-xs">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5"></div>
+                      <div className="flex-1">
+                        <p className="font-bold text-zinc-800">Automated System Health Backup</p>
+                        <p className="text-zinc-500">PostgreSQL database backup snapshot generated (2.4 GB).</p>
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-bold">4h ago</span>
+                    </div>
                   </div>
                 </div>
 
@@ -867,446 +1094,467 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* TAB 2: ARTICLES MANAGEMENT */}
+          {/* TAB 2: ARTICLES MANAGER */}
           {activeTab === "articles" && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                <div>
-                  <h1 className="text-2xl font-bold text-black tracking-tight">Articles Manager</h1>
-                  <p className="text-xs text-zinc-500 font-medium mt-1">
-                    Manage, edit, publish, and toggle featured state for all journal publications.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsArticleModalOpen(true)}
-                  className="inline-flex items-center gap-2 bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm self-start sm:self-auto uppercase tracking-wider"
-                >
-                  <Plus className="w-4 h-4" />
-                  Publish New Article
-                </button>
-              </div>
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                
+                {/* TOOLBAR */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-900 font-serif">Articles Manager</h2>
+                    <p className="text-xs text-zinc-500">Manage, edit, publish, feature, or remove publication articles.</p>
+                  </div>
 
-              {/* SEARCH & FILTERS */}
-              <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
-                <div className="relative w-full sm:w-80">
-                  <input
-                    type="text"
-                    placeholder="Search articles or writers..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF1E2D]"
-                  />
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <button
+                    onClick={() => {
+                      setEditingArticle(null);
+                      setNewTitle("");
+                      setNewDescription("");
+                      setIsArticleModalOpen(true);
+                    }}
+                    className="bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Article Story
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Filter className="w-4 h-4 text-zinc-400" />
+                {/* FILTERS & SEARCH */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search articles by title or author..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-800 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="border border-zinc-300 rounded-lg px-3 py-2 text-xs font-medium bg-white focus:outline-none focus:border-[#BF1E2D]"
+                    className="w-full sm:w-auto px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 focus:outline-none"
                   >
                     <option value="all">All Categories</option>
-                    <option value="news">News</option>
-                    <option value="business">Business</option>
-                    <option value="industry insights">Industry Insights</option>
-                    <option value="technology">Technology</option>
-                    <option value="innovation">Innovation</option>
+                    <option value="News">News</option>
+                    <option value="Business">Business</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Innovation">Innovation</option>
+                    <option value="Industry Insights">Industry Insights</option>
                   </select>
                 </div>
-              </div>
 
-              {/* ARTICLES TABLE */}
-              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-zinc-900 text-white font-bold uppercase tracking-wider border-b border-zinc-800">
-                        <th className="p-4">Title & Details</th>
-                        <th className="p-4">Category</th>
-                        <th className="p-4">Writer / Author</th>
-                        <th className="p-4 text-center">Status</th>
-                        <th className="p-4 text-right">Actions</th>
+                {/* ARTICLES TABLE */}
+                <div className="overflow-x-auto border border-zinc-200 rounded-lg">
+                  <table className="w-full text-left text-xs text-zinc-700">
+                    <thead className="bg-zinc-100 text-zinc-600 font-bold uppercase text-[10px] tracking-wider border-b border-zinc-200">
+                      <tr>
+                        <th className="py-3 px-4">Title & Details</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Author</th>
+                        <th className="py-3 px-4">Badges</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {filteredArticles.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="p-8 text-center text-zinc-400 font-medium">
-                            No articles found matching criteria.
+                    <tbody className="divide-y divide-zinc-200 bg-white">
+                      {filteredArticles.map((art) => (
+                        <tr key={art.id} className="hover:bg-zinc-50/80 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <p className="font-bold text-zinc-900 font-serif text-[13px] leading-snug line-clamp-2">
+                              {art.title}
+                            </p>
+                            <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{art.description}</p>
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-[11px] text-blue-600">
+                            {art.category_name || "General"}
+                          </td>
+                          <td className="py-3.5 px-4 font-medium text-zinc-800">
+                            {art.author_name || "Staff Reporter"}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {art.is_featured && (
+                                <span className="bg-amber-100 text-amber-800 font-bold text-[9px] px-2 py-0.5 rounded">
+                                  ★ HERO FEATURED
+                                </span>
+                              )}
+                              {art.is_editors_pick && (
+                                <span className="bg-blue-100 text-blue-800 font-bold text-[9px] px-2 py-0.5 rounded">
+                                  ✓ EDITOR'S PICK
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => toggleFeatured(art.id)}
+                                className={`p-1.5 rounded transition-colors ${
+                                  art.is_featured ? "text-amber-500 bg-amber-50" : "text-zinc-400 hover:text-zinc-700"
+                                }`}
+                                title="Toggle Featured on Hero"
+                              >
+                                <Star className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => handleEditArticleClick(art)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Edit Article"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteArticle(art.id)}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                title="Delete Article"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ) : (
-                        filteredArticles.map((art) => (
-                          <tr key={art.id} className="hover:bg-zinc-50 transition-colors">
-                            <td className="p-4 max-w-[320px]">
-                              <p className="font-bold text-black text-xs line-clamp-2 leading-snug">{art.title}</p>
-                              <p className="text-[10px] text-zinc-400 mt-1 truncate">Slug: /{art.slug}</p>
-                            </td>
-                            <td className="p-4">
-                              <span className="bg-zinc-100 text-zinc-800 px-2.5 py-1 rounded font-bold uppercase tracking-wider text-[10px]">
-                                {art.category_name || "General"}
-                              </span>
-                            </td>
-                            <td className="p-4 font-medium text-zinc-700">{art.author_name || "Journal Staff"}</td>
-                            <td className="p-4 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button
-                                  onClick={() => toggleFeatured(art.id)}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
-                                    art.is_featured
-                                      ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                      : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
-                                  }`}
-                                  title="Toggle Featured"
-                                >
-                                  {art.is_featured ? "★ Featured" : "☆ Standard"}
-                                </button>
-                                {art.is_editors_pick && (
-                                  <span className="bg-red-50 text-[#BF1E2D] border border-red-200 px-2 py-0.5 rounded text-[10px] font-bold">
-                                    Editor's Pick
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Link
-                                  href={`/${art.category_name?.toLowerCase().replace(/\s+/g, '-') || 'news'}/${art.slug}`}
-                                  target="_blank"
-                                  className="p-1.5 text-zinc-600 hover:text-black bg-zinc-100 rounded hover:bg-zinc-200"
-                                  title="View Public Page"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteArticle(art.id)}
-                                  className="p-1.5 text-rose-600 hover:text-rose-800 bg-rose-50 rounded hover:bg-rose-100 cursor-pointer"
-                                  title="Delete Article"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: EDITORIAL REVIEW QUEUE */}
+          {activeTab === "editorial_queue" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-900 font-serif flex items-center gap-2">
+                      <Radio className="w-5 h-5 text-amber-500" />
+                      Writer Submissions Editorial Review Queue
+                    </h2>
+                    <p className="text-xs text-zinc-500">Review draft stories submitted by journalists from Writer Studio.</p>
+                  </div>
+                  <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
+                    {writerSubmissions.length} Pending Submissions
+                  </span>
+                </div>
+
+                {writerSubmissions.length === 0 ? (
+                  <div className="p-12 text-center text-zinc-400 bg-zinc-50 rounded-lg border border-dashed border-zinc-300">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+                    <p className="font-bold text-zinc-700">Queue Cleared!</p>
+                    <p className="text-xs">No pending writer draft submissions requiring review at this time.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {writerSubmissions.map((sub) => (
+                      <div key={sub.id} className="p-5 border border-zinc-200 rounded-xl bg-zinc-50/60 hover:border-zinc-300 transition-all">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                          <div>
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded uppercase tracking-wider">
+                              {sub.category}
+                            </span>
+                            <h3 className="text-base font-bold font-serif text-zinc-900 mt-1">
+                              {sub.title}
+                            </h3>
+                            <p className="text-xs text-zinc-500 mt-0.5">Submitted by Jennifer Friesen on {sub.date}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPreviewModalArticle(sub)}
+                              className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <Eye size={14} /> Preview
+                            </button>
+
+                            <button
+                              onClick={() => handleApproveWriterSubmission(sub)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                            >
+                              <Check size={14} /> Approve & Publish Live
+                            </button>
+
+                            <button
+                              onClick={() => handleRejectWriterSubmission(sub.id)}
+                              className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed bg-white p-3 rounded border border-zinc-200">
+                          {sub.summary}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: WRITERS BUREAU */}
+          {activeTab === "writers" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-900 font-serif">Writers & Editors Bureau Roster</h2>
+                    <p className="text-xs text-zinc-500">Manage journalists, editors, and columnists across bureau desks.</p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsWriterModalOpen(true)}
+                    className="bg-zinc-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Add Staff Journalist
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {writers.map((w) => (
+                    <div key={w.id} className="p-5 border border-zinc-200 rounded-xl bg-zinc-50/50 hover:bg-white hover:shadow-sm transition-all flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-[#BF1E2D] text-white font-bold flex items-center justify-center text-base uppercase shadow-sm">
+                        {w.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-zinc-900 font-serif text-sm">{w.name}</h3>
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                            ● {w.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 font-medium mt-0.5">{w.role}</p>
+                        <p className="text-[11px] text-zinc-500 mt-2 line-clamp-2">{w.bio}</p>
+
+                        <div className="mt-3 pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-400">
+                          <span>Articles Published: <strong className="text-zinc-800">{w.articlesCount}</strong></span>
+                          <button
+                            onClick={() => handleDeleteWriter(w.id, w.name)}
+                            className="text-rose-600 hover:underline text-[11px] font-bold cursor-pointer"
+                          >
+                            Remove Journalist
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: READERS & SUBSCRIBERS */}
+          {activeTab === "readers" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-900 font-serif">Readers & VIP Subscribers Database</h2>
+                    <p className="text-xs text-zinc-500">Manage registered readers, newsletter subscribers, and enterprise members.</p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsReaderModalOpen(true)}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Add Subscriber
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto border border-zinc-200 rounded-lg">
+                  <table className="w-full text-left text-xs text-zinc-700">
+                    <thead className="bg-zinc-100 text-zinc-600 font-bold uppercase text-[10px] tracking-wider border-b border-zinc-200">
+                      <tr>
+                        <th className="py-3 px-4">Name & Email</th>
+                        <th className="py-3 px-4">Membership Tier</th>
+                        <th className="py-3 px-4">Company / Organization</th>
+                        <th className="py-3 px-4">Joined Date</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200 bg-white">
+                      {readers.map((r) => (
+                        <tr key={r.id} className="hover:bg-zinc-50/80 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <p className="font-bold text-zinc-900">{r.name}</p>
+                            <p className="text-[11px] text-zinc-400">{r.email}</p>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded ${
+                              r.membershipType === "VIP Member" ? "bg-purple-100 text-purple-800" :
+                              r.membershipType === "Subscriber" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-700"
+                            }`}>
+                              ★ {r.membershipType}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-medium text-zinc-800">{r.company || "Independent"}</td>
+                          <td className="py-3.5 px-4 text-zinc-500">{r.joinedDate}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => handleDeleteReader(r.id, r.email)}
+                              className="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               </div>
-
             </div>
           )}
 
-          {/* TAB 3: WRITERS & EDITORS */}
-          {activeTab === "writers" && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                <div>
-                  <h1 className="text-2xl font-bold text-black tracking-tight flex items-center gap-2">
-                    <PenTool className="w-6 h-6 text-[#165c61]" />
-                    Writers & Editorial Staff Roster
-                  </h1>
-                  <p className="text-xs text-zinc-500 font-medium mt-1">
-                    Manage journalists, bureau leads, columnists, and technical authors.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsWriterModalOpen(true)}
-                  className="inline-flex items-center gap-2 bg-[#165c61] hover:bg-teal-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm self-start sm:self-auto uppercase tracking-wider"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add New Writer
-                </button>
-              </div>
-
-              {/* SEARCH WRITERS */}
-              <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
-                <div className="relative max-w-sm">
-                  <input
-                    type="text"
-                    placeholder="Search writer by name or role..."
-                    value={writerSearch}
-                    onChange={(e) => setWriterSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#165c61]"
-                  />
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              {/* WRITERS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredWriters.map((writer) => (
-                  <div key={writer.id} className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={writer.avatar}
-                            alt={writer.name}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-teal-600"
-                          />
-                          <div>
-                            <h3 className="font-bold text-black text-sm">{writer.name}</h3>
-                            <p className="text-[11px] text-[#165c61] font-bold mt-0.5">{writer.role}</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded border border-emerald-200">
-                          {writer.status}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-zinc-600 font-normal leading-relaxed line-clamp-3 mb-4">
-                        {writer.bio}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] font-bold text-zinc-500">
-                        Published Articles: <span className="text-black font-extrabold">{writer.articlesCount}</span>
-                      </span>
-                      <button
-                        onClick={() => handleDeleteWriter(writer.id, writer.name)}
-                        className="text-rose-600 hover:text-rose-800 text-[11px] font-bold cursor-pointer"
-                      >
-                        Remove Writer
-                      </button>
-                    </div>
+          {/* TAB 6: ANALYTICS & AD REVENUE */}
+          {activeTab === "analytics" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-900 font-serif">Traffic Telemetry & Ad Revenue Insights</h2>
+                    <p className="text-xs text-zinc-500">Monthly reader impressions, CPM breakdowns, and category engagement metrics.</p>
                   </div>
-                ))}
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    Revenue Trend ↑ 18.4%
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-zinc-50 p-5 rounded-xl border border-zinc-200">
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase">Average CPM</p>
+                    <p className="text-2xl font-extrabold text-zinc-900 mt-1">$24.50</p>
+                    <p className="text-[10px] text-zinc-400 mt-1">Per 1,000 Verified Reader Views</p>
+                  </div>
+
+                  <div className="bg-zinc-50 p-5 rounded-xl border border-zinc-200">
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase">Top Performing Category</p>
+                    <p className="text-2xl font-extrabold text-[#BF1E2D] mt-1">Business & Tech</p>
+                    <p className="text-[10px] text-zinc-400 mt-1">42% of total readership traffic</p>
+                  </div>
+
+                  <div className="bg-zinc-50 p-5 rounded-xl border border-zinc-200">
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase">Active Sponsor Slots</p>
+                    <p className="text-2xl font-extrabold text-blue-600 mt-1">8 / 8 Active</p>
+                    <p className="text-[10px] text-zinc-400 mt-1">100% Sponsorship Inventory Filled</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: READERS & USERS */}
-          {activeTab === "readers" && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                <div>
-                  <h1 className="text-2xl font-bold text-black tracking-tight flex items-center gap-2">
-                    <BookOpen className="w-6 h-6 text-blue-600" />
-                    Readers & Registered Members
-                  </h1>
-                  <p className="text-xs text-zinc-500 font-medium mt-1">
-                    Manage active readers, newsletter subscribers, and enterprise users.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => showNotification("Exporting reader records CSV...")}
-                    className="inline-flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold px-3 py-2.5 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Export CSV
-                  </button>
-                  <button
-                    onClick={() => setIsReaderModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm uppercase tracking-wider"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Add Reader
-                  </button>
-                </div>
-              </div>
-
-              {/* SEARCH READERS */}
-              <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
-                <div className="relative max-w-sm">
-                  <input
-                    type="text"
-                    placeholder="Search readers by name, email, or company..."
-                    value={readerSearch}
-                    onChange={(e) => setReaderSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-600"
-                  />
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              {/* READERS TABLE */}
-              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-zinc-900 text-white font-bold uppercase tracking-wider">
-                      <th className="p-4">Reader Name & Email</th>
-                      <th className="p-4">Membership Type</th>
-                      <th className="p-4">Organization / Company</th>
-                      <th className="p-4">Joined Date</th>
-                      <th className="p-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {filteredReaders.map((reader) => (
-                      <tr key={reader.id} className="hover:bg-zinc-50 transition-colors">
-                        <td className="p-4">
-                          <p className="font-bold text-black">{reader.name}</p>
-                          <p className="text-[11px] text-zinc-400">{reader.email}</p>
-                        </td>
-                        <td className="p-4">
-                          <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            reader.membershipType === "VIP Member"
-                              ? "bg-purple-100 text-purple-800 border border-purple-200"
-                              : reader.membershipType === "Subscriber"
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "bg-zinc-100 text-zinc-700"
-                          }`}>
-                            {reader.membershipType}
-                          </span>
-                        </td>
-                        <td className="p-4 font-medium text-zinc-600">{reader.company || "Independent"}</td>
-                        <td className="p-4 text-zinc-400 font-medium">{reader.joinedDate}</td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => handleDeleteReader(reader.id, reader.email)}
-                            className="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SYSTEM SETTINGS */}
+          {/* TAB 7: SITE SETTINGS & TICKER */}
           {activeTab === "settings" && (
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-                <h1 className="text-2xl font-bold text-black tracking-tight">System Settings & Configuration</h1>
-                <p className="text-xs text-zinc-500 font-medium mt-1">
-                  Manage application configuration, security parameters, and maintenance preferences.
-                </p>
-              </div>
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-zinc-900 font-serif mb-6 pb-3 border-b border-zinc-200">
+                  Global Site Configuration & Announcement Manager
+                </h2>
 
-              <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold text-black uppercase tracking-wider mb-3">General Preferences</h3>
-                  <div className="space-y-4 max-w-xl">
-                    <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-200">
-                      <div>
-                        <p className="text-xs font-bold text-black">Maintenance Mode</p>
-                        <p className="text-[11px] text-zinc-400">Display maintenance banner to non-admin visitors</p>
-                      </div>
-                      <input type="checkbox" className="w-4 h-4 accent-[#BF1E2D] cursor-pointer" />
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-200">
-                      <div>
-                        <p className="text-xs font-bold text-black">Email Dispatch Notifications</p>
-                        <p className="text-[11px] text-zinc-400">Send sign-in alerts via Nodemailer</p>
-                      </div>
-                      <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#BF1E2D] cursor-pointer" />
-                    </div>
+                <form onSubmit={handleSaveTicker} className="space-y-6 max-w-2xl">
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                      LIVE BREAKING NEWS TICKER BANNER
+                    </label>
+                    <input
+                      type="text"
+                      value={breakingNewsText}
+                      onChange={(e) => setBreakingNewsText(e.target.value)}
+                      className="w-full px-4 py-3 bg-zinc-50 border border-zinc-300 rounded-lg text-sm text-zinc-900 focus:outline-none focus:border-red-600 font-bold"
+                    />
+                    <p className="text-[11px] text-zinc-400 mt-1">This message broadcasts across the website top announcement bar.</p>
                   </div>
-                </div>
 
-                <div className="pt-4 border-t border-zinc-100">
-                  <h3 className="text-sm font-bold text-black uppercase tracking-wider mb-3">Database Connection Details</h3>
-                  <div className="bg-zinc-900 text-zinc-200 p-4 rounded-lg font-mono text-xs space-y-1">
-                    <p><span className="text-zinc-500">HOST:</span> localhost (3306)</p>
-                    <p><span className="text-zinc-500">DATABASE:</span> digital_journal_db</p>
-                    <p><span className="text-zinc-500">POOL LIMIT:</span> 10 active connections</p>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3 px-6 rounded-lg uppercase tracking-wider cursor-pointer shadow-sm"
+                    >
+                      Update Live Announcement Ticker
+                    </button>
                   </div>
-                </div>
+                </form>
               </div>
             </div>
           )}
 
         </main>
+
       </div>
 
-      {/* CREATE ARTICLE MODAL */}
+      {/* CREATE / EDIT ARTICLE MODAL */}
       {isArticleModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-2xl w-full max-w-xl overflow-hidden font-standard-sans animate-fade-in">
-            <div className="bg-zinc-900 text-white p-4 flex items-center justify-between border-b border-zinc-800">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <Plus className="w-4 h-4 text-[#BF1E2D]" />
-                Publish New Journal Article
-              </div>
-              <button
-                onClick={() => setIsArticleModalOpen(false)}
-                className="text-zinc-400 hover:text-white cursor-pointer font-bold text-sm"
-              >
-                ✕
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setIsArticleModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer"
+            >
+              ✕
+            </button>
 
-            <form onSubmit={handleCreateArticle} className="p-6 space-y-4">
+            <h3 className="text-lg font-bold font-serif text-zinc-900 mb-4">
+              {editingArticle ? "Edit Article" : "Create New Article Story"}
+            </h3>
+
+            <form onSubmit={handleCreateOrUpdateArticle} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Article Title *
-                </label>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">ARTICLE TITLE *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Next-Generation Microprocessor Architectures Unveiled"
+                  required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF1E2D]"
-                  required
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none"
+                  placeholder="Enter story title..."
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                    Category
-                  </label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:border-[#BF1E2D]"
-                  >
-                    <option value="Technology">Technology</option>
-                    <option value="Business">Business</option>
-                    <option value="Industry Insights">Industry Insights</option>
-                    <option value="News">News</option>
-                    <option value="Innovation">Innovation</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                    Writer / Author
-                  </label>
-                  <select
-                    value={newAuthor}
-                    onChange={(e) => setNewAuthor(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:border-[#BF1E2D]"
-                  >
-                    {writers.map(w => (
-                      <option key={w.id} value={w.name}>{w.name}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Summary / Lead Description
-                </label>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">CATEGORY</label>
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none bg-white"
+                >
+                  <option value="News">News</option>
+                  <option value="Business">Business</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Innovation">Innovation</option>
+                  <option value="Industry Insights">Industry Insights</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">SUMMARY / EXCERPT</label>
                 <textarea
                   rows={3}
-                  placeholder="Enter a brief summary of the article..."
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF1E2D]"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none"
+                  placeholder="Concise 2-line summary..."
                 />
               </div>
 
-              <div className="flex items-center gap-6 pt-2">
+              <div className="flex items-center gap-4 pt-2">
                 <label className="flex items-center gap-2 text-xs font-bold text-zinc-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isFeatured}
                     onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="w-4 h-4 accent-[#BF1E2D]"
+                    className="rounded border-zinc-300 text-red-600"
                   />
-                  Mark as Featured Article
+                  Feature on Hero Banner
                 </label>
 
                 <label className="flex items-center gap-2 text-xs font-bold text-zinc-700 cursor-pointer">
@@ -1314,25 +1562,25 @@ export default function AdminDashboardPage() {
                     type="checkbox"
                     checked={isEditorsPick}
                     onChange={(e) => setIsEditorsPick(e.target.checked)}
-                    className="w-4 h-4 accent-[#BF1E2D]"
+                    className="rounded border-zinc-300 text-red-600"
                   />
                   Mark as Editor's Pick
                 </label>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+              <div className="pt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsArticleModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
+                  className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold rounded cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors uppercase tracking-wider cursor-pointer shadow-sm"
+                  className="px-5 py-2 bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold rounded cursor-pointer"
                 >
-                  Publish Article
+                  {editingArticle ? "Update Story" : "Publish Article"}
                 </button>
               </div>
             </form>
@@ -1342,80 +1590,35 @@ export default function AdminDashboardPage() {
 
       {/* ADD WRITER MODAL */}
       {isWriterModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-2xl w-full max-w-md overflow-hidden font-standard-sans animate-fade-in">
-            <div className="bg-[#165c61] text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <UserPlus className="w-4 h-4" />
-                Add New Editorial Writer
-              </div>
-              <button
-                onClick={() => setIsWriterModalOpen(false)}
-                className="text-white/80 hover:text-white cursor-pointer font-bold text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddWriter} className="p-6 space-y-4">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onClick={() => setIsWriterModalOpen(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold">✕</button>
+            <h3 className="text-lg font-bold font-serif text-zinc-900 mb-4">Add Staff Journalist</h3>
+            <form onSubmit={handleAddWriter} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Writer Full Name *
-                </label>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">WRITER FULL NAME *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Sarah Jenkins"
+                  required
                   value={newWriterName}
                   onChange={(e) => setNewWriterName(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#165c61]"
-                  required
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900"
+                  placeholder="e.g. Sarah Jenkins"
                 />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Editorial Role / Title *
-                </label>
-                <select
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">DESK ROLE & TITLE</label>
+                <input
+                  type="text"
                   value={newWriterRole}
                   onChange={(e) => setNewWriterRole(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:border-[#165c61]"
-                >
-                  <option value="Senior Reporter">Senior Reporter</option>
-                  <option value="Associate Editor">Associate Editor</option>
-                  <option value="Executive Editor">Executive Editor</option>
-                  <option value="Tech Analyst">Tech Analyst</option>
-                  <option value="Guest Columnist">Guest Columnist</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Writer Bio
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Short bio covering reporting focus and background..."
-                  value={newWriterBio}
-                  onChange={(e) => setNewWriterBio(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#165c61]"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900"
+                  placeholder="e.g. Senior Tech Correspondent"
                 />
               </div>
-
-              <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-100">
-                <button
-                  type="button"
-                  onClick={() => setIsWriterModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-[#165c61] hover:bg-teal-800 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors uppercase tracking-wider cursor-pointer shadow-sm"
-                >
-                  Add Writer
-                </button>
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsWriterModalOpen(false)} className="px-4 py-2 bg-zinc-200 text-xs font-bold rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2 bg-zinc-900 text-white text-xs font-bold rounded">Add Journalist</button>
               </div>
             </form>
           </div>
@@ -1424,93 +1627,74 @@ export default function AdminDashboardPage() {
 
       {/* ADD READER MODAL */}
       {isReaderModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-2xl w-full max-w-md overflow-hidden font-standard-sans animate-fade-in">
-            <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <BookOpen className="w-4 h-4" />
-                Register New Reader Account
-              </div>
-              <button
-                onClick={() => setIsReaderModalOpen(false)}
-                className="text-white/80 hover:text-white cursor-pointer font-bold text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddReader} className="p-6 space-y-4">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onClick={() => setIsReaderModalOpen(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold">✕</button>
+            <h3 className="text-lg font-bold font-serif text-zinc-900 mb-4">Add Subscriber Record</h3>
+            <form onSubmit={handleAddReader} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Reader Email Address *
-                </label>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">EMAIL ADDRESS *</label>
                 <input
                   type="email"
-                  placeholder="reader@example.com"
+                  required
                   value={newReaderEmail}
                   onChange={(e) => setNewReaderEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-600"
-                  required
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900"
+                  placeholder="reader@company.com"
                 />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Alex Morgan"
-                  value={newReaderName}
-                  onChange={(e) => setNewReaderName(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Membership Type
-                </label>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">MEMBERSHIP TIER</label>
                 <select
                   value={newReaderMembership}
                   onChange={(e) => setNewReaderMembership(e.target.value as any)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:border-blue-600"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 bg-white"
                 >
-                  <option value="Subscriber">Subscriber (Newsletter)</option>
-                  <option value="Registered Reader">Registered Reader</option>
+                  <option value="Subscriber">Subscriber</option>
                   <option value="VIP Member">VIP Member</option>
+                  <option value="Registered Reader">Registered Reader</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wide mb-1.5">
-                  Company / Organization
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Enterprise Corp"
-                  value={newReaderCompany}
-                  onChange={(e) => setNewReaderCompany(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:border-blue-600"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-100">
-                <button
-                  type="button"
-                  onClick={() => setIsReaderModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors uppercase tracking-wider cursor-pointer shadow-sm"
-                >
-                  Register Reader
-                </button>
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsReaderModalOpen(false)} className="px-4 py-2 bg-zinc-200 text-xs font-bold rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2 bg-emerald-700 text-white text-xs font-bold rounded">Add Subscriber</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ARTICLE PREVIEW MODAL */}
+      {previewModalArticle && (
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 font-standard-sans">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setPreviewModalArticle(null)} className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold">✕</button>
+            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded uppercase">
+              {'category_name' in previewModalArticle ? previewModalArticle.category_name : (previewModalArticle as SubmittedDraft).category}
+            </span>
+            <h2 className="text-2xl font-bold font-serif text-black mt-2 leading-tight">
+              {previewModalArticle.title}
+            </h2>
+            <p className="text-xs text-zinc-500 mt-2">
+              By <span className="font-semibold text-black">{'author_name' in previewModalArticle ? previewModalArticle.author_name : 'Jennifer Friesen'}</span>
+            </p>
+
+            <div className="mt-4 pt-4 border-t border-zinc-200 text-sm text-zinc-800 leading-relaxed font-sans">
+              <p className="font-bold text-zinc-700 italic bg-zinc-50 p-3 rounded border-l-4 border-[#BF1E2D] mb-4">
+                {'description' in previewModalArticle ? previewModalArticle.description : (previewModalArticle as SubmittedDraft).summary}
+              </p>
+              {'content' in previewModalArticle && (previewModalArticle as SubmittedDraft).content ? (
+                <p>{(previewModalArticle as SubmittedDraft).content}</p>
+              ) : (
+                <p>Full article publication text rendered on live page route.</p>
+              )}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-zinc-200 flex justify-end">
+              <button onClick={() => setPreviewModalArticle(null)} className="bg-zinc-900 text-white text-xs font-bold px-4 py-2 rounded">
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
