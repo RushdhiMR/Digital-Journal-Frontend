@@ -62,6 +62,7 @@ interface Writer {
   bio: string;
   status: "Active" | "On Leave" | "Deactivated";
   email?: string;
+  password?: string;
 }
 
 interface Reader {
@@ -334,6 +335,8 @@ export default function AdminDashboardPage() {
 
   // New Writer Form
   const [newWriterName, setNewWriterName] = useState("");
+  const [newWriterEmail, setNewWriterEmail] = useState("");
+  const [newWriterPassword, setNewWriterPassword] = useState("");
   const [newWriterRole, setNewWriterRole] = useState("Senior Reporter");
   const [newWriterBio, setNewWriterBio] = useState("");
 
@@ -616,27 +619,56 @@ export default function AdminDashboardPage() {
   // Writer Actions
   const handleAddWriter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWriterName.trim()) return;
+    if (!newWriterName.trim() || !newWriterEmail.trim() || !newWriterPassword.trim()) return;
+
+    const email = newWriterEmail.trim().toLowerCase();
+    const pass = newWriterPassword.trim();
 
     const newW: Writer = {
       id: Date.now(),
       name: newWriterName.trim(),
-      role: newWriterRole,
+      role: newWriterRole || "Senior Reporter",
       articlesCount: 0,
       avatar: "/author_woman.jpg",
       bio: newWriterBio || `${newWriterName} is an accredited journalist for Digital Journal.`,
       status: "Active",
-      email: `${newWriterName.toLowerCase().replace(/\s+/g, '.')}@digitaljournal.com`
+      email: email,
+      password: pass
     };
 
     const updatedList = [newW, ...writers];
     setWriters(updatedList);
     localStorage.setItem("dj_writers_list", JSON.stringify(updatedList));
+
+    // Register account in dj_registered_users so writer can log in immediately on /login
+    try {
+      const regStr = localStorage.getItem("dj_registered_users");
+      let regList: any[] = regStr ? JSON.parse(regStr) : [];
+      const existingIdx = regList.findIndex(u => u.email && u.email.toLowerCase() === email);
+      const userRecord = {
+        name: newWriterName.trim(),
+        email: email,
+        password: pass,
+        role: "Writer",
+        registeredAt: new Date().toISOString()
+      };
+      if (existingIdx >= 0) {
+        regList[existingIdx] = userRecord;
+      } else {
+        regList.push(userRecord);
+      }
+      localStorage.setItem("dj_registered_users", JSON.stringify(regList));
+    } catch (err) {
+      console.warn("Could not save to registered users list:", err);
+    }
+
     setStats(prev => ({ ...prev, totalAuthors: prev.totalAuthors + 1 }));
     setIsWriterModalOpen(false);
     setNewWriterName("");
+    setNewWriterEmail("");
+    setNewWriterPassword("");
     setNewWriterBio("");
-    showNotification(`New writer "${newW.name}" added with publishing access!`);
+    showNotification(`✓ New staff journalist "${newW.name}" account created with assigned password!`);
   };
 
   const handleToggleWriterStatus = (id: number, name: string) => {
@@ -1927,9 +1959,9 @@ export default function AdminDashboardPage() {
       {/* ADD WRITER MODAL */}
       {isWriterModalOpen && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onClick={() => setIsWriterModalOpen(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold">✕</button>
-            <h3 className="text-lg font-bold font-serif text-zinc-900 mb-4">Add Staff Journalist</h3>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative font-sans">
+            <button onClick={() => setIsWriterModalOpen(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer">✕</button>
+            <h3 className="text-lg font-bold font-serif text-zinc-900 mb-4">Add Staff Journalist Account</h3>
             <form onSubmit={handleAddWriter} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">WRITER FULL NAME *</label>
@@ -1938,17 +1970,42 @@ export default function AdminDashboardPage() {
                   required
                   value={newWriterName}
                   onChange={(e) => setNewWriterName(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 font-medium focus:outline-none focus:border-red-600"
                   placeholder="e.g. Sarah Jenkins"
                 />
               </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">WRITER EMAIL ADDRESS *</label>
+                <input
+                  type="email"
+                  required
+                  value={newWriterEmail}
+                  onChange={(e) => setNewWriterEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 font-medium focus:outline-none focus:border-red-600"
+                  placeholder="e.g. sarah.jenkins@digitaljournal.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">ASSIGN INITIAL PASSWORD *</label>
+                <input
+                  type="password"
+                  required
+                  value={newWriterPassword}
+                  onChange={(e) => setNewWriterPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 font-medium focus:outline-none focus:border-red-600"
+                  placeholder="e.g. writer123"
+                />
+              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-zinc-700 uppercase mb-1">DESK ROLE & TITLE</label>
                 <input
                   type="text"
                   value={newWriterRole}
                   onChange={(e) => setNewWriterRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 font-medium focus:outline-none"
                   placeholder="e.g. Senior Tech Correspondent"
                 />
               </div>

@@ -53,8 +53,88 @@ export default function WriterStudioPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Profile & Password Settings state
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [profileMsg, setProfileMsg] = useState("");
+  const [profileError, setProfileError] = useState("");
+
   // Preview Modal state
   const [previewArticle, setPreviewArticle] = useState<DraftArticle | null>(null);
+
+  const handleUpdateWriterPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileMsg("");
+    setProfileError("");
+
+    if (newPasswordInput !== confirmPasswordInput) {
+      setProfileError("❌ New password and confirmation do not match!");
+      return;
+    }
+
+    if (newPasswordInput.length < 4) {
+      setProfileError("❌ New password must be at least 4 characters long.");
+      return;
+    }
+
+    const email = currentUser?.email?.toLowerCase();
+    if (!email) {
+      setProfileError("❌ No active user email found.");
+      return;
+    }
+
+    try {
+      // 1. Update in dj_writers_list
+      const writersListStr = localStorage.getItem("dj_writers_list");
+      let wList: any[] = writersListStr ? JSON.parse(writersListStr) : [];
+      let foundInWriterList = false;
+      wList = wList.map(w => {
+        if (w.email && w.email.toLowerCase() === email) {
+          foundInWriterList = true;
+          return { ...w, password: newPasswordInput };
+        }
+        return w;
+      });
+      if (!foundInWriterList) {
+        wList.push({
+          id: Date.now(),
+          name: currentUser?.name || "Writer",
+          email: email,
+          password: newPasswordInput,
+          role: "Staff Journalist",
+          status: "Active"
+        });
+      }
+      localStorage.setItem("dj_writers_list", JSON.stringify(wList));
+
+      // 2. Update in dj_registered_users
+      const regStr = localStorage.getItem("dj_registered_users");
+      let regList: any[] = regStr ? JSON.parse(regStr) : [];
+      const regIdx = regList.findIndex(u => u.email && u.email.toLowerCase() === email);
+      if (regIdx >= 0) {
+        regList[regIdx] = { ...regList[regIdx], password: newPasswordInput };
+      } else {
+        regList.push({
+          name: currentUser?.name || "Writer",
+          email: email,
+          password: newPasswordInput,
+          role: "Writer",
+          registeredAt: new Date().toISOString()
+        });
+      }
+      localStorage.setItem("dj_registered_users", JSON.stringify(regList));
+
+      setProfileMsg("🎉 Account password updated successfully! Next time sign in with your new password.");
+      setCurrentPasswordInput("");
+      setNewPasswordInput("");
+      setConfirmPasswordInput("");
+    } catch (err) {
+      console.error(err);
+      setProfileError("❌ Failed to update password. Please try again.");
+    }
+  };
 
   const [drafts, setDrafts] = useState<DraftArticle[]>([
     {
@@ -333,17 +413,24 @@ export default function WriterStudioPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+            <button
+              type="button"
+              onClick={() => setIsProfileSettingsOpen(true)}
+              className="flex-1 md:flex-none text-center bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <span>⚙</span> Password Settings
+            </button>
             {(currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
               <Link
                 href="/admin"
-                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer"
               >
                 Admin Dashboard
               </Link>
             )}
             <Link
               href="/reader"
-              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer"
             >
               Reader Hub
             </Link>
@@ -630,6 +717,106 @@ export default function WriterStudioPage() {
                 Close Preview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* WRITER PROFILE & PASSWORD SETTINGS MODAL */}
+      {isProfileSettingsOpen && (
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative font-sans">
+            <button
+              onClick={() => {
+                setIsProfileSettingsOpen(false);
+                setProfileMsg("");
+                setProfileError("");
+              }}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">⚙</span>
+              <h3 className="text-lg font-bold font-serif text-zinc-900">
+                Writer Password & Account Settings
+              </h3>
+            </div>
+
+            {profileMsg && (
+              <div className="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold p-3 rounded text-center">
+                {profileMsg}
+              </div>
+            )}
+
+            {profileError && (
+              <div className="mb-4 bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold p-3 rounded text-center">
+                {profileError}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateWriterPassword} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                  ASSIGNED WRITER EMAIL ADDRESS
+                </label>
+                <input
+                  type="email"
+                  disabled
+                  value={currentUser?.email || "writer@digitaljournal.com"}
+                  className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 rounded text-xs text-zinc-600 font-semibold cursor-not-allowed"
+                />
+                <p className="text-[10px] text-zinc-400 mt-1">Email address assigned by Main Admin for staff credentials.</p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                  SET NEW PASSWORD *
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter new password (min. 4 characters)"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                  CONFIRM NEW PASSWORD *
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Re-enter new password to confirm"
+                  value={confirmPasswordInput}
+                  onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
+                />
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileSettingsOpen(false);
+                    setProfileMsg("");
+                    setProfileError("");
+                  }}
+                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold bg-[#BF1E2D] hover:bg-red-800 text-white rounded-lg cursor-pointer shadow"
+                >
+                  Update My Password
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

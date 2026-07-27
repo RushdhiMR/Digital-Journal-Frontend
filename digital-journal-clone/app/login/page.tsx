@@ -140,9 +140,29 @@ export default function LoginPage() {
       }
       authenticatedAccount = { name: acc.name, email: lowerEmail.includes("@") ? lowerEmail : `${lowerEmail}@digitaljournal.com`, role: acc.role };
     } else {
+      // Check writers list created by Admin
+      const writersListStr = localStorage.getItem("dj_writers_list");
+      let matchedWriter: any = null;
+      if (writersListStr) {
+        try {
+          const wList: any[] = JSON.parse(writersListStr);
+          matchedWriter = wList.find((w: any) => w.email && w.email.toLowerCase() === lowerEmail);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
       // Check registered users list
       const matchedUser = registeredUsers.find((u: any) => u.email && u.email.toLowerCase() === lowerEmail);
-      if (matchedUser) {
+
+      if (matchedWriter) {
+        if (matchedWriter.password && matchedWriter.password !== lowerPass) {
+          setErrorMessage(`❌ Access Denied: Incorrect password entered for Writer account '${lowerEmail}'.`);
+          setIsSubmitting(false);
+          return;
+        }
+        authenticatedAccount = { name: matchedWriter.name, email: lowerEmail, role: "Writer" };
+      } else if (matchedUser) {
         if (matchedUser.password && matchedUser.password !== lowerPass) {
           setErrorMessage(`❌ Access Denied: Incorrect password entered for '${lowerEmail}'.`);
           setIsSubmitting(false);
