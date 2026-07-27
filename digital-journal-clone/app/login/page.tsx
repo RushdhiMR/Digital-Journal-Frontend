@@ -168,7 +168,7 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
-        const userRole = matchedUser.role || (lowerEmail.includes("coadmin") ? "Co-Admin" : lowerEmail.includes("writer") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
+        const userRole = matchedUser.role || (lowerEmail.includes("coadmin") ? "Co-Admin" : lowerEmail.includes("writer") || lowerEmail.endsWith("@digitaljournal.com") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
         authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: userRole };
       } else if (lowerEmail.includes("coadmin")) {
         const validCoAdminPasswords = ["coadmin", "coadmin123", "coadmin2026"];
@@ -178,18 +178,30 @@ export default function LoginPage() {
           return;
         }
         authenticatedAccount = { name: "Operations Co-Admin", email: lowerEmail, role: "Co-Admin" };
-      } else if (lowerEmail.includes("writer")) {
-        // Explicit Writer email match check
-        const validWriterPasswords = ["writer", "writer123", "writer2026"];
-        if (!validWriterPasswords.includes(lowerPass)) {
-          setErrorMessage(`❌ Access Denied: Incorrect password for Writer account '${lowerEmail}'.`);
+      } else if (lowerEmail.includes("writer") || lowerEmail.endsWith("@digitaljournal.com") || lowerEmail.includes("journal")) {
+        // Universal Writer / Staff Journalist authentication across all devices!
+        if (lowerPass.length < 3) {
+          setErrorMessage(`❌ Access Denied: Please enter your password for account '${lowerEmail}'.`);
           setIsSubmitting(false);
           return;
         }
-        authenticatedAccount = { name: "Jennifer Friesen", email: lowerEmail, role: "Writer" };
+        const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
+        const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
+        authenticatedAccount = { name: formattedName || "Staff Journalist", email: lowerEmail, role: "Writer" };
+      } else if (lowerEmail.includes("@")) {
+        // Universal user email authentication for any valid email
+        if (lowerPass.length < 3) {
+          setErrorMessage(`❌ Access Denied: Please enter your password for account '${lowerEmail}'.`);
+          setIsSubmitting(false);
+          return;
+        }
+        const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
+        const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
+        const userRole = lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader";
+        authenticatedAccount = { name: formattedName || "Reader", email: lowerEmail, role: userRole };
       } else {
-        // STRICT CHECK: Reject unrecognized / wrong email addresses!
-        setErrorMessage(`❌ Access Denied: Unrecognized email '${lowerEmail}'. Account does not exist. Please check email or register.`);
+        // STRICT CHECK: Reject invalid / blank email formats
+        setErrorMessage(`❌ Access Denied: Invalid email format '${lowerEmail}'. Please enter a valid email address.`);
         setIsSubmitting(false);
         return;
       }
@@ -210,6 +222,24 @@ export default function LoginPage() {
         }
       } catch (e) {
         console.warn("Could not check Co-Admin status:", e);
+      }
+    }
+
+    // CHECK IF WRITER ACCOUNT IS DEACTIVATED OR SUSPENDED BY MAIN ADMIN
+    if (authenticatedAccount && authenticatedAccount.role === "Writer") {
+      try {
+        const wListStr = localStorage.getItem("dj_writers_list");
+        if (wListStr) {
+          const wList: any[] = JSON.parse(wListStr);
+          const wEntry = wList.find((w: any) => w.email && w.email.toLowerCase() === authenticatedAccount!.email.toLowerCase());
+          if (wEntry && wEntry.status === "Deactivated") {
+            setErrorMessage(`❌ Access Denied: Your Writer account '${authenticatedAccount.email}' has been deactivated by the Main Admin. Contact Main Admin to activate access.`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not check Writer status:", e);
       }
     }
 
@@ -250,6 +280,26 @@ export default function LoginPage() {
     }
     if (authenticatedAccount.role === "Writer") {
       localStorage.setItem("dj_writer_user", JSON.stringify(authenticatedAccount));
+      try {
+        const writersListStr = localStorage.getItem("dj_writers_list");
+        let wList: any[] = writersListStr ? JSON.parse(writersListStr) : [];
+        if (!wList.some((w: any) => w.email && w.email.toLowerCase() === authenticatedAccount!.email.toLowerCase())) {
+          wList.push({
+            id: Date.now(),
+            name: authenticatedAccount.name,
+            email: authenticatedAccount.email,
+            password: password.trim(),
+            role: "Staff Journalist",
+            articlesCount: 0,
+            avatar: "/author_woman.jpg",
+            bio: `${authenticatedAccount.name} is an accredited staff journalist for Digital Journal.`,
+            status: "Active"
+          });
+          localStorage.setItem("dj_writers_list", JSON.stringify(wList));
+        }
+      } catch (e) {
+        console.warn(e);
+      }
     }
     localStorage.setItem("dj_toast", `Welcome back, ${authenticatedAccount.name}! Signed in as ${authenticatedAccount.role}.`);
 
