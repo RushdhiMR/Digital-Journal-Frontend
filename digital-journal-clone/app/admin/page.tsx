@@ -334,7 +334,7 @@ export default function AdminDashboardPage() {
         currentUser = JSON.parse(savedAdmin);
       } else if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        if (parsed.role === "Admin" || parsed.role === "admin") {
+        if (parsed.role === "Admin" || parsed.role === "admin" || parsed.role === "Co-Admin" || parsed.role === "coadmin") {
           currentUser = parsed;
         }
       }
@@ -351,8 +351,8 @@ export default function AdminDashboardPage() {
         setBreakingNewsText(savedTicker);
       }
 
-      // Strict session verification: require active Admin role
-      if (currentUser && (currentUser.role === "Admin" || currentUser.role === "admin")) {
+      // Session verification: require active Admin or Co-Admin role
+      if (currentUser && (currentUser.role === "Admin" || currentUser.role === "admin" || currentUser.role === "Co-Admin" || currentUser.role === "coadmin")) {
         setAdminUser(currentUser);
         setIsAuthenticated(true);
         fetchDashboardData();
@@ -370,8 +370,11 @@ export default function AdminDashboardPage() {
   const handleUnlockAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     setLockError("");
+    const pass = lockPasscode.trim();
     const validAdminPasswords = ["admin", "admin123", "Admin@123", "admin2026", "secret"];
-    if (validAdminPasswords.includes(lockPasscode.trim())) {
+    const validCoAdminPasswords = ["coadmin", "coadmin123", "coadmin2026"];
+
+    if (validAdminPasswords.includes(pass)) {
       const adminAcc = {
         name: "System Admin",
         email: "admin@digitaljournal.com",
@@ -382,8 +385,19 @@ export default function AdminDashboardPage() {
       setAdminUser(adminAcc);
       setIsAuthenticated(true);
       fetchDashboardData();
+    } else if (validCoAdminPasswords.includes(pass)) {
+      const coAdminAcc = {
+        name: "Operations Co-Admin",
+        email: "coadmin@digitaljournal.com",
+        role: "Co-Admin"
+      };
+      localStorage.setItem("dj_user", JSON.stringify(coAdminAcc));
+      localStorage.setItem("dj_admin_user", JSON.stringify(coAdminAcc));
+      setAdminUser(coAdminAcc);
+      setIsAuthenticated(true);
+      fetchDashboardData();
     } else {
-      setLockError("❌ Access Denied: Incorrect Admin Passcode!");
+      setLockError("❌ Access Denied: Incorrect Admin or Co-Admin Passcode!");
     }
   };
 
@@ -678,16 +692,29 @@ export default function AdminDashboardPage() {
             Access requires an authenticated Administrator session. Enter passcode below to unlock.
           </p>
 
-          {/* DEFAULT ADMIN ACCOUNT CREDS INFO BOX */}
-          <div className="mb-6 p-3.5 bg-zinc-950 border border-zinc-800 rounded-lg text-left text-xs space-y-1 font-mono">
-            <div className="flex items-center justify-between text-amber-400 font-bold text-[11px] font-sans uppercase mb-1">
-              <span>🛡️ DEFAULT ADMIN ACCOUNT</span>
-              <span className="bg-amber-950/80 text-amber-300 text-[9px] px-1.5 py-0.5 rounded border border-amber-800">
-                SYSTEM DEFAULT
-              </span>
+          {/* DEFAULT ADMIN & CO-ADMIN ACCOUNTS INFO BOX */}
+          <div className="mb-6 p-3.5 bg-zinc-950 border border-zinc-800 rounded-lg text-left text-xs space-y-2 font-mono">
+            <div className="border-b border-zinc-800 pb-2">
+              <div className="flex items-center justify-between text-amber-400 font-bold text-[11px] font-sans uppercase mb-1">
+                <span>🛡️ SUPER ADMIN ACCOUNT</span>
+                <span className="bg-amber-950/80 text-amber-300 text-[9px] px-1.5 py-0.5 rounded border border-amber-800">
+                  FULL ACCESS
+                </span>
+              </div>
+              <p className="text-zinc-300"><span className="text-zinc-500">Email:</span> admin@digitaljournal.com</p>
+              <p className="text-zinc-300"><span className="text-zinc-500">Passcode:</span> admin123 <span className="text-zinc-500">(or admin)</span></p>
             </div>
-            <p className="text-zinc-300"><span className="text-zinc-500">Email:</span> admin@digitaljournal.com</p>
-            <p className="text-zinc-300"><span className="text-zinc-500">Passcode:</span> admin123 <span className="text-zinc-500">(or admin)</span></p>
+
+            <div className="pt-1">
+              <div className="flex items-center justify-between text-blue-400 font-bold text-[11px] font-sans uppercase mb-1">
+                <span>👥 CO-ADMIN ACCOUNT</span>
+                <span className="bg-blue-950/80 text-blue-300 text-[9px] px-1.5 py-0.5 rounded border border-blue-800">
+                  OPERATIONAL CONTROL
+                </span>
+              </div>
+              <p className="text-zinc-300"><span className="text-zinc-500">Email:</span> coadmin@digitaljournal.com</p>
+              <p className="text-zinc-300"><span className="text-zinc-500">Passcode:</span> coadmin123 <span className="text-zinc-500">(or coadmin)</span></p>
+            </div>
           </div>
 
           {lockError && (
@@ -704,7 +731,7 @@ export default function AdminDashboardPage() {
               <input
                 type="password"
                 required
-                placeholder="Enter Admin Passcode (e.g. admin123)"
+                placeholder="Enter Admin or Co-Admin Passcode"
                 value={lockPasscode}
                 onChange={(e) => setLockPasscode(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
@@ -719,25 +746,47 @@ export default function AdminDashboardPage() {
               VERIFY & UNLOCK DASHBOARD
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setLockPasscode("admin123");
-                const adminAcc = {
-                  name: "System Admin",
-                  email: "admin@digitaljournal.com",
-                  role: "Admin"
-                };
-                localStorage.setItem("dj_user", JSON.stringify(adminAcc));
-                localStorage.setItem("dj_admin_user", JSON.stringify(adminAcc));
-                setAdminUser(adminAcc);
-                setIsAuthenticated(true);
-                fetchDashboardData();
-              }}
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold py-2.5 rounded transition-all cursor-pointer border border-zinc-700 mt-2 flex items-center justify-center gap-2"
-            >
-              ⚡ 1-Click Unlock with Default Admin Account
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setLockPasscode("admin123");
+                  const adminAcc = {
+                    name: "System Admin",
+                    email: "admin@digitaljournal.com",
+                    role: "Admin"
+                  };
+                  localStorage.setItem("dj_user", JSON.stringify(adminAcc));
+                  localStorage.setItem("dj_admin_user", JSON.stringify(adminAcc));
+                  setAdminUser(adminAcc);
+                  setIsAuthenticated(true);
+                  fetchDashboardData();
+                }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-amber-300 text-[11px] font-bold py-2.5 px-2 rounded transition-all cursor-pointer border border-zinc-700 text-center"
+              >
+                ⚡ 1-Click Super Admin
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLockPasscode("coadmin123");
+                  const coAdminAcc = {
+                    name: "Operations Co-Admin",
+                    email: "coadmin@digitaljournal.com",
+                    role: "Co-Admin"
+                  };
+                  localStorage.setItem("dj_user", JSON.stringify(coAdminAcc));
+                  localStorage.setItem("dj_admin_user", JSON.stringify(coAdminAcc));
+                  setAdminUser(coAdminAcc);
+                  setIsAuthenticated(true);
+                  fetchDashboardData();
+                }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-blue-300 text-[11px] font-bold py-2.5 px-2 rounded transition-all cursor-pointer border border-zinc-700 text-center"
+              >
+                ⚡ 1-Click Co-Admin
+              </button>
+            </div>
           </form>
 
           <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">

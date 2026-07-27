@@ -76,7 +76,7 @@ export default function LoginPage() {
     const lowerPass = password.trim();
 
     // Defined System Role Accounts
-    const KNOWN_ACCOUNTS: Record<string, { pass: string[]; name: string; role: "Admin" | "Writer" | "Reader" }> = {
+    const KNOWN_ACCOUNTS: Record<string, { pass: string[]; name: string; role: "Admin" | "Co-Admin" | "Writer" | "Reader" }> = {
       "admin@digitaljournal.com": {
         pass: ["admin", "admin123", "Admin@123", "admin2026", "secret"],
         name: "System Administrator",
@@ -86,6 +86,16 @@ export default function LoginPage() {
         pass: ["admin", "admin123", "Admin@123", "admin2026", "secret"],
         name: "System Administrator",
         role: "Admin"
+      },
+      "coadmin@digitaljournal.com": {
+        pass: ["coadmin", "coadmin123", "coadmin2026"],
+        name: "Operations Co-Admin",
+        role: "Co-Admin"
+      },
+      "coadmin": {
+        pass: ["coadmin", "coadmin123", "coadmin2026"],
+        name: "Operations Co-Admin",
+        role: "Co-Admin"
       },
       "writer@digitaljournal.com": {
         pass: ["writer", "writer123", "writer2026"],
@@ -118,7 +128,7 @@ export default function LoginPage() {
       console.warn("Could not read local registered users:", err);
     }
 
-    let authenticatedAccount: { name: string; email: string; role: "Admin" | "Writer" | "Reader" } | null = null;
+    let authenticatedAccount: { name: string; email: string; role: "Admin" | "Co-Admin" | "Writer" | "Reader" } | null = null;
 
     // Check if email matches system accounts
     if (KNOWN_ACCOUNTS[lowerEmail]) {
@@ -138,8 +148,16 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
-        const userRole = matchedUser.role || (lowerEmail.includes("writer") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
+        const userRole = matchedUser.role || (lowerEmail.includes("coadmin") ? "Co-Admin" : lowerEmail.includes("writer") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
         authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: userRole };
+      } else if (lowerEmail.includes("coadmin")) {
+        const validCoAdminPasswords = ["coadmin", "coadmin123", "coadmin2026"];
+        if (!validCoAdminPasswords.includes(lowerPass)) {
+          setErrorMessage(`❌ Access Denied: Incorrect password for Co-Admin account '${lowerEmail}'.`);
+          setIsSubmitting(false);
+          return;
+        }
+        authenticatedAccount = { name: "Operations Co-Admin", email: lowerEmail, role: "Co-Admin" };
       } else if (lowerEmail.includes("writer")) {
         // Explicit Writer email match check
         const validWriterPasswords = ["writer", "writer123", "writer2026"];
@@ -187,9 +205,9 @@ export default function LoginPage() {
     }
 
     // Authenticated successfully! Save session and redirect to role destination
-    const targetDestination = authenticatedAccount.role === "Admin" ? "/admin" : authenticatedAccount.role === "Writer" ? "/writer" : "/reader";
+    const targetDestination = (authenticatedAccount.role === "Admin" || authenticatedAccount.role === "Co-Admin") ? "/admin" : authenticatedAccount.role === "Writer" ? "/writer" : "/reader";
     localStorage.setItem("dj_user", JSON.stringify(authenticatedAccount));
-    if (authenticatedAccount.role === "Admin") {
+    if (authenticatedAccount.role === "Admin" || authenticatedAccount.role === "Co-Admin") {
       localStorage.setItem("dj_admin_user", JSON.stringify(authenticatedAccount));
     }
     if (authenticatedAccount.role === "Writer") {
