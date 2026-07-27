@@ -465,6 +465,7 @@ export default function LoginPage() {
         isOpen={showGoogleChooser}
         onClose={() => setShowGoogleChooser(false)}
         onSelectAccount={handleSelectGoogleAccount}
+        requirePasswordSetup={true}
       />
     </div>
   );
