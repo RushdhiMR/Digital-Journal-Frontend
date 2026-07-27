@@ -39,6 +39,22 @@ interface ArticlePageContentProps {
   sidebarPicks: SidebarItem[];
 }
 
+const getUserBookmarkStorageKey = (): string => {
+  try {
+    const userStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_admin_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.email) {
+        const sanitizedEmail = user.email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+        return `dj_bookmarks_${sanitizedEmail}`;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return "dj_bookmarks_guest";
+};
+
 export default function ArticlePageContent({
   category,
   subcategory,
@@ -54,13 +70,16 @@ export default function ArticlePageContent({
 
   useEffect(() => {
     try {
-      const savedStr = localStorage.getItem("dj_saved_bookmarks");
+      const key = getUserBookmarkStorageKey();
+      const savedStr = localStorage.getItem(key);
       if (savedStr) {
         const savedList: any[] = JSON.parse(savedStr);
         const exists = savedList.some(
           (item) => item.title.trim().toLowerCase() === newsData.title.trim().toLowerCase()
         );
         setIsBookmarked(exists);
+      } else {
+        setIsBookmarked(false);
       }
     } catch (e) {
       console.error(e);
@@ -69,7 +88,8 @@ export default function ArticlePageContent({
 
   const toggleBookmark = () => {
     try {
-      const savedStr = localStorage.getItem("dj_saved_bookmarks");
+      const key = getUserBookmarkStorageKey();
+      const savedStr = localStorage.getItem(key);
       let savedList: any[] = savedStr ? JSON.parse(savedStr) : [];
 
       const existsIndex = savedList.findIndex(
@@ -77,13 +97,13 @@ export default function ArticlePageContent({
       );
 
       if (existsIndex >= 0) {
-        // Remove bookmark
+        // Remove bookmark from account
         savedList.splice(existsIndex, 1);
-        localStorage.setItem("dj_saved_bookmarks", JSON.stringify(savedList));
+        localStorage.setItem(key, JSON.stringify(savedList));
         setIsBookmarked(false);
         showToast("Article removed from your Saved Reading List.");
       } else {
-        // Add bookmark
+        // Add bookmark to account
         const newBookmark = {
           title: newsData.title,
           category: parent.name.toUpperCase(),
@@ -93,9 +113,9 @@ export default function ArticlePageContent({
           savedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
         };
         savedList.unshift(newBookmark);
-        localStorage.setItem("dj_saved_bookmarks", JSON.stringify(savedList));
+        localStorage.setItem(key, JSON.stringify(savedList));
         setIsBookmarked(true);
-        showToast("✓ Article saved to your Reader Reading List!");
+        showToast("✓ Article saved to your personal account reading list!");
       }
     } catch (e) {
       console.error(e);

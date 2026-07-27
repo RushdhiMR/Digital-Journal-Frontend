@@ -27,25 +27,36 @@ export default function ReaderHubPage() {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const getUserBookmarkStorageKey = (userEmail?: string): string => {
+    const activeEmail = userEmail || currentUser?.email || "guest";
+    const sanitizedEmail = activeEmail.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+    return `dj_bookmarks_${sanitizedEmail}`;
+  };
+
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem("dj_user");
+      let activeEmail = "reader@digitaljournal.com";
+
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
         setCurrentUser(parsed);
         setProfileName(parsed.name || "Alex Reader");
         setProfileEmail(parsed.email || "reader@digitaljournal.com");
+        if (parsed.email) activeEmail = parsed.email;
         if (parsed.bio) setProfileBio(parsed.bio);
       } else {
         window.location.href = "/login";
         return;
       }
 
-      // Load Saved Bookmarks from LocalStorage
-      const savedBookmarksStr = localStorage.getItem("dj_saved_bookmarks");
+      // Load Account-Scoped Saved Bookmarks from LocalStorage
+      const userKey = getUserBookmarkStorageKey(activeEmail);
+      const savedBookmarksStr = localStorage.getItem(userKey);
       if (savedBookmarksStr) {
         setSavedArticles(JSON.parse(savedBookmarksStr));
       } else {
+        // First-time default bookmark initialization for this specific account
         const initialBookmarks = [
           {
             title: "Argentina Edge Switzerland in Extra Time to Set Up World Cup Semi-Final Clash With England",
@@ -60,16 +71,9 @@ export default function ReaderHubPage() {
             href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets",
             date: "Jul 18, 2026",
             image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=350&fit=crop"
-          },
-          {
-            title: "Trump's Hormuz Retreat Highlights Struggles to End Iran Conflict",
-            category: "POLITICS",
-            href: "/news/politics/trumps-hormuz-retreat-highlights-struggles-to-end-iran-conflict",
-            date: "Jul 15, 2026",
-            image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&h=350&fit=crop"
           }
         ];
-        localStorage.setItem("dj_saved_bookmarks", JSON.stringify(initialBookmarks));
+        localStorage.setItem(userKey, JSON.stringify(initialBookmarks));
         setSavedArticles(initialBookmarks);
       }
     } catch (e) {
@@ -78,10 +82,11 @@ export default function ReaderHubPage() {
   }, []);
 
   const handleRemoveBookmark = (titleToRemove: string) => {
+    const userKey = getUserBookmarkStorageKey();
     const updated = savedArticles.filter((art) => art.title !== titleToRemove);
     setSavedArticles(updated);
-    localStorage.setItem("dj_saved_bookmarks", JSON.stringify(updated));
-    showToast("Removed from Saved Reading List.");
+    localStorage.setItem(userKey, JSON.stringify(updated));
+    showToast("Removed from your account Saved Reading List.");
   };
 
   const handleSaveProfile = (e: React.FormEvent) => {
