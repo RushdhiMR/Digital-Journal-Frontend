@@ -281,26 +281,36 @@ export default function Header() {
                       <p className="px-3.5 py-1 text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
                         PORTAL PAGES
                       </p>
-                      <Link
-                        href="/admin"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>🛡️</span> Admin Dashboard
-                        </span>
-                        <span className="text-[10px] text-zinc-500 font-mono">/admin</span>
-                      </Link>
-                      <Link
-                        href="/writer"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>✍️</span> Writer Studio
-                        </span>
-                        <span className="text-[10px] text-zinc-500 font-mono">/writer</span>
-                      </Link>
+                      
+                      {/* Admin Dashboard: ONLY Visible to Admin / Co-Admin */}
+                      {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || currentUser.role === "admin" || currentUser.role === "coadmin") && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>🛡️</span> Admin Dashboard
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-mono">/admin</span>
+                        </Link>
+                      )}
+
+                      {/* Writer Studio: Visible to Admin, Co-Admin, and Writer */}
+                      {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || currentUser.role === "Writer" || currentUser.role === "admin" || currentUser.role === "writer") && (
+                        <Link
+                          href="/writer"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="w-full px-4 py-1.5 text-[12.5px] text-zinc-200 hover:bg-zinc-800 hover:text-white text-left transition-colors font-medium flex items-center justify-between"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>✍️</span> Writer Studio
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-mono">/writer</span>
+                        </Link>
+                      )}
+
+                      {/* Reader Hub: Visible to All Roles */}
                       <Link
                         href="/reader"
                         onClick={() => setIsUserDropdownOpen(false)}
@@ -313,32 +323,34 @@ export default function Header() {
                       </Link>
                     </div>
 
-                    {/* Switch Active Role */}
-                    <div className="p-2.5 bg-zinc-950 border-b border-zinc-800">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                        SWITCH ACTIVE ROLE
-                      </p>
-                      <div className="grid grid-cols-3 gap-1 text-[10px] font-bold text-center">
-                        <button
-                          onClick={() => handleSwitchRole("Admin")}
-                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Admin" ? "bg-red-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
-                        >
-                          Admin
-                        </button>
-                        <button
-                          onClick={() => handleSwitchRole("Writer")}
-                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Writer" ? "bg-blue-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
-                        >
-                          Writer
-                        </button>
-                        <button
-                          onClick={() => handleSwitchRole("Reader")}
-                          className={`py-1 rounded cursor-pointer transition-colors ${currentUser.role === "Reader" ? "bg-emerald-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
-                        >
-                          Reader
-                        </button>
+                    {/* Switch Active Role: ONLY Visible to Admin Accounts */}
+                    {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || currentUser.role === "admin") && (
+                      <div className="p-2.5 bg-zinc-950 border-b border-zinc-800">
+                        <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                          SWITCH ACTIVE ROLE
+                        </p>
+                        <div className="grid grid-cols-3 gap-1 text-[10px] font-bold text-center">
+                          <button
+                            onClick={() => handleSwitchRole("Admin")}
+                            className={`py-1 rounded cursor-pointer transition-colors ${(currentUser.role as string) === "Admin" ? "bg-red-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                          >
+                            Admin
+                          </button>
+                          <button
+                            onClick={() => handleSwitchRole("Writer")}
+                            className={`py-1 rounded cursor-pointer transition-colors ${(currentUser.role as string) === "Writer" ? "bg-blue-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                          >
+                            Writer
+                          </button>
+                          <button
+                            onClick={() => handleSwitchRole("Reader")}
+                            className={`py-1 rounded cursor-pointer transition-colors ${(currentUser.role as string) === "Reader" ? "bg-emerald-800 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+                          >
+                            Reader
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Sign Out */}
                     <div className="py-1">
