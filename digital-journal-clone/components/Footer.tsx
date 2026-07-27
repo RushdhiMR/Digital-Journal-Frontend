@@ -14,6 +14,7 @@ export default function Footer() {
           <img
             src="/media__1784141210181.png"
             alt="Digital Journal Logo"
+            onError={(e) => { e.currentTarget.src = "/logo.png"; }}
             className="h-8 w-auto object-contain"
           />
         </div>

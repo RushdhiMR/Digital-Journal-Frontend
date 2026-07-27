@@ -228,7 +228,7 @@ export default function Header() {
               />
             </div>
 
-            <span className="text-[20px] md:text-[30px] leading-none font-bold tracking-[0.5px] whitespace-nowrap">
+            <span className="text-[17px] sm:text-[22px] md:text-[30px] leading-none font-bold tracking-[0.5px] whitespace-nowrap">
               DIGITAL JOURNAL
             </span>
           </Link>

@@ -9,7 +9,7 @@ export default function HeroSection() {
         {/* Main Hero Image Clickable Link */}
         <Link
           href="/business/companies/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
-          className="relative w-full h-[320px] md:h-[400px] lg:h-[480px] overflow-hidden bg-gray-100 block group"
+          className="relative w-full aspect-[16/10] sm:aspect-video lg:h-[480px] overflow-hidden bg-gray-100 rounded-lg block group"
         >
           <img
             src="/ai_hero.png"

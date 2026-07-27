@@ -35,7 +35,7 @@ export default function CategoryHero({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Featured Image */}
-        <div className="lg:col-span-2 relative w-full h-[400px] lg:h-[480px] overflow-hidden bg-gray-100">
+        <div className="lg:col-span-2 relative w-full aspect-[16/10] sm:aspect-video lg:h-[480px] overflow-hidden bg-gray-100 rounded-lg">
           <img
             src={articleImage}
             alt={articleTitle}

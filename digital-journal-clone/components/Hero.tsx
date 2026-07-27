@@ -7,7 +7,7 @@ export default function Hero() {
         {/* Main Hero Image Clickable Link */}
         <Link
           href="/business/companies/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
-          className="lg:col-span-2 relative w-full h-[400px] lg:h-[480px] overflow-hidden bg-gray-100 block group"
+          className="lg:col-span-2 relative w-full aspect-[16/10] sm:aspect-video lg:h-[480px] overflow-hidden bg-gray-100 rounded-lg block group"
         >
           <img
             src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=800&fit=crop"
