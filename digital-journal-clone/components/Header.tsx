@@ -228,22 +228,22 @@ export default function Header() {
         </form>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-4 text-[13px] font-medium flex-shrink-0">
+        <div className="flex items-center gap-3 text-[13px] font-medium flex-shrink-0">
           
           {/* Newsletter Link */}
           <Link 
             href="/newsletters" 
-            className="hidden sm:flex items-center gap-1.5 text-gray-700 hover:text-[#BF1E2D] transition-colors"
+            className="hidden md:flex items-center gap-1.5 text-gray-700 hover:text-[#BF1E2D] transition-colors"
           >
             <Mail size={16} strokeWidth={2} />
             <span className="font-semibold text-[13px]">Newsletter</span>
           </Link>
 
-          <span className="hidden sm:inline text-gray-300">|</span>
+          <span className="hidden md:inline text-gray-300">|</span>
 
           {/* User Sign In / Profile Dropdown */}
           {currentUser ? (
-            <div className="relative">
+            <div className="relative hidden md:block">
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="flex items-center gap-2 text-gray-800 hover:text-[#BF1E2D] cursor-pointer font-bold text-[13px]"
@@ -282,7 +282,7 @@ export default function Header() {
           ) : (
             <Link 
               href="/login" 
-              className="flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-semibold transition-colors"
+              className="hidden md:flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-semibold transition-colors"
             >
               <User size={16} strokeWidth={2} />
               <span>Sign In</span>
@@ -292,7 +292,7 @@ export default function Header() {
           {/* Red Newsletter Signup Button */}
           <Link
             href="/newsletters"
-            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-md transition-colors whitespace-nowrap shadow-sm"
+            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-md transition-colors whitespace-nowrap shadow-sm"
           >
             Newsletter Signup
           </Link>
@@ -300,10 +300,10 @@ export default function Header() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1"
+            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-md hover:bg-gray-100"
             aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
         </div>
@@ -429,24 +429,59 @@ export default function Header() {
 
       {/* MOBILE DRAWER */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white text-gray-900 border-t border-gray-200 py-4 px-4 space-y-4 shadow-lg">
+        <div className="md:hidden bg-white text-gray-900 border-t border-gray-200 py-5 px-5 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
+          
+          {/* Mobile Search Input */}
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
-              placeholder="Search news..."
+              placeholder="Search news, topics, companies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-full"
+              className="w-full pl-4 pr-10 py-2.5 text-xs border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] bg-gray-50 text-gray-900"
             />
+            <button type="submit" className="absolute right-3 top-2.5 text-gray-400">
+              <Search size={16} />
+            </button>
           </form>
 
-          <div className="space-y-2">
+          {/* Action Buttons: Newsletter & Sign In */}
+          <div className="flex items-center gap-3 pt-1 pb-3 border-b border-gray-100">
+            <Link
+              href="/newsletters"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex-1 bg-[#BF1E2D] text-white text-center font-bold text-xs py-2.5 rounded-md shadow-sm"
+            >
+              Newsletter Signup
+            </Link>
+
+            {currentUser ? (
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); setIsUserDropdownOpen(true); }}
+                className="flex-1 bg-gray-100 text-gray-800 text-center font-bold text-xs py-2.5 rounded-md border border-gray-200"
+              >
+                {currentUser.name}
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1 bg-gray-100 text-gray-800 text-center font-bold text-xs py-2.5 rounded-md border border-gray-200 flex items-center justify-center gap-1.5"
+              >
+                <User size={14} />
+                <span>Sign In</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Category Navigation Links */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
             {navCategories.map((cat) => (
               <Link
                 key={cat.name}
                 href={cat.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block py-1.5 text-sm font-bold text-gray-800 hover:text-[#BF1E2D] border-b border-gray-100"
+                className="block py-2 px-3 text-xs font-bold text-gray-800 bg-gray-50 hover:bg-red-50 hover:text-[#BF1E2D] rounded-md transition-colors"
               >
                 {cat.name}
               </Link>

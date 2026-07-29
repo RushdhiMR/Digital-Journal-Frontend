@@ -66,7 +66,7 @@ export default function HeroSection() {
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-[32px] font-bold leading-[1.2] mb-3 text-gray-900 font-serif">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-bold leading-[1.2] mb-3 text-gray-900 font-serif">
             <Link
               href="/business/security/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
               className="hover:text-[#BF1E2D] transition-colors"
