@@ -97,7 +97,7 @@ export default function HeroSection() {
         </div>
 
         {/* COLUMN 3: Right Sidebar - Numbered Trending News (~18%) */}
-        <div className="lg:col-span-3 border-l-0 lg:border-l border-gray-200 lg:pl-5">
+        <div className="lg:col-span-3 border-t lg:border-t-0 border-l-0 lg:border-l border-gray-200 pt-6 lg:pt-0 lg:pl-5">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
             <div className="w-2.5 h-2.5 bg-[#BF1E2D]" />
             <h2 className="text-[13px] font-bold uppercase tracking-wider text-gray-900">

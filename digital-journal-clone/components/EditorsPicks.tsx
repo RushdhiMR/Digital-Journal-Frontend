@@ -120,7 +120,7 @@ export default function EditorsPicks() {
         </div>
 
         {/* RIGHT MARKET WATCH TABBED WIDGET (~25%) */}
-        <div className="lg:col-span-3 lg:border-l border-gray-100 lg:pl-6 flex flex-col justify-between h-full">
+        <div className="lg:col-span-3 border-t lg:border-t-0 border-l-0 lg:border-l border-gray-200 pt-6 lg:pt-0 lg:pl-6 flex flex-col justify-between h-full">
           
           {/* Market Watch Header */}
           <div className="flex items-center gap-2 mb-4">
