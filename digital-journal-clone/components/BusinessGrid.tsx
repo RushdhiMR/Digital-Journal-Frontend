@@ -3,78 +3,131 @@
 import Link from "next/link";
 
 export default function BusinessGrid() {
-  const businessArticles = [
+  const bottomItems = [
     {
-      title: "Canada's Conexiom bets that the future of AI lies in automation, not experimentation",
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=380&fit=crop",
-      description: "Conexiom's CEO discusses how automating key transactional data is the key to enterprise growth...",
-      category: "business",
-      subcategory: "companies"
+      id: 1,
+      title: "Hong Kong activist allowed to stay in UK after deportation threat",
+      description: "Wu was detained for hours at London's Heathrow Airport last week and refused entry, he told the BBC.",
+      time: "15 mins ago | Asia",
+      image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=400&h=260&fit=crop",
+      href: "/business/hong-kong-activist-uk-stay"
     },
     {
-      title: "Canada's AI adoption problem meets its youth employment problem",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=380&fit=crop",
-      description: "A new study outlines how integrating AI training into entry-level roles could solve both problems...",
-      category: "business",
-      subcategory: "companies"
+      id: 2,
+      title: "Chip stocks slide in US and Asia as AI jitters rattle investors",
+      description: "Trading on South Korea's Kospi index was paused temporarily on Tuesday morning after slumping by 8%.",
+      time: "Just now",
+      image: "/ai_chip.png",
+      href: "/business/chip-stocks-slide-us-asia"
     },
     {
-      title: "Op-Ed: Rethinking humanity as automation rewrites human realities",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=380&fit=crop",
-      description: "Automation is not just about replacing jobs; it's about redefining what it means to be human...",
-      category: "business",
-      subcategory: "corporate-news"
-    },
-    {
-      title: "Lightworks, Scotiabank, Sun Life and TELUS launch AI Consortium",
-      image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=380&fit=crop",
-      description: "Major financial and telecom leaders collaborate to invest in and govern ethical AI models...",
-      category: "business",
-      subcategory: "companies"
+      id: 3,
+      title: "'I just found all the classified stuff downstairs' - Biden to ghostwriter",
+      description: "Recordings between Biden and his ghostwriter reveal references to classified information and memory gaps.",
+      time: "2 hrs ago | US & Canada",
+      image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=400&h=260&fit=crop",
+      href: "/business/biden-ghostwriter-classified-documents"
     }
   ];
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 font-standard-sans">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-black uppercase">
-          <span className="bg-[#FFE9D6] text-black px-2 py-0.5">Business</span>
+    <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 border-b border-gray-200 font-sans">
+      {/* Red Bar Title */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="w-1.5 h-6 bg-[#D31220]" />
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+          Business
         </h2>
-        <p className="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-wider">
-          DISCOVER THE LATEST TRENDS IN COMPANIES, CORPORATE STRUCTURES AND STARTUPS
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {businessArticles.map((article, index) => {
-          const slug = article.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '');
-          const articleUrl = `/${article.category}/${article.subcategory}/${slug}`;
+      {/* TOP ROW: Text Story (Left) + Large Image (Center) + Video Story (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-10 pb-8 border-b border-gray-100">
+        
+        {/* Left Column Text Story (~28%) */}
+        <div className="lg:col-span-3 flex flex-col justify-center">
+          <h3 className="text-2xl md:text-3xl font-bold leading-tight text-gray-900 hover:text-[#D31220] transition-colors mb-3 font-serif">
+            <Link href="/business/assam-worst-floods-in-years">
+              &apos;It took everything from us&apos;: India&apos;s Assam faces worst floods in years
+            </Link>
+          </h3>
+          <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
+            While flooding happens in Assam every year, a state minister described this year as the worst in six decades.
+          </p>
+          <span className="text-[11px] text-gray-400 font-medium">
+            7 hrs ago | Asia
+          </span>
+        </div>
 
-          return (
-            <article key={index} className="flex flex-col group">
-              <Link href={articleUrl} className="relative w-full aspect-[4/3] overflow-hidden mb-3 bg-gray-100 rounded-lg block">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  onError={(e) => { e.currentTarget.src = "/ai_hero.png"; }}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+        {/* Center Column Large Flood Image (~64%) */}
+        <div className="lg:col-span-6 w-full">
+          <Link href="/business/assam-worst-floods-in-years" className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 rounded-none block group">
+            <img
+              src="https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1000&h=625&fit=crop"
+              alt="Assam floodwaters rescue"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
+        </div>
+
+        {/* Right Column Secondary Video Story (~28%) */}
+        <div className="lg:col-span-3 flex flex-col">
+          <Link href="/business/china-fake-ai-videos-disasters" className="relative w-full aspect-[16/10] overflow-hidden bg-gray-900 rounded-none mb-3 block group">
+            <img
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=375&fit=crop"
+              alt="China broadcast video stage"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+            />
+          </Link>
+          <h4 className="text-[14px] font-bold leading-snug text-gray-900 hover:text-[#D31220] transition-colors mb-2">
+            <Link href="/business/china-fake-ai-videos-disasters">
+              China&apos;s new challenge as natural disasters strike - fake AI videos
+            </Link>
+          </h4>
+          <p className="text-[12px] text-gray-600 leading-normal mb-2 line-clamp-3">
+            Storms and flooding incidents over the last few months have seen fake videos inundating social media.
+          </p>
+          <span className="text-[11px] text-gray-400 font-medium">
+            7 hrs ago | Asia
+          </span>
+        </div>
+
+      </div>
+
+      {/* BOTTOM ROW: 3 Cards + Ad Box (4 Equal Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {bottomItems.map((item) => (
+          <article key={item.id} className="flex flex-col group cursor-pointer">
+            <Link href={item.href} className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 rounded-none mb-3 block">
+              <img
+                src={item.image}
+                alt={item.title}
+                onError={(e) => { e.currentTarget.src = "/ai_chip.png"; }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </Link>
+
+            <h4 className="text-[13.5px] font-bold leading-snug text-gray-900 group-hover:text-[#D31220] transition-colors mb-1.5 font-serif line-clamp-2">
+              <Link href={item.href}>
+                {item.title}
               </Link>
-              <h3 className="text-[13.5px] font-bold leading-tight text-black mb-2 line-clamp-2">
-                <Link href={articleUrl} className="group-hover:text-[#BF1E2D] transition-colors">
-                  {article.title}
-                </Link>
-              </h3>
-              <p className="text-[11.5px] text-gray-600 leading-relaxed mb-1 line-clamp-3 font-sans">
-                {article.description}
-              </p>
-            </article>
-          );
-        })}
+            </h4>
+
+            <p className="text-[12px] text-gray-600 leading-relaxed mb-2 line-clamp-3">
+              {item.description}
+            </p>
+
+            <span className="text-[10.5px] text-gray-400 font-medium mt-auto">
+              {item.time}
+            </span>
+          </article>
+        ))}
+
+        {/* Column 4: Black Ad Box */}
+        <div className="w-full h-[230px] bg-black text-white rounded-none flex items-center justify-center">
+          <span className="text-sm font-mono tracking-widest text-gray-400">Ad</span>
+        </div>
       </div>
+
     </section>
   );
 }

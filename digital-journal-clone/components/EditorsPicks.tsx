@@ -1,151 +1,191 @@
-import Link from 'next/link';
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { Clock } from "lucide-react";
 
 export default function EditorsPicks() {
+  const [activeTab, setActiveTab] = useState<"indices" | "commodities" | "currencies">("indices");
+
   const editorsPicks = [
     {
-      title: "Review: Has AI been chasing the wrong dream since Alan Turing?",
-      description: "The essential question, then, is not whether machines can imitate people. Turing asked a brilliant question for the early age of computing. Denning asks a different question for the age of generative AI.",
-      author: "Dr. Tim Sandle",
-      date: "July 19, 2026 5:29 PM EDT",
-      image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop",
-      category: "technology",
-      subcategory: "artificial-intelligence"
+      id: 1,
+      category: "INNOVATION",
+      title: "Inside the lab developing tomorrow's sustainable materials",
+      readTime: "7 MIN READ",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=380&fit=crop",
+      href: "/innovation/lab-developing-sustainable-materials"
     },
     {
-      title: "Silicon chips learn to write DNA: Research points to cleaner route for synthetic biology",
-      description: "The Harvard chip is an early-stage demonstration rather than an industrial replacement for current DNA synthesis platforms. Nevertheless, the work establishes a new benchmark for parallel enzymatic DNA synthesis.",
-      author: "Dr. Tim Sandle",
-      date: "July 19, 2026 5:23 PM EDT",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=300&fit=crop",
-      category: "technology",
-      subcategory: "innovations"
+      id: 2,
+      category: "TECHNOLOGY",
+      title: "5G expansion continues to transform industries worldwide",
+      readTime: "4 MIN READ",
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=380&fit=crop",
+      href: "/technology/5g-expansion-transforms-industries"
     },
     {
-      title: "Canada's soft robotics research is moving from laboratory novelty to business tool",
-      description: "Canada's advantage lies in combining engineering research, AI strength, materials science, medical technology and strong university-industry pathways. The challenge will be scale-up: moving devices from prototypes and laboratory demonstrations to manufacturable, validated, regulated and commercially supported products.",
-      author: "Dr. Tim Sandle",
-      date: "July 19, 2026 2:47 PM EDT",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=300&fit=crop",
-      category: "technology",
-      subcategory: "innovations"
+      id: 3,
+      category: "BUSINESS",
+      title: "The future of work: How companies are adapting to hybrid everything",
+      readTime: "4 MIN READ",
+      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=500&h=380&fit=crop",
+      href: "/business/future-of-work-hybrid-everything"
     },
     {
-      title: "Pocket-size AI: Powerful phones star at China show",
-      description: "Wide adoption of phones running on so-called AI agents would be a revolution, but would also take control away from major apps, which aren't always happy about it.",
-      author: "AFP",
-      date: "July 19, 2026",
-      image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=300&fit=crop",
-      category: "technology",
-      subcategory: "cybersecurity"
+      id: 4,
+      category: "BUSINESS",
+      title: "How small businesses can compete in an AI-driven world",
+      readTime: "5 MIN READ",
+      image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=500&h=380&fit=crop",
+      href: "/business/small-businesses-compete-ai-world"
     }
   ];
 
-  const sidebarPicks = [
-    {
-      title: "Canadian mathematician honoured for reshaping how the world moves resources and data",
-      date: "July 18, 2026",
-      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=120&h=120&fit=crop",
-      href: "/news/world/argentina-edge-switzerland-in-extra-time-to-set-up-world-cup-semi-final-clash-with-england"
-    },
-    {
-      title: "Space data centres: Can orbiting AI infrastructure solve Earth's computing crisis?",
-      date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=120&h=120&fit=crop",
-      href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets"
-    },
-    {
-      title: "China's Kimi K3 rattles US AI industry",
-      date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&h=120&fit=crop",
-      href: "/news/politics/trumps-hormuz-retreat-highlights-struggles-to-end-iran-conflict"
-    },
-    {
-      title: "Startups bet on AI, and a leaner future",
-      date: "July 17, 2026",
-      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=120&h=120&fit=crop",
-      href: "/business/companies/new-exclusive-decoration-design-fit-out-llc-structural-acrylic-pioneers-in-the-uae"
-    },
-    {
-      title: "What Alberta found when it pointed 50 agents at its own code",
-      date: "July 16, 2026",
-      image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=120&h=120&fit=crop",
-      href: "/business/corporate-news/ice-suspends-most-vehicle-stops-after-fatal-shootings-in-texas-and-maine"
-    }
-  ];
+  const marketTabs = {
+    indices: [
+      { symbol: "S&P 500", price: "4,510.04", change: "+0.62%", positive: true },
+      { symbol: "NASDAQ", price: "14,150.65", change: "+0.53%", positive: true },
+      { symbol: "DOW JONES", price: "34,112.27", change: "+0.48%", positive: true },
+      { symbol: "FTSE 100", price: "7,524.35", change: "-0.12%", positive: false },
+      { symbol: "DAX 40", price: "15,925.10", change: "-0.18%", positive: false },
+      { symbol: "NIKKEI 225", price: "39,678.02", change: "+0.35%", positive: true }
+    ],
+    commodities: [
+      { symbol: "Crude Oil (WTI)", price: "$78.45", change: "+1.20%", positive: true },
+      { symbol: "Brent Crude", price: "$82.10", change: "+0.95%", positive: true },
+      { symbol: "Gold (USD/oz)", price: "$2,380.50", change: "+0.45%", positive: true },
+      { symbol: "Silver", price: "$30.75", change: "-0.30%", positive: false },
+      { symbol: "Natural Gas", price: "$2.45", change: "-1.15%", positive: false },
+      { symbol: "Copper", price: "$4.42", change: "+0.80%", positive: true }
+    ],
+    currencies: [
+      { symbol: "EUR / USD", price: "1.0875", change: "+0.15%", positive: true },
+      { symbol: "GBP / USD", price: "1.2940", change: "+0.22%", positive: true },
+      { symbol: "USD / JPY", price: "154.20", change: "-0.35%", positive: false },
+      { symbol: "USD / CAD", price: "1.3780", change: "-0.10%", positive: false },
+      { symbol: "AUD / USD", price: "0.6680", change: "+0.40%", positive: true },
+      { symbol: "BTC / USD", price: "$67,420.00", change: "+2.15%", positive: true }
+    ]
+  };
 
   return (
-    <section className="font-standard-sans max-w-[1400px] mx-auto px-4 md:px-8 py-8">
-      {/* Heading Block */}
-      <div className="mb-6">
-        <div className="inline-block bg-[#FFF5C6] px-2 py-0.5 mb-2">
-          <h2 className="text-xl md:text-2xl font-bold text-black">
-            Editor&apos;s picks
-          </h2>
-        </div>
-        <p className="text-[14px] text-gray-800 font-medium font-standard-sans mt-1">
-          What we&apos;d read if we only had 10 minutes
-        </p>
-        {/* Separator Accent Line */}
-        <div className="relative w-full border-t border-gray-200 mt-3">
-          <div className="absolute top-0 left-0 w-16 h-[3px] bg-black -translate-y-[2px]" />
-        </div>
-      </div>
+    <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 border-b border-gray-200 font-sans">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        {/* LEFT 4-CARD GRID (~75%) */}
+        <div className="lg:col-span-9 flex flex-col justify-between h-full">
+          
+          {/* Section Title */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1.5 h-6 bg-[#D31220]" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+              Editor&apos;s Picks
+            </h2>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-        {/* Left Grid: 2x2 featured articles */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
-          {editorsPicks.map((article, index) => {
-            const slug = article.title
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/(^-|-$)/g, '');
-            const articleUrl = `/${article.category}/${article.subcategory}/${slug}`;
-
-            return (
-              <article key={index} className="flex flex-col group">
-                <Link href={articleUrl} className="relative w-full aspect-video overflow-hidden mb-3 bg-gray-100 rounded-lg block">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </Link>
-                <h3 className="text-[16px] font-bold leading-snug text-black mb-2">
-                  <Link href={articleUrl} className="group-hover:text-[#CC3333] transition-colors">
-                    {article.title}
+          {/* 4 Enclosed White Card Containers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 flex-1">
+            {editorsPicks.map((item) => (
+              <article key={item.id} className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full group cursor-pointer">
+                <div>
+                  {/* Image with Bottom-Left White Overlay Category Tag */}
+                  <Link href={item.href} className="relative w-full aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 mb-3 block">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span className="absolute bottom-2.5 left-2.5 bg-white text-[#D31220] text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-sm tracking-wider">
+                      {item.category}
+                    </span>
                   </Link>
-                </h3>
-                <p className="text-[13px] text-zinc-700 leading-relaxed mb-3 font-sans">
-                  {article.description}
-                </p>
-                <p className="text-[11px] text-zinc-500 font-normal">
-                  By <Link href={`/author/${article.author.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} className="underline hover:text-[#CC3333] cursor-pointer">{article.author}</Link> {article.date}
-                </p>
+
+                  <h3 className="text-[14px] font-bold leading-snug text-gray-900 group-hover:text-[#D31220] transition-colors mb-3 line-clamp-3">
+                    <Link href={item.href}>
+                      {item.title}
+                    </Link>
+                  </h3>
+                </div>
+
+                {/* Footer Read Time */}
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-100 mt-auto">
+                  <Clock size={13} strokeWidth={2.2} className="text-gray-400" />
+                  <span>{item.readTime}</span>
+                </div>
               </article>
-            );
-          })}
+            ))}
+          </div>
+
         </div>
 
-        {/* Right Sidebar Stack */}
-        <div className="space-y-6">
-          {sidebarPicks.map((article, index) => (
-            <Link key={index} href={article.href} className="flex gap-4 items-start cursor-pointer group">
-              <div className="relative w-[75px] h-[75px] flex-shrink-0 overflow-hidden bg-gray-100">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
-                />
+        {/* RIGHT MARKET WATCH TABBED WIDGET (~25%) */}
+        <div className="lg:col-span-3 lg:border-l border-gray-100 lg:pl-6 flex flex-col justify-between h-full">
+          
+          {/* Market Watch Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-6 bg-[#D31220]" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+              Market Watch
+            </h2>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-4 text-xs font-semibold border-b border-gray-200 pb-2 mb-3">
+            <button
+              onClick={() => setActiveTab("indices")}
+              className={`cursor-pointer transition-colors ${
+                activeTab === "indices"
+                  ? "text-[#D31220] border-b-2 border-[#D31220] pb-2 font-bold"
+                  : "text-gray-400 hover:text-gray-700"
+              }`}
+            >
+              Indices
+            </button>
+            <button
+              onClick={() => setActiveTab("commodities")}
+              className={`cursor-pointer transition-colors ${
+                activeTab === "commodities"
+                  ? "text-[#D31220] border-b-2 border-[#D31220] pb-2 font-bold"
+                  : "text-gray-400 hover:text-gray-700"
+              }`}
+            >
+              Commodities
+            </button>
+            <button
+              onClick={() => setActiveTab("currencies")}
+              className={`cursor-pointer transition-colors ${
+                activeTab === "currencies"
+                  ? "text-[#D31220] border-b-2 border-[#D31220] pb-2 font-bold"
+                  : "text-gray-400 hover:text-gray-700"
+              }`}
+            >
+              Currencies
+            </button>
+          </div>
+
+          {/* Tabbed Financial Items Table */}
+          <div className="flex-1 flex flex-col justify-between divide-y divide-gray-100">
+            {marketTabs[activeTab].map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between py-2.5">
+                <span className="text-[12.5px] font-bold text-gray-900 uppercase">
+                  {item.symbol}
+                </span>
+                <span className="text-[12px] font-medium text-gray-600 font-mono">
+                  {item.price}
+                </span>
+                <span className={`text-[12px] font-bold flex items-center gap-0.5 font-mono ${
+                  item.positive ? "text-emerald-600" : "text-red-600"
+                }`}>
+                  <span>{item.change}</span>
+                  <span className="text-[10px]">{item.positive ? "▲" : "▼"}</span>
+                </span>
               </div>
-              <div className="flex flex-col">
-                <h4 className="text-[13px] font-bold leading-tight text-black group-hover:text-[#CC3333] transition-colors mb-1.5">
-                  {article.title}
-                </h4>
-                <p className="text-[11px] text-zinc-400 font-normal">{article.date}</p>
-              </div>
-            </Link>
-          ))}
+            ))}
+          </div>
+
         </div>
+
       </div>
     </section>
   );

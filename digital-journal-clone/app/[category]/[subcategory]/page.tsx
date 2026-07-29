@@ -80,7 +80,20 @@ const knownNewsArticles: Record<string, string> = {
   "new-quantum-computing-clusters-open-to-public-cloud-developer-preview": "New quantum computing clusters open to public cloud developer preview",
   "open-source-database-platform-raises-record-funding-round-for-scaling": "Open-source database platform raises record funding round for scaling",
   "how-edge-computing-is-transforming-real-time-telemetry-processing": "How edge computing is transforming real-time telemetry processing",
-  "cybersecurity-protocols-updated-globally-to-counter-multi-vector-threats": "Cybersecurity protocols updated globally to counter multi-vector threats"
+  "cybersecurity-protocols-updated-globally-to-counter-multi-vector-threats": "Cybersecurity protocols updated globally to counter multi-vector threats",
+  "what-to-eat-keep-bones-strong": "Here's what to eat to keep your bones strong (that's not just dairy)",
+  "where-giant-sharks-swim-close-to-shore": "Where giant sharks swim so close to shore you can nearly touch them",
+  "assam-worst-floods-in-years": "'It took everything from us': India's Assam faces worst floods in years",
+  "china-fake-ai-videos-disasters": "China's new challenge as natural disasters strike - fake AI videos",
+  "hong-kong-activist-uk-stay": "Hong Kong activist allowed to stay in UK after deportation threat",
+  "chip-stocks-slide-us-asia": "Chip stocks slide in US and Asia as AI jitters rattle investors",
+  "biden-ghostwriter-classified-documents": "'I just found all the classified stuff downstairs' - Biden to ghostwriter",
+  "clean-energy-investments-record-high": "Clean energy investments hit record high as global transition accelerates",
+  "lab-developing-sustainable-materials": "Inside the lab developing tomorrow's sustainable materials",
+  "5g-expansion-transforms-industries": "5G expansion continues to transform industries worldwide",
+  "future-of-work-hybrid-everything": "The future of work: How companies are adapting to hybrid everything",
+  "small-businesses-compete-ai-world": "How small businesses can compete in an AI-driven world",
+  "what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks": "What tools business should take from a massive security breach to prevent future attacks"
 };
 
 function formatTitleFromSlug(slug: string): string {
@@ -107,27 +120,27 @@ const customNewsDatabase: Record<string, {
   caption: string;
   sections: { heading: string; paragraphs: string[] }[];
 }> = {
-  "airbus-puts-a-price-on-canadian-jet-fuel-security": {
-    title: "Airbus puts a price on Canadian jet fuel security",
+  "new-exclusive-decoration-design-fit-out-llc-structural-acrylic-pioneers-in-the-uae": {
+    title: "New exclusive decoration design fit out llc structural acrylic pioneers in the uae",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
     authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
     date: "July 22, 2026 6:08 PM EDT",
-    image: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=750&fit=crop",
-    caption: "AF truck at Airbus Canada. — Photo courtesy of Airbus",
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&h=750&fit=crop",
+    caption: "Structural acrylic interior decoration fit-out installation in the UAE. — Photo courtesy of Exclusive Decoration LLC",
     sections: [
       {
         heading: "",
         paragraphs: [
-          "Airbus has signaled a strategic focus on Canadian jet fuel supply pipelines, evaluating sustainable aviation fuel (SAF) procurement and local infrastructure reliability.",
-          "Aerospace analysts note that establishing secure, regional fuel supply chains is critical for mitigating volatility and supporting long-term decarbonization goals."
+          "DUBAI — New Exclusive Decoration Design Fit Out LLC has established itself as a leading pioneer in high-precision structural acrylic engineering and luxury interior fit-out projects across the United Arab Emirates.",
+          "Architects and commercial developers are increasingly specifying transparent structural acrylic panels for atrium installations, underwater features, and high-end retail showcases."
         ]
       },
       {
-        heading: "Infrastructure & Energy Compliance",
+        heading: "Structural Engineering & Interior Design Standards",
         paragraphs: [
-          "The initiative comes as Canadian aviation authorities push for increased domestic production of low-carbon aviation fuels.",
-          "Industry stakeholders are coordinating with federal energy regulators to ensure supply security across major hubs in Montreal and Toronto."
+          "The company's specialized engineering teams utilize optical-grade acrylic polymers engineered to withstand extreme thermal loads and structural pressures.",
+          "Industry experts highlight that custom acrylic fit-out installations provide superior clarity, UV stability, and impact resistance compared to traditional heavy laminated glass."
         ]
       }
     ]
@@ -676,6 +689,331 @@ const customNewsDatabase: Record<string, {
         ]
       }
     ]
+  },
+  "what-to-eat-keep-bones-strong": {
+    title: "Here's what to eat to keep your bones strong (that's not just dairy)",
+    authorName: "Dr. Tim Sandle",
+    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop",
+    authorBio: "Dr. Tim Sandle is a science journalist covering health, clinical nutrition, and preventive medicine.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=1200&h=750&fit=crop",
+    caption: "Nutrient-dense plant-based foods, seeds, and leafy greens support optimal bone mineral density. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "While calcium-rich dairy products have long dominated bone health discussions, clinical nutritionists emphasize that plant-based minerals, Vitamin K2, magnesium, and collagen-building amino acids play an equally vital role in maintaining skeletal strength.",
+          "Recent studies published in leading nutritional science journals reveal that individuals consuming a diet rich in leafy greens, chia seeds, almonds, and fermented foods experience superior bone mineral density preservation."
+        ]
+      },
+      {
+        heading: "Essential Minerals Beyond Calcium",
+        paragraphs: [
+          "Magnesium and zinc act as essential co-factors for bone remodeling, regulating osteoblast activity and helping absorb active Vitamin D3.",
+          "Incorporating seeds like sesame, pumpkin, and flax alongside dark leafy vegetables provides essential micronutrients without relying exclusively on dairy sources."
+        ]
+      }
+    ]
+  },
+  "where-giant-sharks-swim-close-to-shore": {
+    title: "Where giant sharks swim so close to shore you can nearly touch them",
+    authorName: "April Hicke",
+    authorAvatar: "/author_glasses.jpg",
+    authorBio: "April Hicke reports on ocean conservation, marine biology, and coastal ecosystems.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=750&fit=crop",
+    caption: "A massive basking shark glides through shallow coastal waters. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "In protected coastal bay zones around Atlantic waters, marine biologists and eco-tourists are witnessing an unprecedented aggregation of gentle giant basking sharks swimming in shallow near-shore currents.",
+          "These filter-feeding sharks, reaching lengths of up to 33 feet, glide calmly along coastal reefs to feed on dense plankton blooms brought in by seasonal upwelling."
+        ]
+      },
+      {
+        heading: "Coastal Ecosystem Protection & Research",
+        paragraphs: [
+          "Conservationists have designated eco-monitoring zones to protect these vulnerable marine species from boat collisions and disturbance.",
+          "Satellite tagging programs are helping researchers track their migration corridors across deep water drop-offs and coastal estuaries."
+        ]
+      }
+    ]
+  },
+  "assam-worst-floods-in-years": {
+    title: "'It took everything from us': India's Assam faces worst floods in years",
+    authorName: "Pramod Jain",
+    authorAvatar: "/author_bluesuit.jpg",
+    authorBio: "Pramod Jain reports on international affairs, climate disaster response, and regional infrastructure.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1200&h=750&fit=crop",
+    caption: "Emergency rescue crews navigate flooded villages across Assam. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "GUWAHATI — Torrential monsoon rains have triggered severe flooding across India's northeastern state of Assam, displacing over two million residents and submerging entire agricultural districts.",
+          "While flooding is an annual occurrence in the Brahmaputra river basin, local authorities described this year's inundation as the most severe in over six decades."
+        ]
+      },
+      {
+        heading: "Humanitarian Relief & Rehabilitation Efforts",
+        paragraphs: [
+          "Disaster management teams and armed forces personnel have deployed medical relief boats and air-dropped food rations to isolated communities.",
+          "State officials are coordinating with central emergency agencies to rebuild damaged embankments and establish permanent flood shelters."
+        ]
+      }
+    ]
+  },
+  "china-fake-ai-videos-disasters": {
+    title: "China's new challenge as natural disasters strike - fake AI videos",
+    authorName: "Jennifer Friesen",
+    authorAvatar: "/author_woman.jpg",
+    authorBio: "Jennifer Friesen reports on media verification, digital technology, and regulatory governance.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=750&fit=crop",
+    caption: "Social media oversight teams combat synthetic media and AI misinformation during extreme weather events. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "BEIJING — As severe weather and flooding strike eastern coastal provinces, Chinese cybersecurity regulators face a surge of hyper-realistic generative AI videos depicting fabricated disaster scenes.",
+          "Unverified video clips showing collapsed bridges and fictional rescues have gone viral on social platforms, creating panic and confusing official rescue coordination."
+        ]
+      },
+      {
+        heading: "Platform Governance & Digital Watermarking Rules",
+        paragraphs: [
+          "Tech platforms have deployed automated forensic algorithms and mandatory AI content labels to flag synthetic media.",
+          "Law enforcement agencies warn that accounts distributing deceptive emergency content face account suspensions and regulatory fines."
+        ]
+      }
+    ]
+  },
+  "hong-kong-activist-uk-stay": {
+    title: "Hong Kong activist allowed to stay in UK after deportation threat",
+    authorName: "Frank Morgan",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop",
+    authorBio: "Frank Morgan covers international human rights and diplomatic policy.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=750&fit=crop",
+    caption: "UK legal tribunals review asylum claims and diplomatic immigration protections. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "LONDON — A prominent Hong Kong pro-democracy activist detained at London's Heathrow Airport has been granted formal temporary leave to remain in the United Kingdom following high-level legal appeals.",
+          "Human rights advocates and parliamentary leaders intervened after border officials initially issued a deportation notice due to administrative visa discrepancies."
+        ]
+      },
+      {
+        heading: "Diplomatic Asylum Protections",
+        paragraphs: [
+          "Home Office representatives confirmed that the activist's protection claim is undergoing priority evaluation under the British National (Overseas) resettlement policy.",
+          "Legal scholars emphasize that maintaining clear asylum pathways is essential for protecting pro-democracy dissidents worldwide."
+        ]
+      }
+    ]
+  },
+  "chip-stocks-slide-us-asia": {
+    title: "Chip stocks slide in US and Asia as AI jitters rattle investors",
+    authorName: "David Chen",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop",
+    authorBio: "David Chen reports on global markets, semiconductor hardware, and tech equities.",
+    date: "July 28, 2026",
+    image: "/ai_chip.png",
+    caption: "Advanced microchip wafer processing and semiconductor market volatility. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "NEW YORK & TOKYO — Global semiconductor stocks experienced a sharp sell-off across US and Asian exchanges after major tech buyers signaled potential delays in next-generation AI data center capital expenditure.",
+          "South Korea's Kospi index experienced a temporary trading circuit breaker after semiconductor heavyweights plummeted by over 7% during morning trading."
+        ]
+      },
+      {
+        heading: "Market Valuation & AI Infrastructure Returns",
+        paragraphs: [
+          "Financial analysts attribute the volatility to investor anxiety over high valuation multiples and the timeline for monetizing generative AI software services.",
+          "Despite short-term market pullbacks, foundry leaders maintain that long-term demand for advanced packaging and high-bandwidth memory (HBM) remains structurally solid."
+        ]
+      }
+    ]
+  },
+  "biden-ghostwriter-classified-documents": {
+    title: "'I just found all the classified stuff downstairs' - Biden to ghostwriter",
+    authorName: "Frank Morgan",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop",
+    authorBio: "Frank Morgan is senior political correspondent.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=1200&h=750&fit=crop",
+    caption: "Congressional committees review audio transcripts and document retention logs. (AFP/File)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "WASHINGTON — Newly disclosed audio recordings and transcript excerpts between US officials and biographical writers reveal candid discussions regarding document storage and sensitive intelligence files.",
+          "Special counsel reports highlight recorded conversations from 2017 addressing notebook entries and classified briefing materials stored at private residences."
+        ]
+      },
+      {
+        heading: "Legal Arguments & Executive Records Compliance",
+        paragraphs: [
+          "Legal teams argued that informal notebook retention has been a historical norm among executive officials, while oversight committees advocate for stricter archival enforcement.",
+          "Department of Justice guidelines continue to refine protocols regarding personal journals containing national security references."
+        ]
+      }
+    ]
+  },
+  "clean-energy-investments-record-high": {
+    title: "Clean energy investments hit record high as global transition accelerates",
+    authorName: "Dr. Tim Sandle",
+    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop",
+    authorBio: "Dr. Tim Sandle reports on clean technology, renewable energy grids, and global sustainability.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&h=750&fit=crop",
+    caption: "Offshore wind turbines and solar farms generate record clean megawatt-hours globally. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "Global capital deployment into renewable energy infrastructure reached a historic $1.8 trillion over the past 12 months, outstripping fossil fuel investments for the third consecutive year.",
+          "Surging demand for offshore wind arrays, utility-scale solar farms, and grid-scale battery storage driven by corporate decarbonization pledges propelled the surge."
+        ]
+      },
+      {
+        heading: "Grid Modernization & Battery Storage Scaling",
+        paragraphs: [
+          "Energy regulators emphasize that expanding high-voltage transmission lines is essential to integrate intermitting renewable power into municipal grids.",
+          "Advances in sodium-ion and solid-state batteries are lowering energy storage costs, enabling 24/7 clean power dispatchability."
+        ]
+      }
+    ]
+  },
+  "lab-developing-sustainable-materials": {
+    title: "Inside the lab developing tomorrow's sustainable materials",
+    authorName: "April Hicke",
+    authorAvatar: "/author_glasses.jpg",
+    authorBio: "April Hicke reports on material science, bio-engineering, and sustainable technology.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=750&fit=crop",
+    caption: "Researchers test biodegradable polymers and carbon-negative building materials in bio-engineering laboratories. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "Inside cutting-edge bio-materials research centers, chemical engineers and biophysicists are synthesizing mushroom mycelium composites and algae-derived bioplastics designed to replace petroleum synthetic polymers.",
+          "These next-generation materials offer structural integrity matching traditional plastics while breaking down safely into organic matter within 90 days."
+        ]
+      },
+      {
+        heading: "Industrial Scaling & Carbon-Negative Composites",
+        paragraphs: [
+          "Consumer packaging manufacturers and automotive partners are conducting pilot tests to integrate bio-composite panels into commercial supply chains.",
+          "Life-cycle assessments confirm that manufacturing these organic alternatives emits up to 70% less carbon than conventional resin processing."
+        ]
+      }
+    ]
+  },
+  "5g-expansion-transforms-industries": {
+    title: "5G expansion continues to transform industries worldwide",
+    authorName: "Pramod Jain",
+    authorAvatar: "/author_bluesuit.jpg",
+    authorBio: "Pramod Jain reports on telecommunications, edge computing, and industrial IoT platforms.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=750&fit=crop",
+    caption: "Private 5G network towers power real-time industrial automation and telemetry. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "Standalone private 5G networks are accelerating digital transformation across manufacturing plants, port logistics hubs, and autonomous mining operations globally.",
+          "With sub-millisecond latency and ultra-reliable machine-type communication, enterprise operators can control remote robotics and autonomous vehicles with unprecedented precision."
+        ]
+      },
+      {
+        heading: "Enterprise IoT & Network Slicing Capabilities",
+        paragraphs: [
+          "Network slicing technology allows telecom providers to allocate dedicated, isolated bandwidth channels for mission-critical industrial applications.",
+          "Industry analysts project that global private 5G deployments will double annually over the next three years."
+        ]
+      }
+    ]
+  },
+  "future-of-work-hybrid-everything": {
+    title: "The future of work: How companies are adapting to hybrid everything",
+    authorName: "Jennifer Friesen",
+    authorAvatar: "/author_woman.jpg",
+    authorBio: "Jennifer Friesen reports on workplace culture, remote management, and organizational leadership.",
+    date: "July 27, 2026",
+    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=750&fit=crop",
+    caption: "Distributed teams collaborate using hybrid video conferencing and asynchronous documentation tools. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "As organizations move beyond rigid return-to-office debates, progressive companies are implementing flexible 'hybrid everything' operational models centered on asynchronous documentation and outcome-focused performance metrics.",
+          "By redesigning physical offices into collaborative workshops rather than daily desk rows, corporate real estate footprints are optimizing by 30%."
+        ]
+      },
+      {
+        heading: "Asynchronous Workflows & Digital Collaboration Tools",
+        paragraphs: [
+          "Executive leaders emphasize that establishing clear architecture decision records and asynchronous communication rules prevents meeting fatigue while empowering global talent.",
+          "Employee sentiment surveys reveal higher job satisfaction and productivity among companies utilizing goal-driven remote frameworks."
+        ]
+      }
+    ]
+  },
+  "small-businesses-compete-ai-world": {
+    title: "How small businesses can compete in an AI-driven world",
+    authorName: "Chris Hogg",
+    authorAvatar: "/author_beard.jpg",
+    authorBio: "Chris Hogg is an executive editor specializing in small business growth, fintech, and digital tools.",
+    date: "July 27, 2026",
+    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=750&fit=crop",
+    caption: "Small business owners adopt low-code AI customer service and inventory software. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "Small and medium-sized enterprises (SMEs) are leveraging low-code artificial intelligence tools to automate customer inquiry handling, inventory forecasting, and personalized marketing campaigns.",
+          "By integrating turnkey SaaS AI microservices, boutique retailers and service providers achieve operational efficiencies previously reserved for enterprise conglomerates."
+        ]
+      },
+      {
+        heading: "Accessible AI Integration & Competitive Advantage",
+        paragraphs: [
+          "Financial experts advise small business owners to focus AI adoption on repetitive admin workflows, such as automated invoicing and appointment scheduling.",
+          "Personalized customer relationships combined with AI-driven speed allow independent businesses to outmaneuver larger corporate competitors."
+        ]
+      }
+    ]
+  },
+  "what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks": {
+    title: "What tools business should take from a massive security breach to prevent future attacks",
+    authorName: "David Potter",
+    authorAvatar: "/author_bluesuit.jpg",
+    authorBio: "David Potter covers enterprise cybersecurity, cloud defense architectures, and incident response protocols.",
+    date: "July 28, 2026",
+    image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1200&h=750&fit=crop",
+    caption: "Cybersecurity operations centers monitor real-time threat vectors and zero-trust access controls. (Photo courtesy of Digital Journal)",
+    sections: [
+      {
+        heading: "",
+        paragraphs: [
+          "Following high-profile corporate security breaches, CISOs and IT directors are overhauling legacy security postures in favor of mandatory Zero-Trust Network Access (ZTNA), automated identity threat detection, and continuous secrets rotation.",
+          "Security audits reveal that over 80% of unauthorized access incidents originate from compromised credentials or unpatched third-party software dependencies."
+        ]
+      },
+      {
+        heading: "Zero-Trust Principles & Incident Resilience",
+        paragraphs: [
+          "Implementing micro-segmentation and hardware-backed multi-factor authentication (MFA) ensures that even if an perimeter is breached, lateral attacker movement remains strictly blocked.",
+          "Organizations conducting regular red-team simulations and automated vulnerability patching remediate threats 60% faster than industry averages."
+        ]
+      }
+    ]
   }
 };
 
@@ -712,6 +1050,22 @@ const authorAvatarMap: Record<string, { avatar: string; bio: string }> = {
 
 function getTopicMatchingImage(slug: string, title: string): string {
   const lower = (slug + " " + title).toLowerCase();
+
+  if (lower.includes("decoration") || lower.includes("acrylic") || lower.includes("fit out") || lower.includes("design fit out") || lower.includes("uae")) {
+    return "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("bone") || lower.includes("eat") || lower.includes("dairy") || lower.includes("nutrient")) {
+    return "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("shark") || lower.includes("basking") || lower.includes("swim close") || lower.includes("ocean")) {
+    return "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("assam") || lower.includes("flood") || lower.includes("took everything")) {
+    return "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1200&h=750&fit=crop";
+  }
+  if (lower.includes("crypto") || lower.includes("bitcoin") || lower.includes("hyperliquid") || lower.includes("zcash")) {
+    return "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=1200&h=750&fit=crop";
+  }
 
   if (lower.includes("space") || lower.includes("orbital") || lower.includes("satellite") || lower.includes("spacex") || lower.includes("starship")) {
     return "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1200&h=750&fit=crop";
