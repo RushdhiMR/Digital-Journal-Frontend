@@ -127,7 +127,7 @@ export default function HeroSection() {
         <div className="lg:col-span-8 bg-white rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
           
           {/* FLUSH LEFT IMAGE (0 Margins) */}
-          <div className="lg:w-[48%] relative min-h-[340px] lg:min-h-[420px] flex-shrink-0 group">
+          <div className="lg:w-[54%] relative min-h-[340px] lg:min-h-[420px] flex-shrink-0 group">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
@@ -146,7 +146,7 @@ export default function HeroSection() {
           </div>
 
           {/* RIGHT TEXT DETAILS */}
-          <div className="lg:w-[52%] p-6 sm:p-8 flex flex-col justify-between h-full bg-white">
+          <div className="lg:w-[46%] p-6 sm:p-8 flex flex-col justify-between h-full bg-white">
             <div>
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
