@@ -124,7 +124,7 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col lg:flex-row items-stretch h-full">
+        <div className="lg:col-span-8 bg-white rounded-2xl overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
           
           {/* FLUSH LEFT IMAGE (0 Margins) */}
           <div className="lg:w-[48%] relative min-h-[340px] lg:min-h-[420px] flex-shrink-0 group">
@@ -230,7 +230,7 @@ export default function HeroSection() {
         </div>
 
         {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH) */}
-        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full">
+        <div className="lg:col-span-4 bg-white rounded-2xl p-6 flex flex-col justify-between h-full">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-5 pb-2">
