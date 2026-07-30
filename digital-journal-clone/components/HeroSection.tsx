@@ -16,6 +16,8 @@ export default function HeroSection() {
       author: "John Doe",
       authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
       date: "July 13, 2026",
+      readTime: "5 MIN READ",
+      image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1000&h=750&fit=crop",
       href: "/business/security/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
     },
     {
@@ -26,6 +28,8 @@ export default function HeroSection() {
       author: "Jennifer Friesen",
       authorAvatar: "/author_woman.jpg",
       date: "July 28, 2026",
+      readTime: "6 MIN READ",
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1000&h=750&fit=crop",
       href: "/technology/artificial-intelligence/can-space-ai-data-centres-solve-earths-computing-crisis"
     },
     {
@@ -36,6 +40,8 @@ export default function HeroSection() {
       author: "April Hicke",
       authorAvatar: "/author_glasses.jpg",
       date: "July 27, 2026",
+      readTime: "4 MIN READ",
+      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1000&h=750&fit=crop",
       href: "/business/companies/canadian-mathematician-honoured-for-reshaping-global-data-networks"
     },
     {
@@ -46,6 +52,8 @@ export default function HeroSection() {
       author: "Dr. Tim Sandle",
       authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
       date: "July 26, 2026",
+      readTime: "5 MIN READ",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&h=750&fit=crop",
       href: "/technology/innovations/chinas-kimi-k3-model-rattles-us-ai-technology-industry"
     },
     {
@@ -56,6 +64,8 @@ export default function HeroSection() {
       author: "Pramod Jain",
       authorAvatar: "/author_bluesuit.jpg",
       date: "July 25, 2026",
+      readTime: "4 MIN READ",
+      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&h=750&fit=crop",
       href: "/business/startups/startups-bet-on-autonomous-ai-agents"
     }
   ];
@@ -109,96 +119,122 @@ export default function HeroSection() {
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 border-b border-gray-200 font-sans">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        {/* LEFT CARD: INTERACTIVE FEATURED ARTICLE CAROUSEL (~58%) */}
-        <div className="lg:col-span-7 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col justify-between h-full">
-          <div>
-            {/* Category Tag */}
-            <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
-              {activeArticle.category}
-            </span>
-
-            {/* Main Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold leading-[1.2] mb-4 text-gray-900 font-serif">
-              <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
-                {activeArticle.title}
-              </Link>
-            </h1>
-
-            {/* Excerpt */}
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6 font-sans">
-              {activeArticle.excerpt}
-            </p>
-
-            {/* Author Row */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+        {/* LEFT CARD: FEATURED ARTICLE CAROUSEL WITH IMAGE (~66% GRID WIDTH) */}
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col justify-between h-full">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-1">
+            
+            {/* Left Image (~50% of card) */}
+            <div className="md:col-span-6 w-full">
+              <Link href={activeArticle.href} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-900 group block">
                 <img
-                  src={activeArticle.authorAvatar}
-                  alt={activeArticle.author}
-                  className="w-full h-full object-cover"
+                  src={activeArticle.image}
+                  alt={activeArticle.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+                <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                  <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm tracking-wider">
+                    {activeArticle.category}
+                  </span>
+                  <span className="bg-black/75 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm tracking-wider">
+                    {activeArticle.readTime}
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Right Text Details (~50% of card) */}
+            <div className="md:col-span-6 flex flex-col justify-between h-full pl-0 md:pl-2">
+              <div>
+                {/* Category Subtitle */}
+                <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-2.5 block">
+                  {activeArticle.category}
+                </span>
+
+                {/* Main Title */}
+                <h1 className="text-xl sm:text-2xl lg:text-[27px] font-bold leading-[1.2] mb-3 text-gray-900 font-serif">
+                  <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
+                    {activeArticle.title}
+                  </Link>
+                </h1>
+
+                {/* Excerpt */}
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 font-sans line-clamp-3">
+                  {activeArticle.excerpt}
+                </p>
+
+                {/* Author Row */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={activeArticle.authorAvatar}
+                      alt={activeArticle.author}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="font-bold text-gray-900">
+                      By {activeArticle.author}
+                    </span>
+                    <span className="w-4 h-4 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
+                      <Check size={9} strokeWidth={3} />
+                    </span>
+                    <span className="text-gray-400 font-medium ml-0.5">
+                      • {activeArticle.date}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="font-bold text-gray-900">
-                  By {activeArticle.author}
-                </span>
-                <span className="w-4 h-4 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
-                  <Check size={10} strokeWidth={3} />
-                </span>
-                <span className="text-gray-400 font-medium ml-1">
-                  • {activeArticle.date}
-                </span>
+
+              {/* Bottom Control Bar */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
+                {/* Dots */}
+                <div className="flex items-center gap-2">
+                  {carouselArticles.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`transition-all duration-300 rounded-full cursor-pointer ${
+                        currentSlide === idx 
+                          ? "w-2.5 h-2.5 bg-[#D31220]" 
+                          : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Nav Arrows */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrevSlide}
+                    className="w-9 h-9 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft size={16} strokeWidth={2.2} />
+                  </button>
+                  <button
+                    onClick={handleNextSlide}
+                    className="w-9 h-9 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={16} strokeWidth={2.2} />
+                  </button>
+                </div>
               </div>
+
             </div>
+
           </div>
-
-          {/* Carousel Control Bar */}
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
-            {/* Dots */}
-            <div className="flex items-center gap-2">
-              {carouselArticles.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`transition-all duration-300 rounded-full cursor-pointer ${
-                    currentSlide === idx 
-                      ? "w-2.5 h-2.5 bg-[#D31220]" 
-                      : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Nav Arrows */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrevSlide}
-                className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft size={18} strokeWidth={2.2} />
-              </button>
-              <button
-                onClick={handleNextSlide}
-                className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
-                aria-label="Next slide"
-              >
-                <ChevronRight size={18} strokeWidth={2.2} />
-              </button>
-            </div>
-          </div>
-
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~42%) */}
-        <div className="lg:col-span-5 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full">
+        {/* RIGHT CARD: TRENDING NOW BOX (~34% GRID WIDTH) */}
+        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between h-full">
           <div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4 pb-2">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-[#D31220]" />
-                <h2 className="text-lg font-extrabold text-gray-900 tracking-tight uppercase">
+                <h2 className="text-base font-extrabold text-gray-900 tracking-tight uppercase">
                   Trending Now
                 </h2>
               </div>
@@ -208,20 +244,20 @@ export default function HeroSection() {
             </div>
 
             {/* 4 Numbered List Items */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {trendingNowItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-start justify-between gap-3 pb-4 ${
+                  className={`flex items-start justify-between gap-3 pb-3 ${
                     idx < trendingNowItems.length - 1 ? "border-b border-gray-100" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3 flex-1">
-                    <span className="text-[#D31220] font-extrabold text-base w-6 flex-shrink-0 mt-0.5">
+                    <span className="text-[#D31220] font-black text-base w-6 flex-shrink-0 mt-0.5">
                       {item.number}
                     </span>
                     <div className="flex-1">
-                      <span className="text-[10px] font-extrabold text-[#D31220] uppercase tracking-wider block mb-1">
+                      <span className="text-[10px] font-extrabold text-[#D31220] uppercase tracking-wider block mb-0.5">
                         {item.category}
                       </span>
                       <h3 className="text-[13px] font-bold text-gray-900 leading-snug hover:text-[#D31220] transition-colors line-clamp-2">
@@ -235,7 +271,7 @@ export default function HeroSection() {
                     </div>
                   </div>
 
-                  <Link href={item.href} className="w-[100px] h-[65px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 block group">
+                  <Link href={item.href} className="w-[95px] h-[62px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 block group">
                     <img
                       src={item.image}
                       alt={item.title}
