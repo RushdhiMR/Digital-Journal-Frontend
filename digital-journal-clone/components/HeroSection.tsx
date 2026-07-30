@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Play } from "lucide-react";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -77,6 +77,7 @@ export default function HeroSection() {
       title: "Major cybersecurity firm warns of new phishing campaign",
       time: "10 minutes ago",
       image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=200&h=140&fit=crop",
+      hasVideo: true,
       href: "/business/security/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
     },
     {
@@ -85,6 +86,7 @@ export default function HeroSection() {
       title: "Economy shows signs of resilience despite global uncertainty",
       time: "35 minutes ago",
       image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=200&h=140&fit=crop",
+      hasVideo: false,
       href: "/business/companies/canadian-mathematician-honoured-for-reshaping-global-data-networks"
     },
     {
@@ -93,6 +95,7 @@ export default function HeroSection() {
       title: "Quantum computing startup raises $200M in Series B",
       time: "1 hour ago",
       image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=140&fit=crop",
+      hasVideo: false,
       href: "/technology/innovations/chinas-kimi-k3-model-rattles-us-ai-technology-industry"
     },
     {
@@ -101,6 +104,7 @@ export default function HeroSection() {
       title: "Humanitarian aid reaches thousands after devastating floods",
       time: "2 hours ago",
       image: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=200&h=140&fit=crop",
+      hasVideo: false,
       href: "/business/startups/startups-bet-on-autonomous-ai-agents"
     }
   ];
@@ -119,119 +123,117 @@ export default function HeroSection() {
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 border-b border-gray-200 font-sans">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        {/* LEFT CARD: FEATURED ARTICLE CAROUSEL WITH IMAGE (~66% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col justify-between h-full">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-1">
-            
-            {/* Left Image (~50% of card) */}
-            <div className="md:col-span-6 w-full">
-              <Link href={activeArticle.href} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-900 group block">
-                <img
-                  src={activeArticle.image}
-                  alt={activeArticle.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-                  <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm tracking-wider">
-                    {activeArticle.category}
-                  </span>
-                  <span className="bg-black/75 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm tracking-wider">
-                    {activeArticle.readTime}
-                  </span>
-                </div>
-              </Link>
-            </div>
-
-            {/* Right Text Details (~50% of card) */}
-            <div className="md:col-span-6 flex flex-col justify-between h-full pl-0 md:pl-2">
-              <div>
-                {/* Category Subtitle */}
-                <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-2.5 block">
+        {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col lg:flex-row items-stretch h-full">
+          
+          {/* FLUSH LEFT IMAGE (0 Margins) */}
+          <div className="lg:w-[48%] relative min-h-[340px] lg:min-h-[420px] flex-shrink-0 group">
+            <Link href={activeArticle.href} className="block w-full h-full">
+              <img
+                src={activeArticle.image}
+                alt={activeArticle.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
+                <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
                   {activeArticle.category}
                 </span>
+                <span className="bg-black/80 text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
+                  {activeArticle.readTime}
+                </span>
+              </div>
+            </Link>
+          </div>
 
-                {/* Main Title */}
-                <h1 className="text-xl sm:text-2xl lg:text-[27px] font-bold leading-[1.2] mb-3 text-gray-900 font-serif">
-                  <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
-                    {activeArticle.title}
-                  </Link>
-                </h1>
+          {/* RIGHT TEXT DETAILS */}
+          <div className="lg:w-[52%] p-6 sm:p-8 flex flex-col justify-between h-full bg-white">
+            <div>
+              {/* Category Subtitle */}
+              <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
+                {activeArticle.category}
+              </span>
 
-                {/* Excerpt */}
-                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 font-sans line-clamp-3">
-                  {activeArticle.excerpt}
-                </p>
+              {/* Main Title */}
+              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-bold leading-[1.25] mb-3 text-gray-900 font-serif">
+                <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
+                  {activeArticle.title}
+                </Link>
+              </h1>
 
-                {/* Author Row */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                    <img
-                      src={activeArticle.authorAvatar}
-                      alt={activeArticle.author}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 text-xs">
-                    <span className="font-bold text-gray-900">
-                      By {activeArticle.author}
-                    </span>
-                    <span className="w-4 h-4 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
-                      <Check size={9} strokeWidth={3} />
-                    </span>
-                    <span className="text-gray-400 font-medium ml-0.5">
-                      • {activeArticle.date}
-                    </span>
-                  </div>
+              {/* Excerpt */}
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-6 font-sans">
+                {activeArticle.excerpt}
+              </p>
+
+              {/* Author Row */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                  <img
+                    src={activeArticle.authorAvatar}
+                    alt={activeArticle.author}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="font-bold text-gray-900">
+                    By {activeArticle.author}
+                  </span>
+                  <span className="w-4 h-4 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
+                    <Check size={9} strokeWidth={3} />
+                  </span>
+                  <span className="text-gray-400 font-medium ml-1">
+                    • {activeArticle.date}
+                  </span>
                 </div>
               </div>
+            </div>
 
-              {/* Bottom Control Bar */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
-                {/* Dots */}
-                <div className="flex items-center gap-2">
-                  {carouselArticles.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentSlide(idx)}
-                      className={`transition-all duration-300 rounded-full cursor-pointer ${
-                        currentSlide === idx 
-                          ? "w-2.5 h-2.5 bg-[#D31220]" 
-                          : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
-                      }`}
-                      aria-label={`Go to slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-
-                {/* Nav Arrows */}
-                <div className="flex items-center gap-2">
+            {/* Bottom Control Bar */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+              {/* Dots */}
+              <div className="flex items-center gap-2">
+                {carouselArticles.map((_, idx) => (
                   <button
-                    onClick={handlePrevSlide}
-                    className="w-9 h-9 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
-                    aria-label="Previous slide"
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.2} />
-                  </button>
-                  <button
-                    onClick={handleNextSlide}
-                    className="w-9 h-9 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
-                    aria-label="Next slide"
-                  >
-                    <ChevronRight size={16} strokeWidth={2.2} />
-                  </button>
-                </div>
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
+                      currentSlide === idx 
+                        ? "w-2.5 h-2.5 bg-[#D31220]" 
+                        : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
               </div>
 
+              {/* Nav Arrows */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrevSlide}
+                  className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft size={18} strokeWidth={2.2} />
+                </button>
+                <button
+                  onClick={handleNextSlide}
+                  className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight size={18} strokeWidth={2.2} />
+                </button>
+              </div>
             </div>
 
           </div>
+
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~34% GRID WIDTH) */}
-        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between h-full">
+        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH) */}
+        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full">
           <div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 pb-2">
+            <div className="flex items-center justify-between mb-5 pb-2">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-[#D31220]" />
                 <h2 className="text-base font-extrabold text-gray-900 tracking-tight uppercase">
@@ -244,16 +246,16 @@ export default function HeroSection() {
             </div>
 
             {/* 4 Numbered List Items */}
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {trendingNowItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-start justify-between gap-3 pb-3 ${
+                  className={`flex items-start justify-between gap-3 pb-3.5 ${
                     idx < trendingNowItems.length - 1 ? "border-b border-gray-100" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3 flex-1">
-                    <span className="text-[#D31220] font-black text-base w-6 flex-shrink-0 mt-0.5">
+                    <span className="text-[#D31220] font-black text-lg w-6 flex-shrink-0 mt-0.5">
                       {item.number}
                     </span>
                     <div className="flex-1">
@@ -271,12 +273,19 @@ export default function HeroSection() {
                     </div>
                   </div>
 
-                  <Link href={item.href} className="w-[95px] h-[62px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 block group">
+                  <Link href={item.href} className="w-[100px] h-[65px] rounded-lg overflow-hidden bg-gray-900 flex-shrink-0 block group relative">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
                     />
+                    {item.hasVideo && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-7 h-7 bg-black/60 rounded-full flex items-center justify-center border border-white/50 text-white shadow-md">
+                          <Play size={12} fill="white" className="ml-0.5" />
+                        </div>
+                      </div>
+                    )}
                   </Link>
                 </div>
               ))}
