@@ -144,63 +144,27 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900">
       <Header />
 
-      {/* PLAIN PAGE CONTENT (NO FLOATING POPUP SHADOW BOX) */}
-      <main className="flex-1 py-12 lg:py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      {/* PLAIN PAGE CONTENT (NO FLOATING POPUP SHADOW BOX, CLEAN CENTERED FORM) */}
+      <main className="flex-1 bg-white py-12 lg:py-16 flex items-center justify-center">
+        <div className="w-full max-w-[460px] mx-auto px-4">
           
-          {/* LEFT COLUMN: REGISTRATION BRANDING & READER BENEFITS */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="flex items-center gap-3 text-xs font-bold text-[#BF1E2D] uppercase tracking-wider">
-              <span className="w-2 h-2 bg-[#BF1E2D] rounded-full" />
-              <span>JOIN DIGITAL JOURNAL NETWORK</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-gray-900 leading-[1.15] font-serif">
-              Join Digital Journal Today
-            </h1>
-
-            <p className="text-gray-600 text-base leading-relaxed font-sans">
-              Create your free reader account to follow global market news, personalize topic feeds, save articles for offline reading, and receive daily breaking news summaries.
+          {/* Logo Header */}
+          <div className="flex flex-col items-center mb-6 text-center">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity mb-3">
+              <img
+                src="/logo.png"
+                alt="Digital Journal Logo"
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-[20px] font-bold tracking-[0.5px] text-black uppercase font-standard-sans">
+                DIGITAL JOURNAL
+              </span>
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900 font-serif">Create Account</h1>
+            <p className="text-xs text-gray-500 font-bold tracking-wider mt-1 uppercase">
+              JOIN DIGITAL JOURNAL TODAY
             </p>
-
-            {/* Feature Highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-none space-y-1.5">
-                <UserCheck className="w-5 h-5 text-[#BF1E2D]" />
-                <h3 className="font-bold text-sm text-gray-900">Verified Profile</h3>
-                <p className="text-xs text-gray-500">Access accredited reader discussions and expert columns.</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-none space-y-1.5">
-                <Bookmark className="w-5 h-5 text-[#BF1E2D]" />
-                <h3 className="font-bold text-sm text-gray-900">Saved Articles</h3>
-                <p className="text-xs text-gray-500">Bookmark essential reports and read them anytime.</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-none space-y-1.5">
-                <Bell className="w-5 h-5 text-[#BF1E2D]" />
-                <h3 className="font-bold text-sm text-gray-900">Topic Alerts</h3>
-                <p className="text-xs text-gray-500">Custom notifications on cybersecurity, markets, and world news.</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-none space-y-1.5">
-                <Sparkles className="w-5 h-5 text-[#BF1E2D]" />
-                <h3 className="font-bold text-sm text-gray-900">Premium Reading</h3>
-                <p className="text-xs text-gray-500">Clean, ad-free reader dashboard and newsletter digests.</p>
-              </div>
-            </div>
           </div>
-
-          {/* RIGHT COLUMN: PLAIN FORM LAYOUT (BORDER-0, NO POPUP SHADOW) */}
-          <div className="lg:col-span-6 bg-white p-0 sm:p-2">
-            
-            {/* Title */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 font-serif">Create Secure Account</h2>
-              <p className="text-xs text-gray-500 font-bold tracking-wider mt-1 uppercase">
-                FILL IN YOUR DETAILS BELOW TO REGISTER
-              </p>
-            </div>
 
             {/* Success Banner */}
             {successMessage && (
@@ -378,13 +342,11 @@ export default function RegisterPage() {
               </div>
             </form>
 
-            <div className="mt-8 text-left">
+            <div className="mt-8 text-center">
               <Link href="/login" className="text-sm text-gray-600 hover:text-black transition-colors">
                 Already registered? <span className="text-[#BF1E2D] font-bold hover:underline">Sign in instead</span>
               </Link>
             </div>
-
-          </div>
 
         </div>
       </main>
