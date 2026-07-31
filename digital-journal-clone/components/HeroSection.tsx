@@ -210,14 +210,14 @@ export default function HeroSection() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrevSlide}
-                  className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                  className="w-9 h-9 border border-gray-200 rounded-none flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
                   aria-label="Previous slide"
                 >
                   <ChevronLeft size={18} strokeWidth={2.2} />
                 </button>
                 <button
                   onClick={handleNextSlide}
-                  className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
+                  className="w-9 h-9 border border-gray-200 rounded-none flex items-center justify-center text-gray-700 hover:border-gray-400 hover:text-black transition-colors cursor-pointer bg-white shadow-sm"
                   aria-label="Next slide"
                 >
                   <ChevronRight size={18} strokeWidth={2.2} />

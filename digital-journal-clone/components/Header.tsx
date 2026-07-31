@@ -303,7 +303,7 @@ export default function Header() {
           {/* Red Newsletter Signup Button */}
           <Link
             href="/newsletters"
-            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-md transition-colors whitespace-nowrap shadow-sm"
+            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm"
           >
             Newsletter Signup
           </Link>
@@ -311,7 +311,7 @@ export default function Header() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-md hover:bg-gray-100"
+            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-none hover:bg-gray-100"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -362,7 +362,7 @@ export default function Header() {
                     onMouseEnter={() => setActiveMenu("WORLD")}
                     className="absolute top-full left-0 pt-1 w-80 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
                   >
-                    <div className="bg-white border border-gray-200 shadow-2xl rounded-lg p-4 text-left font-sans">
+                    <div className="bg-white border border-gray-200 shadow-2xl rounded-none p-4 text-left font-sans">
                       <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
                         <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
                           Top Countries & Regions
@@ -404,7 +404,7 @@ export default function Header() {
             </button>
 
             {isEditionOpen && (
-              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded shadow-md z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-none shadow-md z-50 py-1">
                 {["US Edition", "Canada Edition", "Global Edition", "UK Edition"].map((ed) => (
                   <button
                     key={ed}
