@@ -391,24 +391,6 @@ export default function Header() {
                     </div>
                   </div>
                 )}
-
-                {/* Standard Dropdown Menu for other categories */}
-                {cat.name !== "World" && cat.hasSub && activeMenu === cat.name.toUpperCase() && megaMenuData[cat.name.toUpperCase()] && (
-                  <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 shadow-xl rounded-md z-50 p-4 text-left font-sans">
-                    <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider mb-2">
-                      {cat.name} Subcategories
-                    </h4>
-                    <ul className="space-y-2">
-                      {megaMenuData[cat.name.toUpperCase()].diveDeeper.map((sub, i) => (
-                        <li key={i}>
-                          <Link href={`${cat.href}/${sub.toLowerCase()}`} className="text-[12.5px] text-gray-700 hover:text-[#BF1E2D] hover:underline font-semibold block">
-                            {sub}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             ))}
           </nav>
