@@ -124,17 +124,17 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-center lg:items-stretch lg:h-[310px]">
           
-          {/* FLUSH LEFT LANDSCAPE RECTANGLE IMAGE (50% Width, Sharp Edges) */}
-          <div className="lg:w-1/2 w-full relative aspect-[16/10] sm:aspect-[4/3] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] lg:min-h-[320px] flex-shrink-0 group overflow-hidden">
+          {/* INCREASED WIDTH (58% Width Rightward) & REDUCED HEIGHT (310px Widescreen Rectangle, Sharp Edges) */}
+          <div className="lg:w-[58%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
-              <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
                 <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
                   {activeArticle.category}
                 </span>
@@ -145,8 +145,8 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (50% Width) */}
-          <div className="lg:w-1/2 p-6 sm:p-7 flex flex-col justify-between bg-white">
+          {/* RIGHT TEXT DETAILS (42% Width) */}
+          <div className="lg:w-[42%] p-5 flex flex-col justify-between h-full bg-white">
             <div>
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
