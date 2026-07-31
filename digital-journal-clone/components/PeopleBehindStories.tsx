@@ -50,7 +50,7 @@ export default function PeopleBehindStories() {
                 const slug = author.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                 return (
                   <Link key={index} href={`/author/${slug}`} className="flex flex-col group cursor-pointer">
-                    <div className="w-full aspect-square overflow-hidden bg-gray-200 rounded-sm">
+                    <div className="w-full aspect-square overflow-hidden bg-gray-200 rounded-none">
                       <img
                         src={author.image}
                         alt={author.name}

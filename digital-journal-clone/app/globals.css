@@ -35,3 +35,14 @@
     font-family: Arial, Helvetica, sans-serif !important;
   }
 }
+
+/* ENFORCE SHARP 90-DEGREE EDGES ON ALL IMAGES ACROSS THE ENTIRE WEBSITE */
+img, 
+picture, 
+video, 
+.image-container,
+[class*="aspect-"],
+next-image-wrapper {
+  border-radius: 0px !important;
+}
+

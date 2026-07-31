@@ -216,7 +216,7 @@ export default function MoreNews() {
           return (
             <article key={index} className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start pb-8 border-b border-zinc-100 last:border-b-0 last:pb-0 group">
               {/* Thumbnail Clickable Link */}
-              <Link href={articleUrl} className="relative w-full sm:w-[220px] md:w-[240px] aspect-[16/10] flex-shrink-0 overflow-hidden bg-gray-100 rounded-lg block">
+              <Link href={articleUrl} className="relative w-full sm:w-[220px] md:w-[240px] aspect-[16/10] flex-shrink-0 overflow-hidden bg-gray-100 rounded-none block">
                 <img
                   src={item.image}
                   alt={item.title}

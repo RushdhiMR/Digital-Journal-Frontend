@@ -56,7 +56,7 @@ export default function PRTopicsSection() {
           <article key={article.id} className="flex flex-col group cursor-pointer">
             <Link
               href={article.href}
-              className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100 rounded-sm mb-3 block"
+              className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100 rounded-none mb-3 block"
             >
               <img
                 src={article.image}

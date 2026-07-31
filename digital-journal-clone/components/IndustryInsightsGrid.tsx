@@ -55,7 +55,7 @@ export default function IndustryInsightsGrid() {
 
           return (
             <article key={index} className="flex flex-col group">
-              <Link href={articleUrl} className="relative w-full aspect-[4/3] overflow-hidden mb-3 bg-gray-100 rounded-lg block">
+              <Link href={articleUrl} className="relative w-full aspect-[4/3] overflow-hidden mb-3 bg-gray-100 rounded-none block">
                 <img
                   src={article.image}
                   alt={article.title}
