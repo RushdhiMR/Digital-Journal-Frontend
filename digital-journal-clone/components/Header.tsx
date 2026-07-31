@@ -167,6 +167,17 @@ export default function Header() {
     { name: "Inflation Rate", href: "/search?q=Inflation+Rate" }
   ];
 
+  const topCountriesList = [
+    { flag: "🇺🇸", name: "United States", region: "North America", href: "/news/world" },
+    { flag: "🇬🇧", name: "United Kingdom", region: "Europe", href: "/news/world" },
+    { flag: "🇦🇪", name: "United Arab Emirates", region: "Middle East", href: "/news/world" },
+    { flag: "🇨🇳", name: "China", region: "East Asia", href: "/news/world" },
+    { flag: "🇮🇳", name: "India", region: "South Asia", href: "/news/world" },
+    { flag: "🇨🇦", name: "Canada", region: "Americas", href: "/news/world" },
+    { flag: "🇦🇺", name: "Australia", region: "Oceania", href: "/news/world" },
+    { flag: "🌍", name: "International", region: "Global Summary", href: "/news/world" },
+  ];
+
   return (
     <header className="relative w-full bg-white text-gray-900 z-50 font-sans border-b border-gray-200">
       
@@ -323,22 +334,63 @@ export default function Header() {
                 onMouseEnter={() => cat.hasSub && setActiveMenu(cat.name.toUpperCase())}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <Link
-                  href={cat.href}
-                  className={`flex items-center gap-1 whitespace-nowrap transition-colors ${
-                    cat.name === "World" 
-                      ? "text-gray-900 border-b-2 border-[#BF1E2D] pb-1 font-bold" 
-                      : "text-gray-800 hover:text-[#BF1E2D]"
-                  }`}
-                >
-                  <span>{cat.name}</span>
-                  {cat.hasSub && (
+                {cat.name === "World" ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveMenu(activeMenu === "WORLD" ? null : "WORLD");
+                    }}
+                    className="flex items-center gap-1 whitespace-nowrap transition-colors text-gray-900 border-b-2 border-[#BF1E2D] pb-1 font-bold cursor-pointer bg-transparent border-t-0 border-x-0 outline-none"
+                  >
+                    <span>World</span>
                     <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5" />
-                  )}
-                </Link>
+                  </button>
+                ) : (
+                  <Link
+                    href={cat.href}
+                    className="flex items-center gap-1 whitespace-nowrap transition-colors text-gray-800 hover:text-[#BF1E2D]"
+                  >
+                    <span>{cat.name}</span>
+                    {cat.hasSub && (
+                      <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5" />
+                    )}
+                  </Link>
+                )}
 
-                {/* Dropdown Menu on Hover */}
-                {cat.hasSub && activeMenu === cat.name.toUpperCase() && megaMenuData[cat.name.toUpperCase()] && (
+                {/* Dropdown Menu on Hover for World (Top Countries) */}
+                {cat.name === "World" && activeMenu === "WORLD" && (
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 shadow-2xl rounded-lg z-50 p-4 text-left font-sans animate-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
+                      <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
+                        Top Countries & Regions
+                      </h4>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">Select Region</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1">
+                      {topCountriesList.map((country, i) => (
+                        <Link
+                          key={i}
+                          href={country.href}
+                          onClick={() => setActiveMenu(null)}
+                          className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-red-50 text-gray-800 hover:text-[#BF1E2D] transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-base leading-none">{country.flag}</span>
+                            <span className="text-xs font-bold">{country.name}</span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 group-hover:text-[#BF1E2D] font-medium">
+                            {country.region}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Standard Dropdown Menu for other categories */}
+                {cat.name !== "World" && cat.hasSub && activeMenu === cat.name.toUpperCase() && megaMenuData[cat.name.toUpperCase()] && (
                   <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 shadow-xl rounded-md z-50 p-4 text-left font-sans">
                     <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider mb-2">
                       {cat.name} Subcategories
