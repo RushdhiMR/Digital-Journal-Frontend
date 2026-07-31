@@ -372,20 +372,18 @@ export default function Header() {
 
                       <div className="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto scrollbar-thin">
                         {topCountriesList.map((country, i) => (
-                          <Link
+                          <div
                             key={i}
-                            href={country.href}
-                            onClick={() => setActiveMenu(null)}
-                            className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-red-50 text-gray-800 hover:text-[#BF1E2D] transition-colors group"
+                            className="flex items-center justify-between py-2 px-3 rounded-md text-gray-800 cursor-default pointer-events-none select-none opacity-90"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-base leading-none">{country.flag}</span>
                               <span className="text-xs font-bold">{country.name}</span>
                             </div>
-                            <span className="text-[10px] text-gray-400 group-hover:text-[#BF1E2D] font-medium">
+                            <span className="text-[10px] text-gray-400 font-medium">
                               {country.region}
                             </span>
-                          </Link>
+                          </div>
                         ))}
                       </div>
                     </div>
