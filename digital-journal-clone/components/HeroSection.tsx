@@ -17,7 +17,7 @@ export default function HeroSection() {
       authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
       date: "July 13, 2026",
       readTime: "5 MIN READ",
-      image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1000&h=750&fit=crop",
+      image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&h=800&fit=crop",
       href: "/business/security/what-tools-business-should-take-from-a-massive-security-breach-to-prevent-future-attacks"
     },
     {
@@ -126,13 +126,13 @@ export default function HeroSection() {
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
         <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
           
-          {/* FLUSH LEFT LANDSCAPE RECTANGLE IMAGE (50% Width, 4:3 Aspect Ratio, Sharp Edges) */}
-          <div className="lg:w-1/2 relative aspect-[4/3] min-h-[240px] sm:min-h-[280px] lg:min-h-[340px] flex-shrink-0 group overflow-hidden">
+          {/* FLUSH LEFT LANDSCAPE RECTANGLE IMAGE (50% Width, Sharp Edges) */}
+          <div className="lg:w-1/2 w-full relative aspect-[16/10] sm:aspect-[4/3] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] lg:min-h-[320px] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-none"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
               <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
                 <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
