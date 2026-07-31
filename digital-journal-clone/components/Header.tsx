@@ -345,6 +345,7 @@ export default function Header() {
                     className="flex items-center gap-1 whitespace-nowrap transition-colors text-gray-900 border-b-2 border-[#BF1E2D] pb-1 font-bold cursor-pointer bg-transparent border-t-0 border-x-0 outline-none"
                   >
                     <span>World</span>
+                    <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5" />
                   </button>
                 ) : (
                   <Link
