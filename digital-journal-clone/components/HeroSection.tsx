@@ -145,8 +145,8 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (44% Width, Compact Typography & Bottom Controls) */}
-          <div className="lg:w-[44%] p-4 sm:p-5 flex flex-col justify-between h-full bg-white">
+          {/* RIGHT TEXT DETAILS (44% Width Desktop, Full Width Mobile, Compact Typography & Bottom Controls) */}
+          <div className="w-full lg:w-[44%] p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full bg-white">
             <div>
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-[11px] tracking-wider uppercase mb-1.5 block font-sans">
@@ -229,8 +229,8 @@ export default function HeroSection() {
 
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD HEIGHT 285px) */}
-        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between lg:h-[285px]">
+        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD HEIGHT 285px DESKTOP) */}
+        <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:h-[285px]">
           <div className="flex flex-col justify-between h-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-100">

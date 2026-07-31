@@ -425,8 +425,8 @@ export default function Header() {
       <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 px-4 text-xs font-medium text-gray-700">
         <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3">
           
-          {/* LEFT: TRENDING LABEL & TOPICS (SHIFTED ~1 INCH RIGHT) */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 pl-16 md:pl-24">
+          {/* LEFT: TRENDING LABEL & TOPICS (MOBILE RESPONSIVE, SHIFTED ~1 INCH RIGHT ON DESKTOP) */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 pl-2 md:pl-24">
             <span className="text-[#BF1E2D] font-extrabold uppercase text-[11px] tracking-wider flex-shrink-0">
               TRENDING
             </span>
