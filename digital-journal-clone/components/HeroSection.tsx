@@ -124,62 +124,62 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-center lg:items-stretch lg:h-[285px]">
           
-          {/* INCREASED IMAGE WIDTH (56% Width Rightward) & REDUCED HEIGHT (Widescreen 16:10 Rectangle, Sharp Edges) */}
-          <div className="lg:w-[56%] w-full relative aspect-[16/10] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] lg:min-h-[330px] flex-shrink-0 group overflow-hidden">
+          {/* REDUCED HEIGHT WIDESCREEN RECTANGLE IMAGE (56% Width, 285px Height, Sharp Edges) */}
+          <div className="lg:w-[56%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[285px] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
-              <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
-                <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
+              <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
+                <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-0.5 tracking-wider">
                   {activeArticle.category}
                 </span>
-                <span className="bg-black/80 text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
+                <span className="bg-black/80 text-white text-[10px] font-black uppercase px-2.5 py-0.5 tracking-wider">
                   {activeArticle.readTime}
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (44% Width, Full Content & Bottom Controls) */}
-          <div className="lg:w-[44%] p-5 sm:p-6 flex flex-col justify-between h-full bg-white">
+          {/* RIGHT TEXT DETAILS (44% Width, Compact Typography & Bottom Controls) */}
+          <div className="lg:w-[44%] p-4 sm:p-5 flex flex-col justify-between h-full bg-white">
             <div>
               {/* Category Subtitle */}
-              <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block font-sans">
+              <span className="text-[#D31220] font-black text-[11px] tracking-wider uppercase mb-1.5 block font-sans">
                 {activeArticle.category}
               </span>
 
               {/* Main Title */}
-              <h1 className="text-xl sm:text-2xl lg:text-[26px] font-bold leading-[1.25] mb-3 text-gray-900 font-serif">
+              <h1 className="text-base sm:text-lg lg:text-[21px] font-bold leading-snug mb-2 text-gray-900 font-serif">
                 <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
                   {activeArticle.title}
                 </Link>
               </h1>
 
               {/* Excerpt */}
-              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-6 font-sans">
+              <p className="text-gray-600 text-xs leading-relaxed mb-3 font-sans line-clamp-2">
                 {activeArticle.excerpt}
               </p>
 
               {/* Author Row */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                   <img
                     src={activeArticle.authorAvatar}
                     alt={activeArticle.author}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex items-center gap-1 text-xs font-sans">
+                <div className="flex items-center gap-1 text-[11px] font-sans">
                   <span className="font-bold text-gray-900">
                     By {activeArticle.author}
                   </span>
-                  <span className="w-4 h-4 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
-                    <Check size={9} strokeWidth={3} />
+                  <span className="w-3.5 h-3.5 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
+                    <Check size={8} strokeWidth={3} />
                   </span>
                   <span className="text-gray-400 font-medium ml-1">
                     • {activeArticle.date}
@@ -189,9 +189,9 @@ export default function HeroSection() {
             </div>
 
             {/* Bottom Control Bar: Dots & Nav Arrows */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+            <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 mt-auto">
               {/* Carousel Dots */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {carouselArticles.map((_, idx) => (
                   <button
                     key={idx}
