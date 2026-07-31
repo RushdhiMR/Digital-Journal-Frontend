@@ -326,17 +326,18 @@ export default function Header() {
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between">
           
           {/* Main Horizontal Category Nav Items */}
-          <nav className="flex items-center space-x-6 overflow-x-auto scrollbar-none py-2.5 text-[13.5px] font-bold">
+          <nav className="flex items-center space-x-6 py-2.5 text-[13.5px] font-bold relative z-40">
             {navCategories.map((cat) => (
               <div
                 key={cat.name}
-                className="relative flex items-center group py-0.5"
+                className="relative flex items-center py-0.5"
                 onMouseEnter={() => cat.hasSub && setActiveMenu(cat.name.toUpperCase())}
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {cat.name === "World" ? (
                   <button
                     type="button"
+                    onMouseEnter={() => setActiveMenu("WORLD")}
                     onClick={(e) => {
                       e.preventDefault();
                       setActiveMenu(activeMenu === "WORLD" ? null : "WORLD");
@@ -358,33 +359,38 @@ export default function Header() {
                   </Link>
                 )}
 
-                {/* Dropdown Menu on Hover for World (Top Countries) */}
+                {/* Dropdown Menu on Hover for World (Top Countries List) */}
                 {cat.name === "World" && activeMenu === "WORLD" && (
-                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 shadow-2xl rounded-lg z-50 p-4 text-left font-sans animate-in slide-in-from-top-2 duration-150">
-                    <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
-                      <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
-                        Top Countries & Regions
-                      </h4>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase">Select Region</span>
-                    </div>
+                  <div 
+                    onMouseEnter={() => setActiveMenu("WORLD")}
+                    className="absolute top-full left-0 pt-1 w-80 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                  >
+                    <div className="bg-white border border-gray-200 shadow-2xl rounded-lg p-4 text-left font-sans">
+                      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
+                        <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
+                          Top Countries & Regions
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">Select Country</span>
+                      </div>
 
-                    <div className="grid grid-cols-1 gap-1">
-                      {topCountriesList.map((country, i) => (
-                        <Link
-                          key={i}
-                          href={country.href}
-                          onClick={() => setActiveMenu(null)}
-                          className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-red-50 text-gray-800 hover:text-[#BF1E2D] transition-colors group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-base leading-none">{country.flag}</span>
-                            <span className="text-xs font-bold">{country.name}</span>
-                          </div>
-                          <span className="text-[10px] text-gray-400 group-hover:text-[#BF1E2D] font-medium">
-                            {country.region}
-                          </span>
-                        </Link>
-                      ))}
+                      <div className="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto scrollbar-thin">
+                        {topCountriesList.map((country, i) => (
+                          <Link
+                            key={i}
+                            href={country.href}
+                            onClick={() => setActiveMenu(null)}
+                            className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-red-50 text-gray-800 hover:text-[#BF1E2D] transition-colors group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-base leading-none">{country.flag}</span>
+                              <span className="text-xs font-bold">{country.name}</span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 group-hover:text-[#BF1E2D] font-medium">
+                              {country.region}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
