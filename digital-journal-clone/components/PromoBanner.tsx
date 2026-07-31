@@ -4,29 +4,29 @@ import Link from "next/link";
 
 export default function PromoBanner() {
   return (
-    <section className="w-full bg-zinc-950 text-white py-12 md:py-16 px-4 md:px-8 my-6">
-      <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+    <section className="w-full bg-zinc-950 text-white py-10 md:py-12 px-6 md:px-12 lg:px-16 my-6">
+      <div className="max-w-[1180px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center justify-center">
         
-        {/* Left Column Text (~60%) */}
-        <div className="lg:col-span-7 flex flex-col items-start pr-0 lg:pr-6">
-          <h2 className="text-2xl md:text-3xl lg:text-[34px] font-bold leading-[1.2] mb-4 text-white font-serif">
+        {/* Left Column Text (~60% width) */}
+        <div className="lg:col-span-7 flex flex-col items-start pr-0 lg:pr-6 justify-center">
+          <h2 className="text-xl md:text-2xl lg:text-[26px] font-bold leading-[1.25] mb-3 text-white font-serif">
             The journal of record for technology decisions in Canada
           </h2>
 
-          <p className="text-[14px] md:text-[15px] text-zinc-300 leading-relaxed mb-6 font-sans">
+          <p className="text-[13px] md:text-[13.5px] text-zinc-300 leading-relaxed mb-5 font-sans">
             Digital Journal serves Canadian leaders responsible for what technology delivers across their organizations. Their decisions touch every function and every board conversation about where the organization is going.
           </p>
 
           <Link
             href="/journal-of-record"
-            className="bg-[#BF1E2D] hover:bg-red-700 text-white text-[12px] font-bold uppercase px-6 py-3 tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer rounded-sm"
+            className="bg-[#BF1E2D] hover:bg-red-700 text-white text-[11px] font-bold uppercase px-5 py-2.5 tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer rounded-sm"
           >
             Read More &rarr;
           </Link>
         </div>
 
-        {/* Right Column Image (~40%) */}
-        <div className="lg:col-span-5 w-full h-[260px] md:h-[320px] overflow-hidden bg-zinc-900 rounded-none relative border border-zinc-800">
+        {/* Right Column Image (~40% width, reduced height) */}
+        <div className="lg:col-span-5 w-full h-[190px] sm:h-[210px] md:h-[240px] overflow-hidden bg-zinc-900 rounded-none relative border border-zinc-800 self-center">
           <img
             src="/ai_studio_booth.png"
             alt="Digital Journal Studio Booth"
