@@ -229,60 +229,60 @@ export default function HeroSection() {
 
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH) */}
-        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-none p-6 flex flex-col justify-between h-full">
-          <div>
+        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD HEIGHT 285px) */}
+        <div className="lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between lg:h-[285px]">
+          <div className="flex flex-col justify-between h-full">
             {/* Header */}
-            <div className="flex items-center justify-between mb-5 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-5 bg-[#D31220]" />
-                <h2 className="text-base font-extrabold text-gray-900 tracking-tight uppercase">
+            <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-100">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-4 bg-[#D31220]" />
+                <h2 className="text-xs sm:text-sm font-extrabold text-gray-900 tracking-tight uppercase">
                   Trending Now
                 </h2>
               </div>
-              <Link href="/news" className="text-xs font-bold text-[#D31220] hover:underline">
+              <Link href="/news" className="text-[11px] font-bold text-[#D31220] hover:underline">
                 View all
               </Link>
             </div>
 
-            {/* 4 Numbered List Items */}
-            <div className="space-y-4">
+            {/* 4 Numbered List Items (Scaled to Fit 285px Height) */}
+            <div className="space-y-1.5 flex-1 flex flex-col justify-around">
               {trendingNowItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-start justify-between gap-3 pb-3.5 ${
+                  className={`flex items-center justify-between gap-2 pb-1 ${
                     idx < trendingNowItems.length - 1 ? "border-b border-gray-100" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-3 flex-1">
-                    <span className="text-[#D31220] font-black text-lg w-6 flex-shrink-0 mt-0.5">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <span className="text-[#D31220] font-black text-xs w-4 flex-shrink-0 mt-0.5">
                       {item.number}
                     </span>
-                    <div className="flex-1">
-                      <span className="text-[10px] font-extrabold text-[#D31220] uppercase tracking-wider block mb-0.5">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[9px] font-black text-[#D31220] uppercase tracking-wider block leading-none mb-0.5">
                         {item.category}
                       </span>
-                      <h3 className="text-[13px] font-bold text-gray-900 leading-snug hover:text-[#D31220] transition-colors line-clamp-2">
-                        <Link href={item.href}>
+                      <h3 className="text-[11.5px] font-bold text-gray-900 leading-tight hover:text-[#D31220] transition-colors truncate">
+                        <Link href={item.href} title={item.title}>
                           {item.title}
                         </Link>
                       </h3>
-                      <span className="text-[11px] text-gray-400 block mt-1 font-medium">
+                      <span className="text-[10px] text-gray-400 block mt-0.5 font-medium leading-none">
                         {item.time}
                       </span>
                     </div>
                   </div>
 
-                  <Link href={item.href} className="w-[100px] h-[65px] rounded-none overflow-hidden bg-gray-900 flex-shrink-0 block group relative">
+                  <Link href={item.href} className="w-[68px] h-[42px] rounded-none overflow-hidden bg-gray-900 flex-shrink-0 block group relative">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 rounded-none"
                     />
                     {item.hasVideo && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-7 h-7 bg-black/60 rounded-full flex items-center justify-center border border-white/50 text-white shadow-md">
-                          <Play size={12} fill="white" className="ml-0.5" />
+                        <div className="w-5 h-5 bg-black/60 rounded-full flex items-center justify-center border border-white/50 text-white shadow-md">
+                          <Play size={9} fill="white" className="ml-0.5" />
                         </div>
                       </div>
                     )}
