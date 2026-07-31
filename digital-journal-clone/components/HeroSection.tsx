@@ -126,13 +126,13 @@ export default function HeroSection() {
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
         <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
           
-          {/* LARGER FLUSH LEFT RECTANGLE IMAGE (56% Width, Sharp Edges) */}
-          <div className="lg:w-[56%] relative min-h-[350px] lg:min-h-[440px] flex-shrink-0 group overflow-hidden">
+          {/* WIDESCREEN RECTANGLE IMAGE (62% Width, Reduced Height, Sharp Edges) */}
+          <div className="lg:w-[62%] relative min-h-[260px] sm:min-h-[300px] lg:min-h-[360px] aspect-[16/10] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
               <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
                 <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
@@ -145,8 +145,8 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS */}
-          <div className="lg:w-[44%] p-6 sm:p-8 flex flex-col justify-between h-full bg-white">
+          {/* RIGHT TEXT DETAILS (38% Width) */}
+          <div className="lg:w-[38%] p-5 sm:p-6 flex flex-col justify-between h-full bg-white">
             <div>
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
