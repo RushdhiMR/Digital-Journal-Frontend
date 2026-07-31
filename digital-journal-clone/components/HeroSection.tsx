@@ -124,17 +124,17 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-center lg:items-stretch lg:h-[310px]">
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-stretch h-full">
           
-          {/* INCREASED WIDTH (58% Width Rightward) & REDUCED HEIGHT (310px Widescreen Rectangle, Sharp Edges) */}
-          <div className="lg:w-[58%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full flex-shrink-0 group overflow-hidden">
+          {/* FLUSH LEFT LANDSCAPE RECTANGLE IMAGE (50% Width, Sharp Edges) */}
+          <div className="lg:w-1/2 w-full relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-full min-h-[260px] sm:min-h-[300px] lg:min-h-[380px] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
-              <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-4 left-4 flex items-center gap-1.5 z-10">
                 <span className="bg-[#D31220] text-white text-[10px] font-black uppercase px-2.5 py-1 tracking-wider">
                   {activeArticle.category}
                 </span>
@@ -145,16 +145,16 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (42% Width) */}
-          <div className="lg:w-[42%] p-5 flex flex-col justify-between h-full bg-white">
+          {/* RIGHT TEXT DETAILS (50% Width, Full Content & Bottom Controls) */}
+          <div className="lg:w-1/2 p-6 sm:p-8 flex flex-col justify-between h-full bg-white">
             <div>
               {/* Category Subtitle */}
-              <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block">
+              <span className="text-[#D31220] font-black text-xs tracking-wider uppercase mb-3 block font-sans">
                 {activeArticle.category}
               </span>
 
               {/* Main Title */}
-              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-bold leading-[1.25] mb-3 text-gray-900 font-serif">
+              <h1 className="text-xl sm:text-2xl lg:text-[26px] font-bold leading-[1.25] mb-3 text-gray-900 font-serif">
                 <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
                   {activeArticle.title}
                 </Link>
@@ -174,7 +174,7 @@ export default function HeroSection() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-1 text-xs font-sans">
                   <span className="font-bold text-gray-900">
                     By {activeArticle.author}
                   </span>
@@ -188,9 +188,9 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Bottom Control Bar */}
+            {/* Bottom Control Bar: Dots & Nav Arrows */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-              {/* Dots */}
+              {/* Carousel Dots */}
               <div className="flex items-center gap-2">
                 {carouselArticles.map((_, idx) => (
                   <button
@@ -206,7 +206,7 @@ export default function HeroSection() {
                 ))}
               </div>
 
-              {/* Nav Arrows */}
+              {/* Nav Arrows (< and >) */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrevSlide}
