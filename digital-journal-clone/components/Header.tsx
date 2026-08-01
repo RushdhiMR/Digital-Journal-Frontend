@@ -322,8 +322,8 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between">
+      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between min-w-max md:min-w-0">
           
           {/* Main Horizontal Category Nav Items */}
           <nav className="flex items-center space-x-6 py-2.5 text-[13.5px] font-bold relative z-40">
