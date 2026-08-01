@@ -322,7 +322,7 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full">
+      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto md:overflow-visible scrollbar-none max-w-full relative z-40">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between min-w-max md:min-w-0">
           
           {/* Main Horizontal Category Nav Items */}
@@ -331,7 +331,7 @@ export default function Header() {
               <div
                 key={cat.name}
                 className="relative flex items-center py-0.5"
-                onMouseEnter={() => cat.hasSub && setActiveMenu(cat.name.toUpperCase())}
+                onMouseEnter={() => (cat.name === "World" || cat.hasSub) && setActiveMenu("WORLD")}
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {cat.name === "World" ? (
