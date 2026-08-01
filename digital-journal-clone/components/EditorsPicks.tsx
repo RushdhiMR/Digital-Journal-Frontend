@@ -87,16 +87,16 @@ export default function EditorsPicks() {
           {/* 4 Enclosed White Card Containers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 flex-1">
             {editorsPicks.map((item) => (
-              <article key={item.id} className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full group cursor-pointer">
+              <article key={item.id} className="bg-white border border-gray-200 rounded-none p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full group cursor-pointer">
                 <div>
                   {/* Image with Bottom-Left White Overlay Category Tag */}
-                  <Link href={item.href} className="relative w-full aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 mb-3 block">
+                  <Link href={item.href} className="relative w-full aspect-[4/3] overflow-hidden rounded-none bg-gray-100 mb-3 block">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-none"
                     />
-                    <span className="absolute bottom-2.5 left-2.5 bg-white text-[#D31220] text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-sm tracking-wider">
+                    <span className="absolute bottom-2.5 left-2.5 bg-white text-[#D31220] text-[10px] font-black uppercase px-2.5 py-1 rounded-none shadow-sm tracking-wider">
                       {item.category}
                     </span>
                   </Link>

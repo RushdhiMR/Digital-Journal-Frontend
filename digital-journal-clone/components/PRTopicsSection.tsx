@@ -83,7 +83,7 @@ export default function PRTopicsSection() {
       </div>
 
       {/* AD BANNER PLACEHOLDER */}
-      <div className="w-full bg-black text-white py-14 flex items-center justify-center rounded-sm">
+      <div className="w-full bg-black text-white py-14 flex items-center justify-center rounded-none">
         <span className="text-sm font-mono tracking-widest text-gray-400">Ad</span>
       </div>
     </section>
