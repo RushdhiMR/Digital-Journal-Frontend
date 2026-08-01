@@ -139,9 +139,8 @@ export default function Header() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
-    }
+    const query = searchQuery.trim();
+    window.location.href = query ? `/search?q=${encodeURIComponent(query)}` : "/search";
   };
 
   const navCategories = [
@@ -227,7 +226,17 @@ export default function Header() {
             placeholder="Search for news, topics, companies..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-4 pr-10 py-2 text-[13px] border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] focus:ring-1 focus:ring-[#BF1E2D] bg-white text-gray-800 placeholder-gray-400 transition-all"
+            onFocus={() => {
+              if (typeof window !== "undefined" && window.location.pathname !== "/search") {
+                window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
+              }
+            }}
+            onClick={() => {
+              if (typeof window !== "undefined" && window.location.pathname !== "/search") {
+                window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
+              }
+            }}
+            className="w-full pl-4 pr-10 py-2 text-[13px] border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] focus:ring-1 focus:ring-[#BF1E2D] bg-white text-gray-800 placeholder-gray-400 transition-all cursor-pointer"
           />
           <button
             type="submit"
@@ -473,7 +482,19 @@ export default function Header() {
               placeholder="Search news, topics, companies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-4 pr-10 py-2.5 text-xs border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] bg-gray-50 text-gray-900"
+              onFocus={() => {
+                if (typeof window !== "undefined" && window.location.pathname !== "/search") {
+                  setIsMobileMenuOpen(false);
+                  window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
+                }
+              }}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.location.pathname !== "/search") {
+                  setIsMobileMenuOpen(false);
+                  window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
+                }
+              }}
+              className="w-full pl-4 pr-10 py-2.5 text-xs border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] bg-gray-50 text-gray-900 cursor-pointer"
             />
             <button type="submit" className="absolute right-3 top-2.5 text-gray-400">
               <Search size={16} />
