@@ -316,7 +316,7 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full relative z-40">
         
         {/* LOGO & SUBTITLE */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink min-w-0 ml-20 sm:ml-36">
@@ -385,23 +385,26 @@ export default function Header() {
 
           {/* User Sign In / Profile Dropdown (BOTH MOBILE & DESKTOP) */}
           {currentUser ? (
-            <div className="relative block" ref={userDropdownRef}>
+            <div className="relative block z-50" ref={userDropdownRef}>
               <button
-                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="relative flex items-center gap-1.5 cursor-pointer focus:outline-none p-0.5 rounded-full hover:ring-2 hover:ring-[#BF1E2D]/20 transition-all"
+                type="button"
+                onClick={() => setIsUserDropdownOpen((prev) => !prev)}
+                className="relative flex items-center gap-1.5 cursor-pointer focus:outline-none p-0.5 rounded-full hover:ring-2 hover:ring-[#BF1E2D]/20 transition-all bg-gray-100"
                 aria-label="User Account Menu"
               >
-                <div className="relative w-8 h-8 sm:w-9 sm:h-9">
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-gray-300 shadow-xs flex-shrink-0">
+                <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full overflow-hidden border border-gray-300 shadow-xs bg-gray-100 flex-shrink-0">
+                  {currentUser.avatar ? (
                     <img
-                      src={currentUser.avatar || "/author_bluesuit.jpg"}
+                      src={currentUser.avatar}
                       alt={currentUser.name || "rushdhi"}
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
-                  </div>
+                  ) : (
+                    <User size={18} className="text-[#BF1E2D]" />
+                  )}
                   {/* Green status online dot */}
                   <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white absolute bottom-0 right-0 shadow-xs z-10"></span>
                 </div>
@@ -409,7 +412,7 @@ export default function Header() {
 
               {/* USER ACCOUNT DROPDOWN POPOVER */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-[100] overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
                   
                   {/* Section 1: User Profile Header */}
                   <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-150 flex items-center gap-3">
