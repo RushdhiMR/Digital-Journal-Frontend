@@ -337,7 +337,7 @@ export default function Header() {
         </form>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-2 sm:gap-3 text-[13px] font-medium flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 text-[13px] font-medium flex-shrink-0 mr-8 sm:mr-44">
           
           {/* Red Newsletter Signup Button (Desktop Large) */}
           <Link
