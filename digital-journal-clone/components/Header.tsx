@@ -337,32 +337,31 @@ export default function Header() {
         </form>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-3 text-[13px] font-medium flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 text-[13px] font-medium flex-shrink-0">
           
-          {/* Red Newsletter Signup Button (Left of Profile) */}
+          {/* Red Newsletter Signup Button (Desktop Large) */}
           <Link
             href="/newsletters"
-            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm"
+            className="hidden lg:inline-block bg-gray-900 hover:bg-black text-white font-bold text-[12px] px-3.5 py-2 rounded-none transition-colors whitespace-nowrap shadow-xs"
           >
             Newsletter Signup
           </Link>
 
-          {/* User Sign In / Profile Dropdown */}
+          {/* User Sign In / Profile Dropdown (BOTH MOBILE & DESKTOP) */}
           {currentUser ? (
-            <div className="relative hidden md:block" ref={userDropdownRef}>
+            <div className="relative block" ref={userDropdownRef}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="relative flex items-center gap-2 cursor-pointer focus:outline-none"
+                className="relative flex items-center gap-1.5 cursor-pointer focus:outline-none p-0.5 rounded-full hover:ring-2 hover:ring-[#BF1E2D]/20 transition-all"
                 aria-label="User Account Menu"
               >
-                <div className="relative w-9 h-9">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200/90 shadow-xs flex-shrink-0">
+                <div className="relative w-8 h-8 sm:w-9 sm:h-9">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-gray-300 shadow-xs flex-shrink-0">
                     <img
                       src={currentUser.avatar || "/author_bluesuit.jpg"}
                       alt={currentUser.name || "rushdhi"}
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
-                        // Fallback if image fails to load
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
@@ -374,16 +373,28 @@ export default function Header() {
 
               {/* USER ACCOUNT DROPDOWN POPOVER */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200/90 shadow-lg rounded-lg text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
                   
                   {/* Section 1: User Profile Header */}
-                  <div className="px-3.5 py-2.5 bg-white border-b border-gray-100">
-                    <p className="text-[13px] font-extrabold text-gray-900 leading-snug tracking-tight">
-                      {currentUser.name || "rushdhi"}
-                    </p>
-                    <p className="text-[10.5px] text-gray-500 font-mono tracking-tight font-normal mt-0.5 block truncate">
-                      {currentUser.email || "rushdhiriyaj2005@gmail.com"}
-                    </p>
+                  <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-150 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                      <img
+                        src={currentUser.avatar || "/author_bluesuit.jpg"}
+                        alt={currentUser.name || "User Profile"}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-extrabold text-gray-900 leading-snug tracking-tight truncate">
+                        {currentUser.name || "rushdhi"}
+                      </p>
+                      <p className="text-[10.5px] text-gray-500 font-mono tracking-tight font-normal truncate">
+                        {currentUser.email || "rushdhiriyaj2005@gmail.com"}
+                      </p>
+                      <span className="inline-block mt-0.5 px-2 py-0.2 bg-red-100 text-[#BF1E2D] font-extrabold text-[9px] uppercase tracking-wider rounded">
+                        {currentUser.role || "WRITER"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Admin Dashboard Option (Admin & Co-Admin) */}
@@ -391,9 +402,9 @@ export default function Header() {
                     <Link
                       href="/admin"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-emerald-50/60 transition-colors cursor-pointer group"
+                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-emerald-50/60 transition-colors cursor-pointer group"
                     >
-                      <ShieldCheck size={15} className="text-emerald-600 flex-shrink-0" />
+                      <ShieldCheck size={16} className="text-emerald-600 flex-shrink-0" />
                       <span className="text-emerald-700 font-bold text-[12px] tracking-tight">
                         Admin Dashboard
                       </span>
@@ -405,9 +416,9 @@ export default function Header() {
                     <Link
                       href="/writer"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
                     >
-                      <PenTool size={15} className="text-[#1B50E8] flex-shrink-0" />
+                      <PenTool size={16} className="text-[#1B50E8] flex-shrink-0" />
                       <span className="text-[#1B50E8] font-bold text-[12px] tracking-tight">
                         Author Workspace
                       </span>
@@ -419,9 +430,9 @@ export default function Header() {
                     <Link
                       href="/reader"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
+                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
                     >
-                      <BookOpen size={15} className="text-[#BF1E2D] flex-shrink-0" />
+                      <BookOpen size={16} className="text-[#BF1E2D] flex-shrink-0" />
                       <span className="text-[#BF1E2D] font-bold text-[12px] tracking-tight">
                         Reader Dashboard
                       </span>
@@ -434,9 +445,9 @@ export default function Header() {
                       setIsUserDropdownOpen(false);
                       setIsProfileSettingsOpen(true);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
                   >
-                    <User size={15} className="text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                    <User size={16} className="text-slate-500 group-hover:text-slate-800 flex-shrink-0" />
                     <span className="text-slate-800 font-bold text-[12px] tracking-tight">
                       Profile Settings
                     </span>
@@ -445,10 +456,10 @@ export default function Header() {
                   {/* Section 4: Sign Out Terminal */}
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-3.5 py-2.5 flex items-center gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer group"
                   >
-                    <LogOut size={15} className="text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
-                    <span className="text-slate-800 font-bold text-[12px] tracking-tight">
+                    <LogOut size={16} className="text-red-500 group-hover:text-red-700 flex-shrink-0" />
+                    <span className="text-red-600 font-bold text-[12px] tracking-tight">
                       Sign Out Terminal
                     </span>
                   </button>
@@ -459,27 +470,25 @@ export default function Header() {
           ) : (
             <Link 
               href="/login" 
-              className="hidden md:flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-semibold transition-colors"
+              className="flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-bold text-xs sm:text-sm px-2 py-1.5 rounded transition-colors"
             >
-              <User size={16} strokeWidth={2} />
-              <span>Sign In</span>
+              <User size={18} strokeWidth={2.2} className="text-[#BF1E2D]" />
+              <span className="hidden sm:inline">Sign In</span>
             </Link>
           )}
 
-          {/* Red Subscribe Button (Right Next to Profile) */}
+          {/* Red Subscribe Button (VISIBLE ON BOTH MOBILE & DESKTOP) */}
           <Link
             href="/subscribe"
-            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm uppercase tracking-wider"
+            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[11px] sm:text-[12px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-none transition-colors whitespace-nowrap shadow-xs uppercase tracking-wider flex items-center justify-center"
           >
             Subscribe
           </Link>
 
-
-
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-none hover:bg-gray-100"
+            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded hover:bg-gray-100 transition-colors"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -638,7 +647,7 @@ export default function Header() {
 
       {/* MOBILE DRAWER */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white text-gray-900 border-t border-gray-200 py-5 px-5 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden bg-white text-gray-900 border-t border-gray-200 py-4 px-4 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
           
           {/* Mobile Search Input */}
           <form onSubmit={handleSearchSubmit} className="relative">
@@ -666,47 +675,151 @@ export default function Header() {
             </button>
           </form>
 
-          {/* Action Buttons: Newsletter & Sign In */}
-          <div className="flex items-center gap-3 pt-1 pb-3 border-b border-gray-100">
+          {/* Action Row 1: Subscribe & Newsletter */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <Link
+              href="/subscribe"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="bg-[#BF1E2D] hover:bg-red-700 text-white text-center font-extrabold text-xs py-2.5 rounded-md shadow-xs uppercase tracking-wider flex items-center justify-center gap-1"
+            >
+              <span>Subscribe Now</span>
+            </Link>
+
             <Link
               href="/newsletters"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex-1 bg-[#BF1E2D] text-white text-center font-bold text-xs py-2.5 rounded-md shadow-sm"
+              className="bg-gray-900 hover:bg-black text-white text-center font-bold text-xs py-2.5 rounded-md shadow-xs flex items-center justify-center gap-1"
             >
-              Newsletter Signup
+              <Mail size={14} />
+              <span>Newsletter</span>
             </Link>
+          </div>
 
-            {currentUser ? (
-              <button
-                onClick={() => { setIsMobileMenuOpen(false); setIsUserDropdownOpen(true); }}
-                className="flex-1 bg-gray-100 text-gray-800 text-center font-bold text-xs py-2.5 rounded-md border border-gray-200"
-              >
-                {currentUser.name}
-              </button>
-            ) : (
+          {/* User Profile Section in Mobile Drawer */}
+          {currentUser ? (
+            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-3 font-sans">
+              
+              {/* Profile Overview */}
+              <div className="flex items-center gap-3 pb-2.5 border-b border-slate-200/80">
+                <div className="relative w-11 h-11">
+                  <div className="w-11 h-11 rounded-full overflow-hidden border border-slate-300 flex-shrink-0">
+                    <img
+                      src={currentUser.avatar || "/author_bluesuit.jpg"}
+                      alt={currentUser.name || "User Avatar"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white absolute bottom-0 right-0 z-10"></span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-extrabold text-slate-900 leading-snug truncate">
+                    {currentUser.name || "rushdhi"}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-mono truncate">
+                    {currentUser.email || "rushdhiriyaj2005@gmail.com"}
+                  </p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-[#BF1E2D] font-extrabold text-[9px] uppercase tracking-wider rounded">
+                    {currentUser.role || "WRITER"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Navigation Links */}
+              <div className="grid grid-cols-1 gap-1.5 pt-0.5">
+                {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("admin")) && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 py-2 px-3 bg-emerald-50/80 text-emerald-800 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                  >
+                    <ShieldCheck size={16} className="text-emerald-600" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                )}
+
+                {(currentUser.role === "Writer" || currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("writer")) && (
+                  <Link
+                    href="/writer"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 py-2 px-3 bg-blue-50/80 text-[#1B50E8] rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                  >
+                    <PenTool size={16} className="text-[#1B50E8]" />
+                    <span>Author Workspace</span>
+                  </Link>
+                )}
+
+                {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && (
+                  <Link
+                    href="/reader"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 py-2 px-3 bg-red-50/80 text-[#BF1E2D] rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                  >
+                    <BookOpen size={16} className="text-[#BF1E2D]" />
+                    <span>Reader Dashboard</span>
+                  </Link>
+                )}
+
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProfileSettingsOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 py-2 px-3 bg-white text-slate-800 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors text-left"
+                >
+                  <User size={16} className="text-slate-500" />
+                  <span>Profile Settings</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="w-full flex items-center gap-2.5 py-2 px-3 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors text-left"
+                >
+                  <LogOut size={16} className="text-red-500" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pt-1 pb-2 border-b border-gray-100">
               <Link
                 href="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex-1 bg-gray-100 text-gray-800 text-center font-bold text-xs py-2.5 rounded-md border border-gray-200 flex items-center justify-center gap-1.5"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center font-bold text-xs py-2.5 rounded-md border border-gray-300 flex items-center justify-center gap-1.5 transition-colors"
               >
-                <User size={14} />
+                <User size={15} className="text-[#BF1E2D]" />
                 <span>Sign In</span>
               </Link>
-            )}
-          </div>
+              <Link
+                href="/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1 bg-slate-900 hover:bg-black text-white text-center font-bold text-xs py-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>Register Account</span>
+              </Link>
+            </div>
+          )}
 
           {/* Category Navigation Links */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            {navCategories.map((cat) => (
-              <Link
-                key={cat.name}
-                href={cat.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block py-2 px-3 text-xs font-bold text-gray-800 bg-gray-50 hover:bg-red-50 hover:text-[#BF1E2D] rounded-md transition-colors"
-              >
-                {cat.name}
-              </Link>
-            ))}
+          <div className="pt-1">
+            <h5 className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider mb-2">
+              Browse Categories
+            </h5>
+            <div className="grid grid-cols-2 gap-2">
+              {navCategories.map((cat) => (
+                <Link
+                  key={cat.name}
+                  href={cat.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-2 px-3 text-xs font-bold text-gray-800 bg-gray-50 hover:bg-red-50 hover:text-[#BF1E2D] rounded-md transition-colors"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
