@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
 import { ShieldCheck, TrendingUp, Edit3, Lock } from "lucide-react";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -143,7 +144,9 @@ export default function LoginPage() {
         }
         const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
         const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
-        authenticatedAccount = { name: formattedName || "Staff Journalist", email: lowerEmail, role: "Writer" };
+        const savedProf = getUserProfile(lowerEmail);
+        const userRole: "Admin" | "Writer" | "Reader" | "Co-Admin" = (savedProf?.role as any) || (lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader");
+        authenticatedAccount = { name: formattedName || "Reader", email: lowerEmail, role: userRole };
       } else if (lowerEmail.includes("@")) {
         if (lowerPass.length < 3) {
           setErrorMessage(`❌ Access Denied: Please enter your password for account '${lowerEmail}'.`);
@@ -152,13 +155,20 @@ export default function LoginPage() {
         }
         const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
         const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
-        const userRole = lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader";
+        const savedProf = getUserProfile(lowerEmail);
+        const userRole: "Admin" | "Writer" | "Reader" | "Co-Admin" = (savedProf?.role as any) || (lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader");
         authenticatedAccount = { name: formattedName || "Reader", email: lowerEmail, role: userRole };
       } else {
         setErrorMessage(`❌ Access Denied: Invalid email format '${lowerEmail}'. Please enter a valid email address.`);
         setIsSubmitting(false);
         return;
       }
+    }
+
+    if (!authenticatedAccount) {
+      setErrorMessage("❌ Access Denied: Account authentication failed.");
+      setIsSubmitting(false);
+      return;
     }
 
     // CHECK IF CO-ADMIN ACCOUNT IS DEACTIVATED
@@ -226,17 +236,29 @@ export default function LoginPage() {
       console.warn("Backend auth sync offline:", err);
     }
 
-    const targetDestination = (authenticatedAccount.role === "Admin" || authenticatedAccount.role === "Co-Admin") ? "/admin" : authenticatedAccount.role === "Writer" ? "/writer" : "/reader";
-    localStorage.setItem("dj_user", JSON.stringify(authenticatedAccount));
-    if (authenticatedAccount.role === "Admin" || authenticatedAccount.role === "Co-Admin") {
-      localStorage.setItem("dj_admin_user", JSON.stringify(authenticatedAccount));
-    }
-    if (authenticatedAccount.role === "Writer") {
-      localStorage.setItem("dj_writer_user", JSON.stringify(authenticatedAccount));
-    }
-    localStorage.setItem("dj_toast", `Welcome back, ${authenticatedAccount.name}! Signed in as ${authenticatedAccount.role}.`);
+    const savedProfile = getUserProfile(authenticatedAccount.email);
+    const finalAccount = {
+      name: savedProfile?.name || authenticatedAccount.name,
+      email: authenticatedAccount.email,
+      avatar: savedProfile?.avatar || (authenticatedAccount as any).avatar,
+      bio: savedProfile?.bio || (authenticatedAccount as any).bio,
+      role: authenticatedAccount.role
+    };
 
-    setSuccessMessage(`✓ Security Verified! Signed in as ${authenticatedAccount.role}. Opening ${targetDestination}...`);
+    saveUserProfile(finalAccount);
+
+    const targetDestination = (finalAccount.role === "Admin" || finalAccount.role === "Co-Admin") ? "/admin" : finalAccount.role === "Writer" ? "/writer" : "/reader";
+    localStorage.removeItem("dj_signed_out");
+    localStorage.setItem("dj_user", JSON.stringify(finalAccount));
+    if (finalAccount.role === "Admin" || finalAccount.role === "Co-Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(finalAccount));
+    }
+    if (finalAccount.role === "Writer") {
+      localStorage.setItem("dj_writer_user", JSON.stringify(finalAccount));
+    }
+    localStorage.setItem("dj_toast", `Welcome back, ${finalAccount.name}! Signed in as ${finalAccount.role}.`);
+
+    setSuccessMessage(`✓ Security Verified! Signed in as ${finalAccount.role}. Opening ${targetDestination}...`);
     setTimeout(() => {
       router.push(targetDestination);
     }, 800);
@@ -275,12 +297,36 @@ export default function LoginPage() {
       console.warn("Could not persist device google account:", e);
     }
 
-    localStorage.setItem("dj_user", JSON.stringify({ name: acc.name, email: acc.email }));
-    localStorage.setItem("dj_toast", `Welcome back, ${acc.name}! You are successfully signed in with Google.`);
+    const savedProfile = getUserProfile(acc.email);
+    const role = savedProfile?.role || "Reader";
+    const finalAccount = {
+      name: savedProfile?.name || acc.name,
+      email: acc.email,
+      avatar: savedProfile?.avatar || (acc as any).avatar,
+      role: role
+    };
 
-    setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Redirecting...`);
+    saveUserProfile(finalAccount);
+    localStorage.removeItem("dj_signed_out");
+    localStorage.setItem("dj_user", JSON.stringify(finalAccount));
+    if (role === "Writer") {
+      localStorage.setItem("dj_writer_user", JSON.stringify(finalAccount));
+    }
+    if (role === "Admin" || role === "Co-Admin") {
+      localStorage.setItem("dj_admin_user", JSON.stringify(finalAccount));
+    }
+
+    const targetDestination = (role === "Admin" || role === "Co-Admin")
+      ? "/admin"
+      : role === "Writer"
+      ? "/writer"
+      : "/reader";
+
+    localStorage.setItem("dj_toast", `Welcome back, ${finalAccount.name}! Opening Reader Hub...`);
+
+    setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Opening Reader Hub...`);
     setTimeout(() => {
-      router.push("/");
+      router.push(targetDestination);
     }, 1000);
   };
 

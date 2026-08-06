@@ -1,31 +1,59 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { BookOpen, Bookmark, Bell, History, ArrowRight, Star, User, Settings, Lock, CheckCircle2, ShieldCheck, Mail, Sparkles, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  ArrowLeft,
+  ChevronDown,
+  Trash2,
+  User,
+  Settings,
+  LogOut,
+  CheckCircle2,
+  PenTool,
+  ShieldCheck,
+  X,
+  Lock,
+  ExternalLink
+} from "lucide-react";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
 
-export default function ReaderHubPage() {
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; bio?: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"saved" | "settings">("saved");
+export default function ReaderDashboardPage() {
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    avatar?: string;
+    role?: string;
+    bio?: string;
+  } | null>(null);
 
-  // Dynamic Saved Bookmarks state
   const [savedArticles, setSavedArticles] = useState<any[]>([]);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Profile Settings Form State
   const [profileName, setProfileName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
-  const [profileBio, setProfileBio] = useState("Avid reader of global economics, artificial intelligence, and clean energy innovation.");
+  const [profileBio, setProfileBio] = useState("");
+  const [profileLinkedin, setProfileLinkedin] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
-  // Preference Toggles
-  const [notifyBreaking, setNotifyBreaking] = useState(true);
-  const [notifyWeekly, setNotifyWeekly] = useState(true);
-  const [publicHistory, setPublicHistory] = useState(false);
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const getUserBookmarkStorageKey = (userEmail?: string): string => {
     const activeEmail = userEmail || currentUser?.email || "guest";
@@ -35,50 +63,51 @@ export default function ReaderHubPage() {
 
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem("dj_user");
-      let activeEmail = "reader@digitaljournal.com";
+      const savedUserStr = localStorage.getItem("dj_user");
+      let activeUser = null;
 
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setCurrentUser(parsed);
-        setProfileName(parsed.name || "Alex Reader");
-        setProfileEmail(parsed.email || "reader@digitaljournal.com");
-        if (parsed.email) activeEmail = parsed.email;
-        if (parsed.bio) setProfileBio(parsed.bio);
-      } else {
-        window.location.href = "/login";
-        return;
+      if (savedUserStr) {
+        activeUser = JSON.parse(savedUserStr);
       }
 
-      // Load Account-Scoped Saved Bookmarks from LocalStorage
-      const userKey = getUserBookmarkStorageKey(activeEmail);
-      const savedBookmarksStr = localStorage.getItem(userKey);
-      if (savedBookmarksStr) {
-        setSavedArticles(JSON.parse(savedBookmarksStr));
+      const activeEmail = activeUser?.email || "reader@digitaljournal.com";
+      const savedProfile = getUserProfile(activeEmail);
+
+      const finalUser = {
+        name: savedProfile?.name || activeUser?.name || "Nesto Super",
+        email: activeEmail,
+        avatar: savedProfile?.avatar || activeUser?.avatar || "/author_bluesuit.jpg",
+        role: savedProfile?.role || activeUser?.role || "Reader",
+        bio: savedProfile?.bio || activeUser?.bio || "Avid reader of global economics and technology innovation."
+      };
+
+      setCurrentUser(finalUser);
+      setProfileName(finalUser.name);
+      setProfileEmail(finalUser.email);
+      setProfileBio(finalUser.bio);
+
+      // Load Saved Articles for this user
+      const key = getUserBookmarkStorageKey(activeEmail);
+      const bookmarksStr = localStorage.getItem(key);
+      if (bookmarksStr) {
+        setSavedArticles(JSON.parse(bookmarksStr));
       } else {
-        // First-time default bookmark initialization for this specific account
-        const initialBookmarks = [
-          {
-            title: "Argentina Edge Switzerland in Extra Time to Set Up World Cup Semi-Final Clash With England",
-            category: "SPORTS",
-            href: "/news/world/argentina-edge-switzerland-in-extra-time-to-set-up-world-cup-semi-final-clash-with-england",
-            date: "Jul 12, 2026",
-            image: "/argentina_vs_switzerland.png"
-          },
-          {
-            title: "U.S. Stocks End Higher as SK Hynix's Wall Street Debut and Meta's AI Momentum Lift Markets",
-            category: "BUSINESS",
-            href: "/news/markets/us-stocks-end-higher-as-sk-hynixs-wall-street-debut-and-metas-ai-momentum-lift-markets",
-            date: "Jul 18, 2026",
-            image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=350&fit=crop"
-          }
-        ];
-        localStorage.setItem(userKey, JSON.stringify(initialBookmarks));
-        setSavedArticles(initialBookmarks);
+        setSavedArticles([]);
       }
     } catch (e) {
       console.error(e);
     }
+  }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleRemoveBookmark = (titleToRemove: string) => {
@@ -86,7 +115,16 @@ export default function ReaderHubPage() {
     const updated = savedArticles.filter((art) => art.title !== titleToRemove);
     setSavedArticles(updated);
     localStorage.setItem(userKey, JSON.stringify(updated));
-    showToast("Removed from your account Saved Reading List.");
+    showToast("Article removed from your Saved Articles.");
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("dj_user");
+    localStorage.removeItem("dj_admin_user");
+    localStorage.removeItem("dj_writer_user");
+    localStorage.setItem("dj_signed_out", "true");
+    localStorage.setItem("dj_toast", "You have successfully signed out.");
+    window.location.href = "/";
   };
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -97,7 +135,7 @@ export default function ReaderHubPage() {
     }
 
     if (newPassword && newPassword !== confirmPassword) {
-      showToast("❌ New password and confirmation do not match.");
+      showToast("❌ Password confirmation does not match.");
       return;
     }
 
@@ -106,15 +144,18 @@ export default function ReaderHubPage() {
       name: profileName.trim(),
       email: profileEmail.trim(),
       bio: profileBio.trim(),
-      role: currentUser?.role || "Reader"
+      linkedin: profileLinkedin.trim(),
+      role: currentUser?.role || "Reader",
+      avatar: profileAvatar || currentUser?.avatar || "/author_bluesuit.jpg"
     };
 
-    localStorage.setItem("dj_user", JSON.stringify(updatedUser));
+    saveUserProfile(updatedUser);
     setCurrentUser(updatedUser);
+    localStorage.setItem("dj_user", JSON.stringify(updatedUser));
+    setIsProfileModalOpen(false);
     setNewPassword("");
     setConfirmPassword("");
-
-    showToast("✓ Reader Profile Settings updated successfully!");
+    showToast("✓ Profile settings saved successfully!");
   };
 
   const showToast = (msg: string) => {
@@ -123,357 +164,366 @@ export default function ReaderHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-standard-sans">
-      <Header />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-red-500 selection:text-white">
+      
+      {/* ================= TOP HEADER BAR MATCHING SCREENSHOT ================= */}
+      <header className="bg-white border-b border-slate-200/90 py-3.5 px-4 md:px-10 flex items-center justify-between shadow-2xs relative z-30 font-sans">
+        
+        {/* Left: Back to News Link */}
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-[12.5px] font-medium text-slate-600 hover:text-black transition-colors group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to News</span>
+        </Link>
 
+        {/* Center: Bold Serif Title "READERS DASHBOARD" */}
+        <h1 className="font-serif text-[20px] sm:text-[24px] md:text-[26px] font-bold text-slate-900 uppercase tracking-[2.5px] text-center font-serif leading-none">
+          READERS DASHBOARD
+        </h1>
+
+        {/* Right: User Profile Dropdown Pill ("Nesto Super v") */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+            className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-full px-3 py-1.5 transition-colors cursor-pointer text-left focus:outline-none"
+            aria-label="User Account Menu"
+          >
+            {/* Avatar image */}
+            <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-300/80">
+              <img
+                src={currentUser?.avatar || "/author_bluesuit.jpg"}
+                alt={currentUser?.name || "Nesto Super"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+            </div>
+            
+            {/* User Name */}
+            <span className="text-[13px] font-bold text-slate-900 tracking-tight font-sans">
+              {currentUser?.name || "Nesto Super"}
+            </span>
+
+            {/* Chevron icon */}
+            <ChevronDown size={14} className="text-slate-400 flex-shrink-0 ml-0.5" />
+          </button>
+
+          {/* USER DROPDOWN MENU */}
+          {isUserDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 shadow-xl rounded-xl text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                <p className="text-[13px] font-extrabold text-slate-900 leading-snug">
+                  {currentUser?.name || "Nesto Super"}
+                </p>
+                <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
+                  {currentUser?.email || "reader@digitaljournal.com"}
+                </p>
+              </div>
+
+              {/* Settings Action */}
+              <button
+                onClick={() => {
+                  setIsUserDropdownOpen(false);
+                  setIsProfileModalOpen(true);
+                }}
+                className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 hover:bg-slate-50 transition-colors text-slate-700 hover:text-slate-900 cursor-pointer"
+              >
+                <Settings size={15} className="text-slate-400" />
+                <span className="text-[12.5px] font-bold">Profile Settings</span>
+              </button>
+
+              {/* Author / Admin links if user has permissions */}
+              {(currentUser?.role === "Writer" || currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
+                <Link
+                  href="/writer"
+                  onClick={() => setIsUserDropdownOpen(false)}
+                  className="px-4 py-2.5 flex items-center gap-2.5 hover:bg-blue-50/40 text-blue-700 font-bold border-t border-slate-100 transition-colors cursor-pointer"
+                >
+                  <PenTool size={15} className="text-blue-600" />
+                  <span className="text-[12.5px]">Writer Workspace</span>
+                </Link>
+              )}
+
+              {/* Sign Out */}
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 border-t border-slate-100 hover:bg-red-50/40 text-slate-700 hover:text-red-700 transition-colors cursor-pointer"
+              >
+                <LogOut size={15} className="text-slate-400" />
+                <span className="text-[12.5px] font-bold">Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+      </header>
+
+      {/* TOAST MESSAGE */}
       {toastMessage && (
-        <div className="w-full bg-[#165c61] text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 shadow-md animate-fade-in z-50">
-          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs font-bold py-2.5 px-6 rounded-full border border-zinc-700 shadow-2xl flex items-center justify-center gap-2 animate-bounce z-50">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-8 py-8">
+      {/* ================= MAIN DASHBOARD CONTENT ================= */}
+      <main className="flex-1 max-w-[1240px] w-full mx-auto px-4 sm:px-6 md:px-10 py-8">
         
-        {/* Reader Header Card */}
-        <div className="bg-zinc-900 text-white rounded-xl p-6 md:p-8 mb-6 shadow-xl border border-zinc-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0 shadow-md">
-              <BookOpen size={26} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold font-serif">Reader Preferences Hub</h1>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  {currentUser?.role || "READER ROLE"}
-                </span>
+        {/* SUB-HEADER ROW: "📖 SAVED ARTICLES" AND "0 ARTICLES" PILL */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          
+          {/* Left: Book Icon + SAVED ARTICLES */}
+          <div className="flex items-center gap-2 text-slate-900">
+            <BookOpen className="w-5 h-5 text-[#BF1E2D]" strokeWidth={2.2} />
+            <h2 className="text-[14px] md:text-[15px] font-extrabold uppercase tracking-wider font-sans text-slate-900">
+              SAVED ARTICLES
+            </h2>
+          </div>
+
+          {/* Right: "X ARTICLES" Count Pill */}
+          <div className="bg-slate-100/90 border border-slate-200/90 text-slate-500 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider font-sans">
+            {savedArticles.length} ARTICLES
+          </div>
+
+        </div>
+
+        {/* ================= LARGE WHITE ROUNDED CARD CONTAINER MATCHING SCREENSHOT ================= */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-8 sm:p-12 md:p-16 min-h-[420px] flex items-center justify-center transition-all">
+          
+          {savedArticles.length === 0 ? (
+            /* EMPTY STATE DISPLAY MATCHING SCREENSHOT EXACTLY */
+            <div className="text-center max-w-md mx-auto py-8">
+              
+              {/* Circular light blue/slate icon container */}
+              <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center mx-auto mb-4 text-slate-300 shadow-2xs">
+                <BookOpen size={30} strokeWidth={1.5} />
               </div>
-              <p className="text-zinc-400 text-sm mt-1">
-                Welcome back, <span className="text-white font-medium">{currentUser?.name || "Reader"}</span> ({currentUser?.email})
+
+              {/* No Saved Articles title */}
+              <h3 className="font-bold text-[16.5px] text-slate-800 mb-1.5 font-sans tracking-tight">
+                No Saved Articles
+              </h3>
+
+              {/* Explore publications subtitle */}
+              <p className="text-[12.5px] text-slate-400 font-normal leading-relaxed max-w-sm mx-auto font-sans">
+                Explore our publications and bookmark your favorite articles to read them here later.
               </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            {/* Show Writer Studio ONLY to Writers & Admins */}
-            {(currentUser?.role === "Writer" || currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
-              <Link
-                href="/writer"
-                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
-              >
-                Writer Studio
-              </Link>
-            )}
-
-            {/* Show Admin Dashboard ONLY to Admins & Co-Admins */}
-            {(currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
-              <Link
-                href="/admin"
-                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
-              >
-                Admin Dashboard
-              </Link>
-            )}
-
-            <Link
-              href="/news"
-              className="flex-1 md:flex-none text-center bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2.5 rounded transition-all cursor-pointer shadow"
-            >
-              Browse Latest News
-            </Link>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex border-b border-zinc-200 mb-8 font-sans">
-          <button
-            onClick={() => setActiveTab("saved")}
-            className={`px-6 py-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              activeTab === "saved"
-                ? "border-[#BF1E2D] text-[#BF1E2D]"
-                : "border-transparent text-zinc-500 hover:text-zinc-900"
-            }`}
-          >
-            <Bookmark size={16} />
-            Saved Reading List ({savedArticles.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`px-6 py-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              activeTab === "settings"
-                ? "border-[#BF1E2D] text-[#BF1E2D]"
-                : "border-transparent text-zinc-500 hover:text-zinc-900"
-            }`}
-          >
-            <Settings size={16} />
-            Reader Profile & Settings
-          </button>
-        </div>
-
-        {/* TAB 1: SAVED READING LIST */}
-        {activeTab === "saved" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* Saved Articles */}
-            <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200 p-6 md:p-8 shadow-sm">
-              <div className="flex items-center justify-between pb-4 mb-6 border-b border-zinc-200">
-                <h2 className="text-xl font-bold text-black font-serif flex items-center gap-2">
-                  <Bookmark size={20} className="text-[#BF1E2D]" />
-                  Saved Reading List
-                </h2>
-                <Link href="/news" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
-                  Browse Latest Stories <ArrowRight size={14} />
+              {/* Action Link to browse stories */}
+              <div className="mt-6">
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] uppercase tracking-wider px-6 py-2.5 rounded-lg transition-colors shadow-xs"
+                >
+                  <span>Explore Publications</span>
+                  <ExternalLink size={14} />
                 </Link>
               </div>
 
-              {savedArticles.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500 font-sans">
-                  <Bookmark size={36} className="mx-auto mb-3 text-zinc-300" />
-                  <p className="text-sm font-medium mb-4">You have no saved articles in your reading list.</p>
-                  <Link
-                    href="/news"
-                    className="inline-flex items-center gap-2 bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2 rounded transition-colors shadow"
+            </div>
+          ) : (
+            /* POPULATED SAVED ARTICLES LIST */
+            <div className="w-full space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <h3 className="font-serif text-[18px] font-bold text-slate-900">
+                  Your Reading List ({savedArticles.length})
+                </h3>
+                <span className="text-[12px] text-slate-400 font-sans">
+                  Account synced
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {savedArticles.map((art, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-slate-200/80 hover:border-slate-300 bg-white hover:shadow-sm transition-all group relative"
                   >
-                    Explore Latest Stories <ArrowRight size={14} />
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {savedArticles.map((art, idx) => (
-                    <div key={idx} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-zinc-100 last:border-none group relative">
-                      <Link href={art.href} className="relative w-full sm:w-[200px] h-[130px] flex-shrink-0 overflow-hidden bg-gray-100 rounded border border-zinc-200 block">
-                        <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      </Link>
-                      <div className="flex flex-col flex-1 pr-8">
-                        <span className="text-[10px] font-bold text-[#1D9BF0] uppercase tracking-wider mb-1">
+                    <Link
+                      href={art.href}
+                      className="relative w-full sm:w-[150px] h-[100px] flex-shrink-0 overflow-hidden bg-slate-100 rounded-lg border border-slate-200 block"
+                    >
+                      <img
+                        src={art.image}
+                        alt={art.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </Link>
+
+                    <div className="flex flex-col justify-between flex-1 pr-6">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#BF1E2D] uppercase tracking-wider block mb-1">
                           {art.category}
                         </span>
-                        <Link href={art.href} className="font-serif text-[18px] font-bold text-black group-hover:text-[#BF1E2D] transition-colors leading-snug mb-2">
+                        <Link
+                          href={art.href}
+                          className="font-serif text-[15px] font-bold text-slate-900 hover:text-[#BF1E2D] transition-colors leading-snug line-clamp-2"
+                        >
                           {art.title}
                         </Link>
-                        <span className="text-[11px] text-zinc-400 font-sans mt-auto">{art.date}</span>
                       </div>
 
-                      {/* Remove Bookmark Button */}
-                      <button
-                        onClick={() => handleRemoveBookmark(art.title)}
-                        className="absolute top-0 right-0 text-zinc-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-zinc-100 cursor-pointer"
-                        title="Remove from Saved List"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 font-sans mt-3">
+                        <span>{art.date}</span>
+                        <Link
+                          href={art.href}
+                          className="text-[#BF1E2D] font-bold hover:underline flex items-center gap-1"
+                        >
+                          Read Article →
+                        </Link>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Reader Digest Sidebar */}
-            <div className="lg:col-span-4 space-y-6">
-              <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-                <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
-                  <Bell size={18} className="text-zinc-700" />
-                  <h3 className="text-base font-bold text-black font-serif">Newsletter Digest</h3>
-                </div>
-                <p className="text-xs text-zinc-600 mb-4 leading-relaxed">
-                  Receive daily executive briefings and market summaries directly in your inbox.
-                </p>
-                <div className="space-y-2.5">
-                  <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
-                    <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
-                    Daily Breaking News Digest
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs text-zinc-800 font-medium cursor-pointer">
-                    <input type="checkbox" defaultChecked className="accent-[#BF1E2D] w-4 h-4" />
-                    Technology & AI Weekly Analysis
-                  </label>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-                <div className="flex items-center gap-2 pb-3 mb-4 border-b border-zinc-200">
-                  <Star size={18} className="text-amber-500" />
-                  <h3 className="text-base font-bold text-black font-serif">Favorite Topics</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {["Artificial Intelligence", "Markets", "Biotech", "Energy", "Politics", "Clean Tech"].map((topic, i) => (
-                    <span key={i} className="text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1 rounded-full cursor-pointer transition-colors">
-                      + {topic}
-                    </span>
-                  ))}
-                </div>
+                    {/* Trash remove button */}
+                    <button
+                      onClick={() => handleRemoveBookmark(art.title)}
+                      className="absolute top-3 right-3 text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-slate-100 cursor-pointer"
+                      title="Remove article"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-          </div>
-        )}
+        </div>
 
-        {/* TAB 2: READER PROFILE SETTINGS */}
-        {activeTab === "settings" && (
-          <div className="max-w-4xl mx-auto bg-white rounded-xl border border-zinc-200 p-6 md:p-10 shadow-sm font-sans">
-            <div className="flex items-center justify-between pb-6 mb-8 border-b border-zinc-200">
+      </main>
+
+      {/* ================= PROFILE SETTINGS MODAL MATCHING SCREENSHOT ================= */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 font-sans">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl relative text-left overflow-hidden border-t-[5px] border-[#BF1E2D]">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setIsProfileModalOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header Title Section */}
+            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+              <h2 className="text-[22px] font-serif font-bold text-slate-900 leading-snug">
+                Profile Settings
+              </h2>
+              <p className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase mt-0.5 font-sans">
+                MANAGE YOUR ACCOUNT
+              </p>
+            </div>
+
+            {/* Avatar & Photo Section */}
+            <div className="flex items-center gap-4 px-6 pt-6 pb-2">
+              <img
+                src={profileAvatar || currentUser?.avatar || "/author_bluesuit.jpg"}
+                alt={profileName || "Nesto Super"}
+                className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0"
+              />
+
               <div>
-                <h2 className="text-2xl font-bold text-black font-serif flex items-center gap-2">
-                  <User size={24} className="text-[#BF1E2D]" />
-                  Reader Account & Profile Settings
-                </h2>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Manage your personal account details, reading bio, and security preferences.
+                <label className="text-[#005691] font-bold text-xs sm:text-sm hover:underline cursor-pointer block">
+                  Change photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-xs text-slate-500 font-sans tracking-tight mt-0.5">
+                  {currentUser?.email || "nestosuper2024@gmail.com"}
                 </p>
+                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-wider rounded uppercase inline-block mt-1.5 font-sans">
+                  {currentUser?.role || "READER"}
+                </span>
               </div>
-
-              <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded flex items-center gap-1.5">
-                <ShieldCheck size={14} /> Active Verified Reader
-              </span>
             </div>
 
-            <form onSubmit={handleSaveProfile} className="space-y-8">
+            {/* Profile Form */}
+            <form onSubmit={handleSaveProfile} className="px-6 pt-4 pb-6 space-y-4 font-sans">
               
-              {/* Profile Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2">
-                  PERSONAL INFORMATION
-                </h3>
+              {/* Field 1: FULL NAME */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  FULL NAME
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all"
+                />
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-700 mb-1">
-                      FULL NAME
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
-                      placeholder="Enter Full Name"
-                    />
-                  </div>
+              {/* Field 2: BIO */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  BIO
+                </label>
+                <textarea
+                  rows={3}
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  placeholder="New Washington Global Times subscriber via Google."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all leading-relaxed"
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-700 mb-1">
-                      EMAIL ADDRESS
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={profileEmail}
-                      onChange={(e) => setProfileEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
-                      placeholder="Enter Email Address"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1">
-                    READING TAGLINE & BIO
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={profileBio}
-                    onChange={(e) => setProfileBio(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors resize-none"
-                    placeholder="Brief bio or topics you follow..."
+              {/* Field 3: LINKEDIN PROFILE */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  LINKEDIN PROFILE
+                </label>
+                <div className="relative rounded-xl border-2 border-[#005691] px-3.5 py-2.5 flex items-center gap-2.5 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                  <svg
+                    className="w-5 h-5 text-[#005691] fill-[#005691] flex-shrink-0"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                  <input
+                    type="url"
+                    placeholder="https://www.linkedin.com/in/your-profile"
+                    value={profileLinkedin}
+                    onChange={(e) => setProfileLinkedin(e.target.value)}
+                    className="w-full bg-transparent text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
                   />
                 </div>
+                <p className="text-[11px] text-slate-400 font-normal mt-1.5 leading-normal">
+                  Shown on your article bylines so readers can connect with you.
+                </p>
               </div>
 
-              {/* Notification Preferences */}
-              <div className="space-y-4 pt-4 border-t border-zinc-200">
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2 flex items-center gap-2">
-                  <Bell size={16} /> NOTIFICATION PREFERENCES
-                </h3>
-
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded cursor-pointer hover:bg-zinc-100 transition-colors">
-                    <div>
-                      <p className="text-xs font-bold text-black">Breaking News Push Notifications</p>
-                      <p className="text-[11px] text-zinc-500">Receive instant alerts for major geopolitical and financial market developments.</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notifyBreaking}
-                      onChange={(e) => setNotifyBreaking(e.target.checked)}
-                      className="accent-[#BF1E2D] w-4 h-4 cursor-pointer"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded cursor-pointer hover:bg-zinc-100 transition-colors">
-                    <div>
-                      <p className="text-xs font-bold text-black">Weekly Analytical Digest</p>
-                      <p className="text-[11px] text-zinc-500">Receive a curated weekend summary of top long-form essays and technology reviews.</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notifyWeekly}
-                      onChange={(e) => setNotifyWeekly(e.target.checked)}
-                      className="accent-[#BF1E2D] w-4 h-4 cursor-pointer"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Security & Passcode */}
-              <div className="space-y-4 pt-4 border-t border-zinc-200">
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-2 flex items-center gap-2">
-                  <Lock size={16} /> SECURITY & PASSWORD
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-700 mb-1">
-                      NEW PASSWORD (OPTIONAL)
-                    </label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
-                      placeholder="Enter new password"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-700 mb-1">
-                      CONFIRM NEW PASSWORD
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-zinc-300 rounded text-sm text-black focus:outline-none focus:border-[#BF1E2D] transition-colors"
-                      placeholder="Confirm new password"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-end gap-3">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("saved")}
-                  className="w-full sm:w-auto px-6 py-2.5 border border-zinc-300 text-zinc-700 hover:bg-zinc-100 font-bold text-xs rounded transition-colors cursor-pointer"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="flex-1 py-3.5 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider hover:bg-slate-50 transition-colors cursor-pointer text-center"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs rounded transition-colors shadow cursor-pointer uppercase tracking-wider"
+                  className="flex-1 py-3.5 px-4 bg-[#005691] hover:bg-[#00416d] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer text-center"
                 >
-                  Save Profile Settings
+                  SAVE CHANGES
                 </button>
               </div>
 
             </form>
+
           </div>
-        )}
+        </div>
+      )}
 
-      </main>
-
-      <Footer />
     </div>
   );
 }

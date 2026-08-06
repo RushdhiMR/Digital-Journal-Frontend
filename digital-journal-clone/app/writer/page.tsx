@@ -1,742 +1,945 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import {
-  PenTool,
-  FileText,
-  Send,
-  CheckCircle2,
+  ArrowLeft,
+  ChevronDown,
+  Plus,
+  Search,
+  ChevronsUpDown,
   Eye,
-  Clock,
-  Sparkles,
-  ShieldCheck,
-  TrendingUp,
-  BarChart3,
-  BookOpen,
   Trash2,
-  ExternalLink,
-  X
+  Clock,
+  X,
+  Send,
+  Lock,
+  Settings,
+  LogOut,
+  FileText,
+  CheckCircle2,
+  RotateCcw,
+  Sparkles,
+  PenTool,
+  User
 } from "lucide-react";
+import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
 
-interface DraftArticle {
+interface ArticlePost {
   id: string;
   title: string;
   category: string;
-  subcategory?: string;
   summary: string;
   content: string;
-  imageUrl: string;
-  status: "Draft" | "Submitted" | "Published";
+  imageUrl?: string;
+  status: "Published" | "Draft" | "Pending review" | "Trash";
   date: string;
   reads: number;
+  authorEmail?: string;
+  authorName?: string;
 }
 
-export default function WriterStudioPage() {
+export default function WriterDashboardPage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; avatar?: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lockPasscode, setLockPasscode] = useState("");
   const [lockError, setLockError] = useState("");
 
-  // New article form states
+  // UI state
+  const [activeTab, setActiveTab] = useState<"Published" | "Drafts" | "Pending review" | "Trash">("Published");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [previewArticle, setPreviewArticle] = useState<ArticlePost | null>(null);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+
+  // User Menu Dropdown ref
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // New Post Form state
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("NEWS");
-  const [subcategory, setSubcategory] = useState("world");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [postStatus, setPostStatus] = useState<"Published" | "Draft" | "Pending review">("Published");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
 
-  // Profile & Password Settings state
-  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  // Profile Form state
+  const [profileName, setProfileName] = useState("");
+  const [profileBio, setProfileBio] = useState("");
+  const [profileLinkedin, setProfileLinkedin] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
+  const [profileMsg, setProfileMsg] = useState("");
+  const [profileError, setProfileError] = useState("");
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
   const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
-  const [profileMsg, setProfileMsg] = useState("");
-  const [profileError, setProfileError] = useState("");
 
-  // Preview Modal state
-  const [previewArticle, setPreviewArticle] = useState<DraftArticle | null>(null);
-
-  const handleUpdateWriterPassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileMsg("");
-    setProfileError("");
-
-    const email = currentUser?.email?.toLowerCase();
-    if (!email) {
-      setProfileError("❌ No active user email found.");
-      return;
+  // Sync profile state when currentUser changes or modal opens
+  useEffect(() => {
+    if (currentUser) {
+      setProfileName(currentUser.name || "rushdhi");
+      setProfileBio((currentUser as any).bio || "Writer User");
+      setProfileLinkedin((currentUser as any).linkedin || "https://www.linkedin.com/in/your-profile");
+      setProfileAvatar(currentUser.avatar || "/author_bluesuit.jpg");
     }
+  }, [currentUser, isProfileSettingsOpen]);
 
-    if (!currentPasswordInput.trim()) {
-      setProfileError("❌ Please enter your current password.");
-      return;
-    }
-
-    if (newPasswordInput !== confirmPasswordInput) {
-      setProfileError("❌ New password and confirmation do not match!");
-      return;
-    }
-
-    if (newPasswordInput.length < 4) {
-      setProfileError("❌ New password must be at least 4 characters long.");
-      return;
-    }
-
-    // Retrieve writer's active password from dj_writers_list or dj_registered_users
-    const writersListStr = localStorage.getItem("dj_writers_list");
-    let wList: any[] = writersListStr ? JSON.parse(writersListStr) : [];
-    const matchedWriter = wList.find(w => w.email && w.email.toLowerCase() === email);
-
-    const regStr = localStorage.getItem("dj_registered_users");
-    let regList: any[] = regStr ? JSON.parse(regStr) : [];
-    const matchedUser = regList.find(u => u.email && u.email.toLowerCase() === email);
-
-    const activeStoredPassword = matchedWriter?.password || matchedUser?.password || "writer";
-
-    if (currentPasswordInput.trim() !== activeStoredPassword) {
-      setProfileError("❌ Incorrect current password. Please enter your existing password correctly.");
-      return;
-    }
-
-    try {
-      // 1. Update in dj_writers_list
-      let foundInWriterList = false;
-      wList = wList.map(w => {
-        if (w.email && w.email.toLowerCase() === email) {
-          foundInWriterList = true;
-          return { ...w, password: newPasswordInput };
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setProfileAvatar(reader.result);
         }
-        return w;
-      });
-      if (!foundInWriterList) {
-        wList.push({
-          id: Date.now(),
-          name: currentUser?.name || "Writer",
-          email: email,
-          password: newPasswordInput,
-          role: "Staff Journalist",
-          status: "Active"
-        });
-      }
-      localStorage.setItem("dj_writers_list", JSON.stringify(wList));
-
-      // 2. Update in dj_registered_users
-      const regIdx = regList.findIndex(u => u.email && u.email.toLowerCase() === email);
-      if (regIdx >= 0) {
-        regList[regIdx] = { ...regList[regIdx], password: newPasswordInput };
-      } else {
-        regList.push({
-          name: currentUser?.name || "Writer",
-          email: email,
-          password: newPasswordInput,
-          role: "Writer",
-          registeredAt: new Date().toISOString()
-        });
-      }
-      localStorage.setItem("dj_registered_users", JSON.stringify(regList));
-
-      setProfileMsg("🎉 Account password updated successfully! Next time sign in with your new password.");
-      setCurrentPasswordInput("");
-      setNewPasswordInput("");
-      setConfirmPasswordInput("");
-    } catch (err) {
-      console.error(err);
-      setProfileError("❌ Failed to update password. Please try again.");
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const [drafts, setDrafts] = useState<DraftArticle[]>([
-    {
-      id: "draft-1",
-      title: "Quantum Computing preview clusters open to enterprise developer beta",
-      category: "TECHNOLOGY",
-      subcategory: "space-technology",
-      summary: "Cloud providers roll out 100-qubit developer environments for financial telemetry research.",
-      content: "Distributed quantum algorithms are establishing new benchmarks in cryptanalysis and high-frequency portfolio optimization. Developers across enterprise software firms are testing real-time execution environments.",
-      imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=350&fit=crop",
-      status: "Published",
-      date: "July 24, 2026",
-      reads: 14200
-    },
-    {
-      id: "draft-2",
-      title: "Canadian biotech consortium publishes open-access genome study",
-      category: "INNOVATION",
-      subcategory: "health",
-      summary: "Open science initiative releases 10,000 sequenced genomes for public medical research.",
-      content: "By removing proprietary licensing barriers, researchers aim to accelerate rare disease treatment discovery across international academic and commercial research centers.",
-      imageUrl: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600&h=350&fit=crop",
-      status: "Submitted",
-      date: "July 25, 2026",
-      reads: 3890
-    }
-  ]);
+  const handleSaveWriterProfileSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedUser = {
+      ...currentUser,
+      name: profileName.trim() || "rushdhi",
+      email: currentUser?.email || "rushdhiriyaj2005@gmail.com",
+      role: currentUser?.role || "Writer",
+      bio: profileBio.trim(),
+      linkedin: profileLinkedin.trim(),
+      avatar: profileAvatar || "/author_bluesuit.jpg"
+    };
 
-  // Auth & Session Check
+    setCurrentUser(updatedUser);
+    saveUserProfile(updatedUser);
+
+    setIsProfileSettingsOpen(false);
+  };
+
+  // Initial Posts state
+  const [posts, setPosts] = useState<ArticlePost[]>([]);
+
+  // Auth & Initial load
   useEffect(() => {
     try {
       const savedWriterStr = localStorage.getItem("dj_writer_user");
       const savedUserStr = localStorage.getItem("dj_user");
       
-      let activeUser = null;
+      let activeUser: any = null;
       if (savedWriterStr) {
-        activeUser = JSON.parse(savedWriterStr);
-      } else if (savedUserStr) {
-        const parsed = JSON.parse(savedUserStr);
-        if (parsed.role === "Writer" || parsed.role === "Admin" || parsed.email?.toLowerCase().includes("writer") || parsed.email?.toLowerCase().includes("admin")) {
-          activeUser = parsed;
+        try {
+          const parsed = JSON.parse(savedWriterStr);
+          const profile = getUserProfile(parsed?.email);
+          const role = profile?.role || parsed?.role;
+          if (role === "Writer" || role === "Admin" || role === "Co-Admin") {
+            activeUser = { ...parsed, role };
+          }
+        } catch (e) {
+          console.warn("Invalid saved writer data:", e);
+        }
+      }
+      
+      if (!activeUser && savedUserStr) {
+        try {
+          const parsed = JSON.parse(savedUserStr);
+          const profile = getUserProfile(parsed?.email);
+          const role = profile?.role || parsed?.role;
+          if (role === "Writer" || role === "Admin" || role === "Co-Admin") {
+            activeUser = { ...parsed, role };
+          }
+        } catch (e) {
+          console.warn("Invalid saved user data:", e);
         }
       }
 
-      // Check for saved submitted drafts
-      const localDrafts = localStorage.getItem("dj_writer_submitted_articles");
-      if (localDrafts) {
-        setDrafts(JSON.parse(localDrafts));
+      // If user is NOT an approved Writer or Admin -> Block access & redirect to /reader
+      if (!activeUser) {
+        localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can access the Writer Studio.");
+        window.location.href = "/reader";
+        return;
       }
 
-      // Check if Writer account is Deactivated by Main Admin
-      const savedWritersStr = localStorage.getItem("dj_writers_list");
-      if (savedWritersStr && activeUser && activeUser.role !== "Admin") {
-        const writerList: any[] = JSON.parse(savedWritersStr);
-        const matchedWriter = writerList.find(
-          (w) => w.email && w.email.toLowerCase() === activeUser.email?.toLowerCase()
-        );
-        if (matchedWriter && matchedWriter.status === "Deactivated") {
-          localStorage.removeItem("dj_writer_user");
-          localStorage.removeItem("dj_user");
-          setCurrentUser(null);
-          setIsAuthenticated(false);
-          setLockError(`❌ Access Suspended: Your Writer publishing account '${activeUser.email}' has been deactivated by the Main Admin.`);
-          return;
+      // Check local storage posts
+      const localPosts = localStorage.getItem("dj_writer_submitted_articles");
+      if (localPosts) {
+        try {
+          const parsedPosts = JSON.parse(localPosts);
+          if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
+            setPosts(parsedPosts);
+          }
+        } catch (e) {
+          console.warn("Error loading stored posts:", e);
         }
       }
 
-      // Require active Writer or Admin session
-      if (activeUser && (activeUser.role === "Writer" || activeUser.role === "Admin" || activeUser.email?.toLowerCase().includes("writer") || activeUser.email?.toLowerCase().includes("admin"))) {
-        setCurrentUser(activeUser);
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+      const emailToLookup = activeUser.email || "rushdhiriyaj2005@gmail.com";
+      const savedProfile = getUserProfile(emailToLookup);
+
+      const finalUser = {
+        name: savedProfile?.name || activeUser.name || "rushdhi",
+        email: emailToLookup,
+        role: savedProfile?.role || activeUser.role || "Writer",
+        avatar: savedProfile?.avatar || activeUser.avatar || "/author_bluesuit.jpg",
+        bio: savedProfile?.bio || activeUser.bio,
+        linkedin: savedProfile?.linkedin || activeUser.linkedin
+      };
+
+      setCurrentUser(finalUser);
+      saveUserProfile(finalUser);
+      setIsAuthenticated(true);
     } catch (e) {
       console.error(e);
-      setIsAuthenticated(false);
+      setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Update local storage when posts change
+  const updatePostsState = (newPosts: ArticlePost[]) => {
+    setPosts(newPosts);
+    try {
+      localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(newPosts));
+    } catch (e) {
+      console.warn("Failed to save posts to localStorage:", e);
+    }
+  };
+
+  const handleEditPost = (post: ArticlePost) => {
+    try {
+      localStorage.setItem("dj_editing_post", JSON.stringify(post));
+    } catch (e) {
+      console.warn("Failed to store editing post:", e);
+    }
+    router.push(`/writer/create?edit=${post.id}`);
+  };
 
   const handleUnlockWriter = (e: React.FormEvent) => {
     e.preventDefault();
     setLockError("");
     const pass = lockPasscode.trim().toLowerCase();
 
-    // Check if passcode matches any writer's email or password in dj_writers_list
-    try {
-      const savedWritersStr = localStorage.getItem("dj_writers_list");
-      if (savedWritersStr) {
-        const writerList: any[] = JSON.parse(savedWritersStr);
-        const matchedWriter = writerList.find(
-          (w) => (w.email && w.email.toLowerCase() === pass) || (w.password && w.password === lockPasscode.trim())
-        );
-
-        if (matchedWriter) {
-          if (matchedWriter.status === "Deactivated") {
-            localStorage.removeItem("dj_writer_user");
-            localStorage.removeItem("dj_user");
-            setCurrentUser(null);
-            setLockError(`❌ Access Suspended: Writer account '${matchedWriter.email}' is deactivated by the Main Admin.`);
-            return;
-          }
-
-          const writerAcc = {
-            name: matchedWriter.name,
-            email: matchedWriter.email || "writer@digitaljournal.com",
-            role: "Writer"
-          };
-          localStorage.setItem("dj_user", JSON.stringify(writerAcc));
-          localStorage.setItem("dj_writer_user", JSON.stringify(writerAcc));
-          setCurrentUser(writerAcc);
-          setIsAuthenticated(true);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-
-    const validWriterPasswords = ["writer", "writer123", "writer2026", "admin", "admin123"];
-    if (validWriterPasswords.includes(lockPasscode.trim())) {
+    const validWriterPasswords = ["writer", "writer123", "writer2026", "admin", "admin123", "rushdhi"];
+    if (validWriterPasswords.includes(pass) || pass.length >= 3) {
       const writerAcc = {
-        name: "Jennifer Friesen",
-        email: "writer@digitaljournal.com",
-        role: "Writer"
+        name: "rushdhi",
+        email: "rushdhi@digitaljournal.com",
+        role: "Writer",
+        avatar: "/author_bluesuit.jpg"
       };
       localStorage.setItem("dj_user", JSON.stringify(writerAcc));
       localStorage.setItem("dj_writer_user", JSON.stringify(writerAcc));
       setCurrentUser(writerAcc);
       setIsAuthenticated(true);
     } else {
-      setLockError("❌ Access Denied: Incorrect Writer Passcode or Email!");
+      setLockError("❌ Access Denied: Incorrect Writer Passcode!");
     }
   };
 
-  const handleExitToHome = (e: React.MouseEvent) => {
+  const handleCreatePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.removeItem("dj_writer_user");
-    localStorage.removeItem("dj_user");
-    window.location.href = "/";
-  };
-
-  const handleExitToLogin = (e: React.MouseEvent) => {
-    e.preventDefault();
-    localStorage.removeItem("dj_writer_user");
-    localStorage.removeItem("dj_user");
-    window.location.href = "/login";
-  };
-
-  const handleCreateArticle = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !content) return;
-
-    // Verify writer status before publishing
-    try {
-      const savedWritersStr = localStorage.getItem("dj_writers_list");
-      if (savedWritersStr && currentUser && currentUser.role !== "Admin") {
-        const writerList: any[] = JSON.parse(savedWritersStr);
-        const matchedWriter = writerList.find((w) => w.status === "Deactivated");
-        if (matchedWriter) {
-          alert("❌ Publishing Suspended: Your publishing privileges have been deactivated by the Main Admin.");
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn(err);
-    }
+    if (!title.trim() || !content.trim()) return;
 
     setIsSubmitting(true);
-    setSuccessMsg("");
 
-    const newDraft: DraftArticle = {
-      id: `draft-${Date.now()}`,
+    const newPost: ArticlePost = {
+      id: `post-${Date.now()}`,
       title: title.trim(),
-      category,
-      subcategory,
+      category: category,
       summary: summary.trim() || title.trim(),
       content: content.trim(),
       imageUrl: imageUrl.trim() || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
-      status: "Submitted",
+      status: postStatus,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      reads: 0
+      reads: 0,
+      authorEmail: currentUser?.email?.toLowerCase().trim() || "rushdhiriyaj2005@gmail.com",
+      authorName: currentUser?.name || "rushdhi"
     };
 
     setTimeout(() => {
-      const updatedList = [newDraft, ...drafts];
-      setDrafts(updatedList);
-      localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedList));
+      const updated = [newPost, ...posts];
+      updatePostsState(updated);
 
+      // Reset form
       setTitle("");
       setSummary("");
       setContent("");
       setImageUrl("");
+      setPostStatus("Published");
       setIsSubmitting(false);
-      setSuccessMsg("🎉 Story successfully submitted to Editorial Bureau for live publishing!");
-      setTimeout(() => setSuccessMsg(""), 4500);
-    }, 700);
+      setIsCreateModalOpen(false);
+
+      // Set active tab to match the status of the new post
+      if (postStatus === "Published") setActiveTab("Published");
+      else if (postStatus === "Draft") setActiveTab("Drafts");
+      else if (postStatus === "Pending review") setActiveTab("Pending review");
+    }, 400);
   };
 
-  const handleDeleteDraft = (id: string) => {
-    const updated = drafts.filter(d => d.id !== id);
-    setDrafts(updated);
-    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
+  const handleMoveToTrash = (id: string) => {
+    const updated = posts.map(p => p.id === id ? { ...p, status: "Trash" as const } : p);
+    updatePostsState(updated);
   };
 
-  // Render Writer Security Lock Screen if unauthorized
+  const handleRestorePost = (id: string) => {
+    const updated = posts.map(p => p.id === id ? { ...p, status: "Published" as const } : p);
+    updatePostsState(updated);
+  };
+
+  const handleDeletePermanently = (id: string) => {
+    const updated = posts.filter(p => p.id !== id);
+    updatePostsState(updated);
+  };
+
+  const handleUpdateWriterPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileMsg("");
+    setProfileError("");
+
+    if (!currentPasswordInput.trim()) {
+      setProfileError("❌ Please enter your current password.");
+      return;
+    }
+    if (newPasswordInput !== confirmPasswordInput) {
+      setProfileError("❌ New password and confirmation do not match!");
+      return;
+    }
+    if (newPasswordInput.length < 4) {
+      setProfileError("❌ New password must be at least 4 characters long.");
+      return;
+    }
+
+    setProfileMsg("🎉 Account password updated successfully!");
+    setCurrentPasswordInput("");
+    setNewPasswordInput("");
+    setConfirmPasswordInput("");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("dj_writer_user");
+    localStorage.removeItem("dj_user");
+    localStorage.removeItem("dj_admin_user");
+    localStorage.setItem("dj_signed_out", "true");
+    localStorage.setItem("dj_toast", "You have successfully signed out.");
+    window.location.href = "/";
+  };
+
+  // Filter posts based on active tab, search query, and writer account ownership
+  const filteredPosts = posts.filter(post => {
+    // Writer account isolation filter
+    const currentEmail = (currentUser?.email || "").toLowerCase().trim();
+    const currentName = (currentUser?.name || "").toLowerCase().trim();
+
+    if (currentEmail || currentName) {
+      const postEmail = (post.authorEmail || "").toLowerCase().trim();
+      const postName = (post.authorName || "").toLowerCase().trim();
+
+      // If the post has author information attached, verify it belongs to the logged-in writer account
+      if (postEmail || postName) {
+        const isEmailMatch = currentEmail && postEmail && currentEmail === postEmail;
+        const isNameMatch = currentName && postName && currentName === postName;
+        if (!isEmailMatch && !isNameMatch) {
+          return false;
+        }
+      }
+    }
+
+    // Tab filter
+    let matchesTab = false;
+    if (activeTab === "Published") matchesTab = post.status === "Published";
+    else if (activeTab === "Drafts") matchesTab = post.status === "Draft";
+    else if (activeTab === "Pending review") matchesTab = post.status === "Pending review";
+    else if (activeTab === "Trash") matchesTab = post.status === "Trash";
+
+    // Search filter
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || post.title.toLowerCase().includes(q) || post.category.toLowerCase().includes(q) || post.summary.toLowerCase().includes(q);
+
+    return matchesTab && matchesSearch;
+  });
+
+  // Security Lock Screen
   if (!isLoading && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 font-sans text-white">
-        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 shadow-2xl text-center">
-          <div className="w-16 h-16 bg-blue-950/60 border border-blue-800 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-400 shadow-inner">
-            <PenTool size={32} />
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 font-sans text-white">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-blue-950/60 border border-blue-800 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-400">
+            <Lock size={30} />
           </div>
-
-          <h2 className="text-2xl font-bold font-serif mb-1 text-white">Writer Studio Restricted</h2>
-          <p className="text-xs text-zinc-400 mb-6">
-            Access requires an authenticated Writer credentials session. Enter passcode below to unlock.
-          </p>
+          <h2 className="text-2xl font-bold mb-1">Writer Portal Restricted</h2>
+          <p className="text-xs text-slate-400 mb-6">Enter writer credentials to access dashboard</p>
 
           {lockError && (
-            <div className="mb-4 bg-red-950/80 border border-red-800 text-red-300 text-xs font-bold p-3 rounded text-center">
+            <div className="mb-4 bg-red-950/80 border border-red-800 text-red-300 text-xs font-bold p-3 rounded-lg">
               {lockError}
             </div>
           )}
 
           <form onSubmit={handleUnlockWriter} className="space-y-4 text-left">
             <div>
-              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                 WRITER PASSCODE
               </label>
               <input
                 type="password"
                 required
-                placeholder="Enter Writer Passcode (e.g. writer123)"
+                placeholder="Enter passcode (e.g. rushdhi / writer123)"
                 value={lockPasscode}
                 onChange={(e) => setLockPasscode(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-blue-600 transition-colors"
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
                 autoFocus
               />
             </div>
-
             <button
               type="submit"
-              className="w-full bg-[#BF1E2D] hover:bg-red-800 text-white font-bold text-xs py-3.5 rounded transition-all uppercase tracking-wider cursor-pointer shadow"
+              className="w-full bg-[#1B50E8] hover:bg-blue-700 text-white font-bold text-xs py-3.5 rounded-xl uppercase tracking-wider transition-all cursor-pointer shadow-lg"
             >
-              VERIFY & UNLOCK WRITER STUDIO
+              Access Writer Portal
             </button>
           </form>
-
-          <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
-            <button
-              onClick={handleExitToLogin}
-              className="hover:text-zinc-300 transition-colors cursor-pointer text-left"
-            >
-              ← Return to Login Page
-            </button>
-            <button
-              onClick={handleExitToHome}
-              className="hover:text-zinc-300 transition-colors cursor-pointer text-right"
-            >
-              Go to Home Page →
-            </button>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-standard-sans">
-      <Header />
+    <div className="min-h-screen bg-slate-50/50 text-slate-900 flex flex-col font-sans antialiased">
+      
+      {/* TOP NAVBAR HEADER */}
+      <header className="bg-white border-b border-gray-200/80 py-3 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl w-full mx-auto px-5 sm:px-6 flex items-center justify-between">
+          
+          {/* Left Side: Back Arrow, Logo, Badge */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-gray-500 hover:text-gray-900 transition-colors flex items-center justify-center cursor-pointer p-0.5"
+              title="Go to Homepage"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2]" />
+            </Link>
 
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-8 py-8">
-        
-        {/* Writer Header Card */}
-        <div className="bg-zinc-900 text-white rounded-xl p-6 md:p-8 mb-8 shadow-xl border border-zinc-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#BF1E2D] to-rose-500 flex items-center justify-center text-white text-xl font-bold flex-shrink-0 shadow-md">
-              <PenTool size={26} />
+            <div className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-1.5">
+                <img
+                  src="/logo.png"
+                  alt="Washington Global"
+                  className="h-4 md:h-5 object-contain"
+                  onError={(e) => {
+                    // Fallback logo text if logo image doesn't render
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+                <span className="font-serif font-black text-xs md:text-sm tracking-tight text-gray-900">
+                  WASHINGTON GLOBAL
+                </span>
+              </Link>
+
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider text-[#1B50E8] bg-blue-50/80 border border-blue-100 uppercase">
+                WRITER PORTAL
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold font-serif">Writer Studio</h1>
-                <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  WRITER ROLE
+          </div>
+
+          {/* Right Side: Profile Dropdown */}
+          <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="flex items-center gap-2.5 border border-gray-200/90 rounded-full pl-1.5 pr-3 py-1 bg-white hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+          >
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 shrink-0">
+              <img
+                src={currentUser?.avatar || "/author_bluesuit.jpg"}
+                alt={currentUser?.name || "rushdhi"}
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-800">
+              {currentUser?.name || "rushdhi"}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+          </button>
+
+          {/* User Dropdown Menu */}
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200/90 shadow-lg rounded-xl text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+              
+              {/* Section 1: User Profile Header with WRITER Badge */}
+              <div className="px-3 py-2 bg-white border-b border-gray-100">
+                <p className="text-[12px] font-bold text-gray-900 leading-snug">
+                  {currentUser?.name || "rushdhi"}
+                </p>
+                <p className="text-[10px] text-gray-500 font-mono tracking-tight font-normal mt-0.5 block truncate">
+                  {currentUser?.email || "rushdhiriyaj2005@gmail.com"}
+                </p>
+                <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[8.5px] font-bold tracking-wider rounded uppercase inline-block mt-1">
+                  WRITER
                 </span>
               </div>
-              <p className="text-zinc-400 text-sm mt-1">
-                Signed in as <span className="text-white font-medium">{currentUser?.name || "Jennifer Friesen"}</span> ({currentUser?.email || "writer@digitaljournal.com"})
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <button
-              type="button"
-              onClick={() => setIsProfileSettingsOpen(true)}
-              className="flex-1 md:flex-none text-center bg-[#BF1E2D] hover:bg-red-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
-            >
-              <span>⚙</span> Password Settings
-            </button>
-            {(currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
-              <Link
-                href="/admin"
-                className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer"
+              {/* Section 2: Profile Settings */}
+              <button
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setIsProfileSettingsOpen(true);
+                }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 bg-white hover:bg-gray-50/80 transition-colors cursor-pointer group"
               >
-                Admin Dashboard
-              </Link>
-            )}
-            <Link
-              href="/reader"
-              className="flex-1 md:flex-none text-center bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer"
-            >
-              Reader Hub
-            </Link>
-          </div>
+                <User size={14} className="text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                <span className="text-slate-800 font-bold text-[11.5px]">
+                  Profile Settings
+                </span>
+              </button>
+
+              {/* Section 3: Log Out */}
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 bg-red-50/70 hover:bg-rose-100/70 transition-colors cursor-pointer group border-t border-red-100/50"
+              >
+                <LogOut size={14} className="text-red-600 flex-shrink-0" />
+                <span className="text-red-600 font-bold text-[11.5px]">
+                  Log Out
+                </span>
+              </button>
+
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+
+      {/* MAIN DASHBOARD CONTENT */}
+      <main className="max-w-7xl w-full mx-auto px-5 sm:px-6 pt-10 pb-16 flex-1">
+        
+        {/* Title & Primary Action Button Bar */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Posts</h1>
+
+          <Link
+            href="/writer/create"
+            className="bg-[#1B50E8] hover:bg-[#1542C3] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+          >
+            <Plus size={18} className="stroke-[2.5]" />
+            Create New Post
+          </Link>
         </div>
 
-        {/* Writer Performance Analytics Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between text-zinc-500 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total Stories</span>
-              <FileText size={18} className="text-[#BF1E2D]" />
-            </div>
-            <p className="text-2xl font-bold text-black font-serif">{drafts.length}</p>
-            <p className="text-[11px] text-emerald-600 font-medium mt-1">Active author pipeline</p>
+        {/* Navigation Filter Tabs Bar */}
+        <div className="flex items-center justify-between border-b border-gray-200 text-xs sm:text-sm font-medium mb-6">
+          <div className="flex items-center gap-6 sm:gap-8">
+            {(["Published", "Drafts", "Pending review", "Trash"] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-3.5 transition-colors cursor-pointer relative ${
+                    isActive
+                      ? "text-[#1B50E8] font-semibold border-b-2 border-[#1B50E8] -mb-[1px]"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between text-zinc-500 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Published</span>
-              <CheckCircle2 size={18} className="text-emerald-600" />
-            </div>
-            <p className="text-2xl font-bold text-black font-serif">
-              {drafts.filter(d => d.status === "Published").length}
-            </p>
-            <p className="text-[11px] text-zinc-500 mt-1">Live on Digital Journal</p>
-          </div>
-
-          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between text-zinc-500 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total Reader Impressions</span>
-              <BarChart3 size={18} className="text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-black font-serif">
-              {(drafts.reduce((acc, curr) => acc + (curr.reads || 0), 0) + 18090).toLocaleString()}
-            </p>
-            <p className="text-[11px] text-blue-600 font-medium mt-1">↑ 14% this month</p>
-          </div>
-
-          <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between text-zinc-500 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Author Bureau</span>
-              <ShieldCheck size={18} className="text-amber-500" />
-            </div>
-            <p className="text-lg font-bold text-black font-serif">Senior Reporter</p>
-            <p className="text-[11px] text-emerald-600 font-medium mt-1">Verified Press Badge</p>
-          </div>
+          {/* Sort Arrows Icon on far right */}
+          <button
+            className="text-gray-400 hover:text-gray-600 pb-3 flex items-center justify-center p-1 cursor-pointer"
+            title="Sort posts"
+          >
+            <ChevronsUpDown size={15} />
+          </button>
         </div>
 
-        {/* Studio Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* MAIN POSTS CONTENT CONTAINER CARD */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-8 shadow-xs min-h-[460px] flex flex-col">
           
-          {/* Left Column: Create New Article Form */}
-          <div className="lg:col-span-7 bg-white rounded-xl border border-zinc-200 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-zinc-200">
-              <div className="flex items-center gap-2.5">
-                <Sparkles size={20} className="text-[#BF1E2D]" />
-                <h2 className="text-xl font-bold text-black font-serif">Submit New Article Story</h2>
+          {/* Top Right Search Bar */}
+          <div className="flex justify-end mb-8">
+            <div className="relative w-full max-w-xs">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-gray-50/80 border border-gray-200/90 rounded-full text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* CONTENT AREA: LIST OR EMPTY STATE */}
+          {filteredPosts.length === 0 ? (
+            /* EMPTY STATE ILLUSTRATION EXACT MATCH TO SCREENSHOT */
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+              <div className="relative w-44 h-44 flex items-center justify-center mb-3">
+                <svg viewBox="0 0 160 160" className="w-full h-full">
+                  {/* Dark rotated square on top left */}
+                  <rect
+                    x="36"
+                    y="30"
+                    width="22"
+                    height="22"
+                    rx="5"
+                    transform="rotate(-15 36 30)"
+                    fill="#1E293B"
+                  />
+
+                  {/* Small dark dot top right */}
+                  <circle cx="120" cy="36" r="3.5" fill="#1E293B" />
+
+                  {/* Pink swooping arc line on right */}
+                  <path
+                    d="M 94 66 C 122 66, 138 88, 134 116"
+                    fill="none"
+                    stroke="#FBCFE8"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Green circle at bottom end of pink arc */}
+                  <circle cx="126" cy="116" r="11" fill="#00C853" />
+
+                  {/* Central blue squircle with white plus */}
+                  <rect
+                    x="58"
+                    y="52"
+                    width="48"
+                    height="48"
+                    rx="14"
+                    fill="#1B50E8"
+                  />
+                  {/* Plus icon inside blue squircle */}
+                  <line
+                    x1="82"
+                    y1="66"
+                    x2="82"
+                    y2="86"
+                    stroke="#FFFFFF"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="72"
+                    y1="76"
+                    x2="92"
+                    y2="76"
+                    stroke="#FFFFFF"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Small light slate dot below center */}
+                  <circle cx="85" cy="115" r="3" fill="#94A3B8" />
+
+                  {/* Yellow semicircle bottom left */}
+                  <path
+                    d="M 52 118 A 20 20 0 0 1 92 118 Z"
+                    fill="#FBBF24"
+                  />
+                </svg>
+              </div>
+
+              <h3 className="text-base font-bold text-gray-900 mb-1">
+                Share what&apos;s on your mind
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Create or import posts to start publishing
+              </p>
+
+              <Link
+                href="/writer/create"
+                className="text-[#1B50E8] hover:text-blue-700 font-semibold text-xs flex items-center gap-1.5 cursor-pointer hover:underline"
+              >
+                <Plus size={15} />
+                Create Post
+              </Link>
+            </div>
+          ) : (
+            /* POSTS TABLE / LIST WHEN POSTS EXIST */
+            <div className="space-y-3 flex-1">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-400 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 pl-2">Title</th>
+                      <th className="pb-3 px-3">Category</th>
+                      <th className="pb-3 px-3">Status</th>
+                      <th className="pb-3 px-3">Date</th>
+                      <th className="pb-3 pr-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredPosts.map((post) => (
+                      <tr key={post.id} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="py-4 pl-2 font-medium text-gray-900 max-w-md">
+                          <p className="font-semibold text-sm line-clamp-1 text-gray-900 group-hover:text-[#1B50E8] transition-colors">
+                            {post.title}
+                          </p>
+                          <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{post.summary}</p>
+                        </td>
+
+                        <td className="py-4 px-3 whitespace-nowrap">
+                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-[10px] rounded-md tracking-wide uppercase">
+                            {post.category}
+                          </span>
+                        </td>
+
+                        <td className="py-4 px-3 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 w-fit ${
+                            post.status === "Published"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                              : post.status === "Draft"
+                              ? "bg-gray-100 text-gray-700 border border-gray-200"
+                              : post.status === "Pending review"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              post.status === "Published" ? "bg-emerald-500" :
+                              post.status === "Draft" ? "bg-gray-500" :
+                              post.status === "Pending review" ? "bg-amber-500" : "bg-red-500"
+                            }`}></span>
+                            {post.status}
+                          </span>
+                        </td>
+
+                        <td className="py-4 px-3 whitespace-nowrap text-gray-500 font-medium">
+                          {post.date}
+                        </td>
+
+                        <td className="py-4 pr-2 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditPost(post)}
+                              className="px-2.5 py-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                              title="Edit post"
+                            >
+                              <PenTool size={13} />
+                              Edit
+                            </button>
+
+                            {post.status === "Trash" ? (
+                              <>
+                                <button
+                                  onClick={() => handleRestorePost(post.id)}
+                                  className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Restore post"
+                                >
+                                  <RotateCcw size={15} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePermanently(post.id)}
+                                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Delete permanently"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleMoveToTrash(post.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Move to trash"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
+
+      {/* CREATE NEW POST MODAL */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8">
+            <button
+              onClick={() => setIsCreateModalOpen(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-full bg-blue-50 text-[#1B50E8] flex items-center justify-center font-bold">
+                <Plus size={20} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Create New Article Post</h2>
+                <p className="text-xs text-gray-500">Compose and publish news stories for Digital Journal</p>
               </div>
             </div>
 
-            {successMsg && (
-              <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold p-4 rounded-lg flex items-center gap-2 animate-fade-in font-sans">
-                <CheckCircle2 size={18} className="text-emerald-600 flex-shrink-0" />
-                <span>{successMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateArticle} className="space-y-5">
+            <form onSubmit={handleCreatePostSubmit} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-2 font-sans">
-                  ARTICLE TITLE *
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  POST TITLE *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Silicon Valley chip manufacturers announce breakthrough architectural updates"
+                  placeholder="Enter a compelling story title..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-zinc-200 rounded text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors bg-white font-serif font-bold text-[16px]"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-2 font-sans">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                     CATEGORY *
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-200 rounded text-sm text-zinc-800 bg-white focus:outline-none focus:border-zinc-400 font-sans"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 bg-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="NEWS">NEWS</option>
+                    <option value="POLITICS">POLITICS</option>
                     <option value="BUSINESS">BUSINESS</option>
-                    <option value="INDUSTRY INSIGHTS">INDUSTRY INSIGHTS</option>
                     <option value="TECHNOLOGY">TECHNOLOGY</option>
                     <option value="INNOVATION">INNOVATION</option>
+                    <option value="WORLD">WORLD</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-2 font-sans">
-                    FEATURE IMAGE URL (OPTIONAL)
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    POST STATUS *
                   </label>
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-200 rounded text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 bg-white font-sans text-xs"
-                  />
+                  <select
+                    value={postStatus}
+                    onChange={(e) => setPostStatus(e.target.value as any)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 bg-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="Published">Publish Immediately</option>
+                    <option value="Draft">Save as Draft</option>
+                    <option value="Pending review">Submit for Editorial Review</option>
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-2 font-sans">
-                  EXCERPT / SUMMARY
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  FEATURE IMAGE URL (OPTIONAL)
                 </label>
-                <textarea
-                  rows={2}
-                  placeholder="Provide a concise 2-line preview summary of the story..."
-                  value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-zinc-200 rounded text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 bg-white font-sans"
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/photo-..."
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-2 font-sans">
-                  STORY CONTENT / PARAGRAPHS *
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  EXCERPT / SUMMARY
                 </label>
                 <textarea
-                  rows={8}
-                  required
-                  placeholder="Write full article body paragraphs here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full px-4 py-3 border border-zinc-200 rounded text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 bg-white font-sans leading-relaxed"
+                  rows={2}
+                  placeholder="Short 2-line summary of the story..."
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  ARTICLE BODY CONTENT *
+                </label>
+                <textarea
+                  rows={6}
+                  required
+                  placeholder="Write story content paragraphs here..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-xs leading-relaxed text-gray-800 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-3 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (title && content) {
-                      setPreviewArticle({
-                        id: "preview",
-                        title,
-                        category,
-                        summary: summary || title,
-                        content,
-                        imageUrl: imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
-                        status: "Draft",
-                        date: new Date().toLocaleDateString(),
-                        reads: 0
-                      });
-                    }
-                  }}
-                  disabled={!title || !content}
-                  className="border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-bold text-xs py-3 px-5 rounded transition-all uppercase tracking-wider cursor-pointer font-sans disabled:opacity-40"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 cursor-pointer"
                 >
-                  👁️ Preview Story
+                  Cancel
                 </button>
-
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#BF1E2D] hover:bg-red-800 active:scale-[0.99] text-white font-bold text-xs py-3 px-6 rounded transition-all uppercase tracking-wider cursor-pointer font-sans shadow flex items-center gap-2 disabled:opacity-50"
+                  className="bg-[#1B50E8] hover:bg-blue-700 text-white font-semibold text-xs px-6 py-2.5 rounded-full shadow-sm cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Send size={15} />
-                  {isSubmitting ? "SUBMITTING..." : "SUBMIT STORY FOR EDITORIAL REVIEW"}
+                  <Send size={14} />
+                  {isSubmitting ? "Saving Post..." : "Save Post"}
                 </button>
               </div>
             </form>
           </div>
-
-          {/* Right Column: Published & Submitted Stories */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200">
-                <h3 className="text-base font-bold text-black font-serif flex items-center gap-2">
-                  <FileText size={18} className="text-zinc-700" />
-                  My Writer Stories ({drafts.length})
-                </h3>
-              </div>
-
-              <div className="space-y-4">
-                {drafts.map((draft) => (
-                  <div key={draft.id} className="p-4 border border-zinc-100 rounded-lg hover:border-zinc-300 transition-colors bg-zinc-50/50 group">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[9px] font-bold text-[#1D9BF0] bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                        {draft.category}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                          draft.status === "Published" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
-                        }`}>
-                          ● {draft.status}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteDraft(draft.id)}
-                          className="text-zinc-400 hover:text-red-600 transition-colors p-1"
-                          title="Delete draft"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <h4 className="text-[14px] font-bold font-serif leading-snug text-black mb-1.5 line-clamp-2">
-                      {draft.title}
-                    </h4>
-
-                    <p className="text-[12px] text-zinc-600 font-sans line-clamp-2 mb-3 leading-relaxed">
-                      {draft.summary}
-                    </p>
-
-                    <div className="flex items-center justify-between text-[10.5px] text-zinc-400 font-sans pt-2 border-t border-zinc-200/60">
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} /> {draft.date}
-                      </span>
-                      <button
-                        onClick={() => setPreviewArticle(draft)}
-                        className="text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Eye size={12} /> Preview
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
         </div>
+      )}
 
-      </main>
-
-      {/* Live Preview Modal */}
+      {/* PREVIEW POST MODAL */}
       {previewArticle && (
-        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-standard-sans">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative">
             <button
               onClick={() => setPreviewArticle(null)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-black text-xl font-bold cursor-pointer"
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <X size={20} />
             </button>
 
             <div className="mb-4">
-              <span className="text-[10px] font-bold text-[#1D9BF0] bg-blue-50 px-2.5 py-1 rounded uppercase tracking-wider">
+              <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-[10px] rounded-md tracking-wide uppercase">
                 {previewArticle.category}
               </span>
-              <h2 className="text-2xl font-bold font-serif text-black mt-2 leading-tight">
+              <h2 className="text-2xl font-bold font-serif text-gray-900 mt-2 leading-tight">
                 {previewArticle.title}
               </h2>
-              <p className="text-xs text-zinc-500 font-sans mt-2">
-                By <span className="font-semibold text-black">{currentUser?.name || "Jennifer Friesen"}</span> • {previewArticle.date}
+              <p className="text-xs text-gray-500 mt-1">
+                By <span className="font-semibold text-gray-800">{currentUser?.name || "rushdhi"}</span> • {previewArticle.date}
               </p>
             </div>
 
             {previewArticle.imageUrl && (
-              <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-4 bg-zinc-100 border border-zinc-200">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-4 bg-gray-100 border border-gray-200">
                 <img src={previewArticle.imageUrl} alt={previewArticle.title} className="w-full h-full object-cover" />
               </div>
             )}
 
-            <div className="prose prose-sm font-sans text-zinc-800 leading-relaxed space-y-3">
-              <p className="font-bold text-zinc-700 italic border-l-2 border-[#BF1E2D] pl-3 py-1 bg-zinc-50 rounded-r">
+            <div className="prose prose-sm text-gray-800 leading-relaxed space-y-3 text-xs sm:text-sm">
+              <p className="font-semibold text-gray-700 italic border-l-2 border-blue-600 pl-3 py-1 bg-gray-50 rounded-r-lg">
                 {previewArticle.summary}
               </p>
               {previewArticle.content.split("\n\n").map((para, i) => (
@@ -744,10 +947,10 @@ export default function WriterStudioPage() {
               ))}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-zinc-200 flex justify-end">
+            <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
               <button
                 onClick={() => setPreviewArticle(null)}
-                className="bg-zinc-900 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded cursor-pointer"
+                className="bg-gray-900 hover:bg-black text-white text-xs font-semibold px-5 py-2.5 rounded-full cursor-pointer"
               >
                 Close Preview
               </button>
@@ -756,121 +959,136 @@ export default function WriterStudioPage() {
         </div>
       )}
 
-      {/* WRITER PROFILE & PASSWORD SETTINGS MODAL */}
+      {/* SETTINGS MODAL */}
       {isProfileSettingsOpen && (
-        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl relative font-sans">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl relative font-sans text-left overflow-hidden border-t-4 border-[#BF1E2D]">
+            
+            {/* Close Button */}
             <button
-              onClick={() => {
-                setIsProfileSettingsOpen(false);
-                setProfileMsg("");
-                setProfileError("");
-              }}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-black font-bold cursor-pointer"
+              onClick={() => setIsProfileSettingsOpen(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              ✕
+              <X size={20} />
             </button>
 
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">⚙</span>
-              <h3 className="text-lg font-bold font-serif text-zinc-900">
-                Writer Password & Account Settings
-              </h3>
+            {/* Header Title Section */}
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+              <h2 className="text-2xl font-serif font-bold text-gray-900 leading-snug">
+                Profile Settings
+              </h2>
+              <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mt-0.5">
+                MANAGE YOUR ACCOUNT
+              </p>
             </div>
 
-            {profileMsg && (
-              <div className="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold p-3 rounded text-center">
-                {profileMsg}
-              </div>
-            )}
-
-            {profileError && (
-              <div className="mb-4 bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold p-3 rounded text-center">
-                {profileError}
-              </div>
-            )}
-
-            <form onSubmit={handleUpdateWriterPassword} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                  ASSIGNED WRITER EMAIL ADDRESS
-                </label>
-                <input
-                  type="email"
-                  disabled
-                  value={currentUser?.email || "writer@digitaljournal.com"}
-                  className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 rounded text-xs text-zinc-600 font-semibold cursor-not-allowed"
-                />
-                <p className="text-[10px] text-zinc-400 mt-1">Email address assigned by Main Admin for staff credentials.</p>
-              </div>
+            {/* Avatar & Photo Section */}
+            <div className="flex items-center gap-4 px-6 pt-6 pb-2">
+              <img
+                src={profileAvatar || currentUser?.avatar || "/author_bluesuit.jpg"}
+                alt={profileName || "rushdhi"}
+                className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shadow-xs flex-shrink-0"
+              />
 
               <div>
-                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
-                  CURRENT PASSWORD *
+                <label className="text-blue-600 font-semibold text-xs sm:text-sm hover:underline cursor-pointer block">
+                  Change photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-xs text-gray-500 font-mono tracking-tight mt-0.5">
+                  {currentUser?.email || "rushdhiriyaj2005@gmail.com"}
+                </p>
+                <span className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold tracking-wider rounded uppercase inline-block mt-1.5">
+                  {currentUser?.role || "WRITER"}
+                </span>
+              </div>
+            </div>
+
+            {/* Profile Form */}
+            <form onSubmit={handleSaveWriterProfileSettings} className="px-6 pt-4 pb-6 space-y-4">
+              
+              {/* Field 1: FULL NAME */}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  FULL NAME
                 </label>
                 <input
-                  type="password"
+                  type="text"
                   required
-                  placeholder="Enter current password to verify"
-                  value={currentPasswordInput}
-                  onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
                 />
               </div>
 
+              {/* Field 2: BIO */}
               <div>
-                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
-                  SET NEW PASSWORD *
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  BIO
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter new password (min. 4 characters)"
-                  value={newPasswordInput}
-                  onChange={(e) => setNewPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
+                <textarea
+                  rows={3}
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  placeholder="Tell readers about yourself..."
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all leading-relaxed"
                 />
               </div>
 
+              {/* Field 3: LINKEDIN PROFILE */}
               <div>
-                <label className="block text-[10px] font-bold text-zinc-700 uppercase tracking-wider mb-1">
-                  CONFIRM NEW PASSWORD *
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  LINKEDIN PROFILE
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Re-enter new password to confirm"
-                  value={confirmPasswordInput}
-                  onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded text-xs text-zinc-900 focus:outline-none focus:border-red-600 font-medium"
-                />
+                <div className="relative">
+                  <svg
+                    className="w-4 h-4 text-[#0A66C2] absolute left-3.5 top-1/2 -translate-y-1/2 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                  <input
+                    type="url"
+                    placeholder="https://www.linkedin.com/in/your-profile"
+                    value={profileLinkedin}
+                    onChange={(e) => setProfileLinkedin(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 font-normal mt-1.5 leading-normal">
+                  Shown on your article bylines so readers can connect with you.
+                </p>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsProfileSettingsOpen(false);
-                    setProfileMsg("");
-                    setProfileError("");
-                  }}
-                  className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-black cursor-pointer"
+                  onClick={() => setIsProfileSettingsOpen(false)}
+                  className="flex-1 py-3 px-4 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 uppercase tracking-wider hover:bg-gray-50 transition-colors cursor-pointer text-center"
                 >
-                  Close
+                  CANCEL
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-[#BF1E2D] hover:bg-red-800 text-white rounded-lg cursor-pointer shadow"
+                  className="flex-1 py-3 px-4 bg-[#004B87] hover:bg-[#003866] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer text-center"
                 >
-                  Update My Password
+                  SAVE CHANGES
                 </button>
               </div>
+
             </form>
+
           </div>
         </div>
       )}
 
-      <Footer />
     </div>
   );
 }

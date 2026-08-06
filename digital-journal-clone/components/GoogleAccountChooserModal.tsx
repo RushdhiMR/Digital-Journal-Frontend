@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { KeyRound, CheckCircle2, ArrowLeft, ShieldCheck } from "lucide-react";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
 
 export interface Account {
   name: string;
@@ -169,19 +170,35 @@ export default function GoogleAccountChooserModal({
   };
 
   const completeSignIn = (acc: Account) => {
+    const savedProfile = getUserProfile(acc.email);
+    const finalAccount: Account = {
+      ...acc,
+      name: savedProfile?.name || acc.name,
+      avatar: savedProfile?.avatar || acc.avatar
+    };
+
+    saveUserProfile({
+      name: finalAccount.name,
+      email: finalAccount.email,
+      avatar: finalAccount.avatar
+    });
+
     // Save to local device google accounts
     try {
       const existingStr = localStorage.getItem("dj_device_google_accounts");
       const existingList: Account[] = existingStr ? JSON.parse(existingStr) : [];
-      if (!existingList.some((a) => a.email.toLowerCase() === acc.email.toLowerCase())) {
-        existingList.unshift(acc);
-        localStorage.setItem("dj_device_google_accounts", JSON.stringify(existingList));
+      const idx = existingList.findIndex((a) => a.email.toLowerCase() === acc.email.toLowerCase());
+      if (idx !== -1) {
+        existingList[idx] = finalAccount;
+      } else {
+        existingList.unshift(finalAccount);
       }
+      localStorage.setItem("dj_device_google_accounts", JSON.stringify(existingList));
     } catch (err) {
       console.warn("Failed to persist device account:", err);
     }
 
-    onSelectAccount(acc);
+    onSelectAccount(finalAccount);
   };
 
   const handleAddCustomAccountSubmit = (e: React.FormEvent) => {

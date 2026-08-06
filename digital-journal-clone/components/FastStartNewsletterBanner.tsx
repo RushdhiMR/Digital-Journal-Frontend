@@ -36,7 +36,7 @@ export default function FastStartNewsletterBanner() {
   };
 
   return (
-    <div className="my-10 p-6 md:p-8 bg-[#FFFBEB] border-y-2 border-[#D97706]/70 font-serif rounded-xs shadow-xs">
+    <div className="my-10 p-6 md:p-8 bg-white border-y-2 border-[#D97706]/70 font-serif rounded-xs shadow-xs">
       <h3 className="text-[20px] md:text-[23px] font-bold text-[#B45309] mb-1.5 font-serif leading-snug tracking-tight">
         Digital Journal Fast Start — <span className="font-normal italic text-[#92400E]">Let the best of news come to you</span>
       </h3>

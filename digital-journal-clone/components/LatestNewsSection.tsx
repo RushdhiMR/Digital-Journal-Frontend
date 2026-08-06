@@ -1,13 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Share2, Bookmark } from "lucide-react";
 
 export default function LatestNewsSection() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [publishedNews, setPublishedNews] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const savedStr = localStorage.getItem("dj_writer_submitted_articles");
+      if (savedStr) {
+        const posts: any[] = JSON.parse(savedStr);
+        const approved = posts.filter((p) => p.status === "Published");
+        const formatted = approved.map((post, idx) => ({
+          id: post.id || `pub-latest-${idx}`,
+          category: (post.category || "WORLD").toUpperCase(),
+          title: post.title,
+          time: post.date || "Just published",
+          image: post.imageUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=300&h=200&fit=crop",
+          href: `/${(post.category || "news").toLowerCase()}/${(post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          summary: post.summary || post.content?.replace(/<[^>]+>/g, "").slice(0, 140) + "..."
+        }));
+        setPublishedNews(formatted);
+      }
+    } catch (e) {
+      console.warn("Could not read published articles for LatestNews:", e);
+    }
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +68,19 @@ export default function LatestNewsSection() {
     }
   ];
 
+  const mainFeatured = publishedNews.length > 0 ? publishedNews[0] : {
+    category: "ENERGY",
+    title: "Clean energy investments hit record high as global transition accelerates",
+    summary: "Governments and private investors are pouring billions into renewable energy, driving a cleaner and more sustainable future.",
+    image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=700&h=525&fit=crop",
+    href: "/news/world/clean-energy-investments-record-high",
+    time: "2 hours ago"
+  };
+
+  const displayStacked = publishedNews.length > 1 
+    ? [...publishedNews.slice(1), ...stackedArticles].slice(0, 3) 
+    : (publishedNews.length === 1 ? stackedArticles : stackedArticles);
+
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 border-b border-gray-200 font-sans">
       
@@ -63,12 +99,12 @@ export default function LatestNewsSection() {
           
           {/* Featured Image (Left side) */}
           <Link
-            href="/news/world/clean-energy-investments-record-high"
+            href={mainFeatured.href}
             className="w-full md:w-1/2 aspect-[4/3] overflow-hidden rounded-none bg-gray-100 flex-shrink-0 group block"
           >
             <img
-              src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=700&h=525&fit=crop"
-              alt="Wind turbines at sunset"
+              src={mainFeatured.image}
+              alt={mainFeatured.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           </Link>
@@ -77,28 +113,28 @@ export default function LatestNewsSection() {
           <div className="w-full md:w-1/2 flex flex-col justify-between h-full py-1">
             <div>
               <span className="text-[#D31220] text-[11px] font-extrabold uppercase tracking-wider block mb-2">
-                ENERGY
+                {mainFeatured.category}
               </span>
 
               <h3 className="text-xl font-bold leading-snug text-gray-900 hover:text-[#D31220] transition-colors mb-3">
-                <Link href="/news/world/clean-energy-investments-record-high">
-                  Clean energy investments hit record high as global transition accelerates
+                <Link href={mainFeatured.href}>
+                  {mainFeatured.title}
                 </Link>
               </h3>
 
               <p className="text-[13px] text-gray-500 leading-relaxed mb-4 line-clamp-3">
-                Governments and private investors are pouring billions into renewable energy, driving a cleaner and more sustainable future.
+                {mainFeatured.summary}
               </p>
             </div>
 
             {/* Metadata Footer: Timestamp & Action Icons */}
             <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium pt-3 border-t border-gray-100 mt-auto">
-              <span>2 hours ago • 6 MIN READ</span>
+              <span>{mainFeatured.time} • 4 MIN READ</span>
               <div className="flex items-center gap-3 text-gray-400">
                 <button 
                   onClick={() => {
                     if (navigator.share) {
-                      navigator.share({ title: "Clean Energy Investments", url: window.location.href });
+                      navigator.share({ title: mainFeatured.title, url: window.location.href });
                     }
                   }}
                   className="hover:text-gray-700 cursor-pointer p-1 transition-colors"
@@ -107,7 +143,21 @@ export default function LatestNewsSection() {
                   <Share2 size={15} strokeWidth={2} />
                 </button>
                 <button 
-                  onClick={() => setBookmarked(!bookmarked)} 
+                  onClick={() => {
+                    try {
+                      const userStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_admin_user");
+                      if (userStr) {
+                        const user = JSON.parse(userStr);
+                        const role = (user.role || "").toLowerCase();
+                        const email = (user.email || "").toLowerCase();
+                        if (role === "writer" || role === "admin" || role === "co-admin" || email.includes("writer") || email.includes("admin") || email.includes("coadmin")) {
+                          alert("🚫 Bookmarking is available for Reader accounts only. Writer & Admin accounts cannot save articles.");
+                          return;
+                        }
+                      }
+                    } catch (e) {}
+                    setBookmarked(!bookmarked);
+                  }} 
                   className={`cursor-pointer p-1 transition-colors ${bookmarked ? "text-[#D31220]" : "hover:text-gray-700"}`}
                   aria-label="Bookmark article"
                 >
@@ -121,8 +171,8 @@ export default function LatestNewsSection() {
 
         {/* COLUMN 2: STACKED ARTICLE LIST (~33%) */}
         <div className="lg:col-span-3 lg:border-l border-gray-100 lg:pl-8 flex flex-col justify-between space-y-4">
-          {stackedArticles.map((item, idx) => (
-            <div key={item.id} className={`flex items-start gap-4 ${idx < stackedArticles.length - 1 ? "pb-4 border-b border-gray-100" : ""}`}>
+          {displayStacked.map((item, idx) => (
+            <div key={item.id} className={`flex items-start gap-4 ${idx < displayStacked.length - 1 ? "pb-4 border-b border-gray-100" : ""}`}>
               <Link href={item.href} className="w-[85px] h-[65px] rounded-none overflow-hidden bg-gray-100 flex-shrink-0 group block">
                 <img
                   src={item.image}

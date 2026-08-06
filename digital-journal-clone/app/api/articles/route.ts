@@ -87,3 +87,57 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { generateAutoSEO } = await import('@/lib/seo');
+
+    const autoSEO = generateAutoSEO({
+      title: body.title || '',
+      subheading: body.subheading || body.description || '',
+      content: body.content || '',
+      category: body.category || 'news',
+      subcategory: body.subcategory || 'world',
+      authorName: body.authorName || 'Digital Journal Writer',
+      imageUrl: body.imageUrl || body.image,
+      metaTitle: body.metaTitle,
+      metaDescription: body.metaDescription,
+      keywords: body.keywords,
+      focusKeyword: body.focusKeyword,
+      canonicalUrl: body.canonicalUrl,
+      ogImage: body.ogImage
+    });
+
+    const articleRecord: any = {
+      ...body,
+      seo: autoSEO
+    };
+
+    try {
+      const slug = body.title ? body.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') : `article-${Date.now()}`;
+      const [insertResult]: any = await db.query(
+        `INSERT INTO articles (title, slug, description, image_url, published_at) VALUES (?, ?, ?, ?, NOW())`,
+        [body.title || 'Untitled', slug, autoSEO.metaDescription, body.imageUrl || body.image || '']
+      );
+      if (insertResult && insertResult.insertId) {
+        articleRecord.id = insertResult.insertId;
+        articleRecord.dbInserted = true;
+      }
+    } catch (dbErr) {
+      console.warn('MySQL DB insert fallback:', dbErr);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Article created successfully with automatic SEO metadata',
+      article: articleRecord
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Failed to save article' },
+      { status: 500 }
+    );
+  }
+}
+

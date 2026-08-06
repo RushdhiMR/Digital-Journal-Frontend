@@ -1,11 +1,64 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Check, Play } from "lucide-react";
+
+import { getUserProfile } from "@/lib/userProfiles";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [userPublishedArticles, setUserPublishedArticles] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const savedStr = localStorage.getItem("dj_writer_submitted_articles");
+      if (savedStr) {
+        const posts: any[] = JSON.parse(savedStr);
+        const approved = posts.filter((p) => p.status === "Published");
+        const formatted = approved.map((post, idx) => {
+          let authorName = post.authorName || "Staff Journalist";
+          let authorAvatar = post.authorAvatar;
+
+          if (post.authorEmail) {
+            const prof = getUserProfile(post.authorEmail);
+            if (prof) {
+              authorName = prof.name || authorName;
+              authorAvatar = prof.avatar || authorAvatar;
+            }
+          }
+          try {
+            const uStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user");
+            if (uStr) {
+              const u = JSON.parse(uStr);
+              if (u?.name && u.name.toLowerCase().trim() === authorName.toLowerCase().trim()) {
+                if (u.avatar) authorAvatar = u.avatar;
+              }
+            }
+          } catch (e) {}
+
+          const postSlug = (post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          const cat = (post.category || "business").toLowerCase();
+
+          return {
+            id: post.id || `pub-${idx}`,
+            category: (post.category || "WORLD").toUpperCase(),
+            title: post.title,
+            excerpt: post.summary || post.content?.replace(/<[^>]+>/g, "").slice(0, 150) + "...",
+            author: authorName,
+            authorAvatar: authorAvatar || null,
+            date: post.date || "Just now",
+            readTime: post.readDuration || "4 MIN READ",
+            image: post.imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop",
+            href: `/${cat}/companies/${postSlug}`
+          };
+        });
+        setUserPublishedArticles(formatted);
+      }
+    } catch (e) {
+      console.warn("Error reading published articles for Hero:", e);
+    }
+  }, []);
 
   const carouselArticles = [
     {
@@ -109,15 +162,17 @@ export default function HeroSection() {
     }
   ];
 
+  const allCarouselArticles = userPublishedArticles.length > 0 ? [...userPublishedArticles, ...carouselArticles] : carouselArticles;
+
   const handlePrevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? carouselArticles.length - 1 : prev - 1));
+    setCurrentSlide((prev) => (prev === 0 ? allCarouselArticles.length - 1 : prev - 1));
   };
 
   const handleNextSlide = () => {
-    setCurrentSlide((prev) => (prev === carouselArticles.length - 1 ? 0 : prev + 1));
+    setCurrentSlide((prev) => (prev === allCarouselArticles.length - 1 ? 0 : prev + 1));
   };
 
-  const activeArticle = carouselArticles[currentSlide];
+  const activeArticle = allCarouselArticles[currentSlide] || carouselArticles[0];
 
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 border-b border-gray-200 font-sans">
@@ -167,12 +222,16 @@ export default function HeroSection() {
 
               {/* Author Row */}
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                  <img
-                    src={activeArticle.authorAvatar}
-                    alt={activeArticle.author}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1E293B] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                  {activeArticle.authorAvatar && activeArticle.authorAvatar.length > 5 ? (
+                    <img
+                      src={activeArticle.authorAvatar}
+                      alt={activeArticle.author}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{(activeArticle.author || "RM").slice(0, 2).toUpperCase()}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 text-[11px] font-sans">
                   <span className="font-bold text-gray-900">

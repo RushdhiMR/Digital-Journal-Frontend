@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Search, ChevronDown, User, Mail, Menu, X, Sun, CloudSun } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, ChevronDown, User, Mail, Menu, X, PenTool, LogOut, Settings, BookOpen, ShieldCheck } from "lucide-react";
+import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
 
 const megaMenuData: Record<string, {
   diveDeeper: string[];
@@ -64,25 +65,110 @@ export default function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; avatar?: string; bio?: string; linkedin?: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [selectedEdition, setSelectedEdition] = useState("US Edition");
   const [isEditionOpen, setIsEditionOpen] = useState(false);
 
+  // Profile Form state
+  const [profileName, setProfileName] = useState("");
+  const [profileBio, setProfileBio] = useState("");
+  const [profileLinkedin, setProfileLinkedin] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
+
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync profile state when currentUser or modal opens
+  useEffect(() => {
+    if (currentUser) {
+      setProfileName(currentUser.name || "rushdhi");
+      setProfileBio(currentUser.bio || "Writer User");
+      setProfileLinkedin(currentUser.linkedin || "https://www.linkedin.com/in/your-profile");
+      setProfileAvatar(currentUser.avatar || "/author_bluesuit.jpg");
+    }
+  }, [currentUser, isProfileSettingsOpen]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setProfileAvatar(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfileSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedUser = {
+      ...currentUser,
+      name: profileName.trim() || "rushdhi",
+      email: currentUser?.email || "rushdhiriyaj2005@gmail.com",
+      role: currentUser?.role || "Writer",
+      bio: profileBio.trim(),
+      linkedin: profileLinkedin.trim(),
+      avatar: profileAvatar || "/author_bluesuit.jpg"
+    };
+
+    setCurrentUser(updatedUser);
+    saveUserProfile(updatedUser);
+
+    setToastMessage("🎉 Profile settings saved successfully!");
+    setIsProfileSettingsOpen(false);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     try {
+      const isSignedOut = localStorage.getItem("dj_signed_out");
       const savedUser = localStorage.getItem("dj_user");
+      const savedWriter = localStorage.getItem("dj_writer_user");
+
+      let activeUser = null;
       if (savedUser) {
-        const parsed = JSON.parse(savedUser);
+        activeUser = JSON.parse(savedUser);
+      } else if (savedWriter) {
+        activeUser = JSON.parse(savedWriter);
+      }
+
+      if (isSignedOut === "true") {
+        setCurrentUser(null);
+      } else {
+        const targetEmail = activeUser?.email || "rushdhiriyaj2005@gmail.com";
+        const savedProfile = getUserProfile(targetEmail);
+
+        const finalUser = {
+          name: savedProfile?.name || activeUser?.name || "rushdhi",
+          email: targetEmail,
+          role: savedProfile?.role || activeUser?.role || "Writer",
+          avatar: savedProfile?.avatar || activeUser?.avatar || "/author_bluesuit.jpg",
+          bio: savedProfile?.bio || activeUser?.bio,
+          linkedin: savedProfile?.linkedin || activeUser?.linkedin
+        };
 
         // Check if Writer account is deactivated
-        if (parsed.role === "Writer" || parsed.email?.toLowerCase().includes("writer")) {
+        if (finalUser.role === "Writer" || finalUser.email?.toLowerCase().includes("writer")) {
           const writerListStr = localStorage.getItem("dj_writers_list");
           if (writerListStr) {
             const writerList: any[] = JSON.parse(writerListStr);
             const matched = writerList.find(
-              (w) => (w.email && w.email.toLowerCase() === parsed.email?.toLowerCase()) || parsed.email?.toLowerCase().includes("writer")
+              (w) => (w.email && w.email.toLowerCase() === finalUser.email?.toLowerCase()) || finalUser.email?.toLowerCase().includes("writer")
             );
             if (matched && matched.status === "Deactivated") {
               localStorage.removeItem("dj_user");
@@ -94,12 +180,12 @@ export default function Header() {
         }
 
         // Check if Co-Admin account is deactivated
-        if (parsed.role === "Co-Admin" || parsed.email?.toLowerCase().includes("coadmin")) {
+        if (finalUser.role === "Co-Admin" || finalUser.email?.toLowerCase().includes("coadmin")) {
           const coListStr = localStorage.getItem("dj_co_admins_list");
           if (coListStr) {
             const coList: any[] = JSON.parse(coListStr);
             const matched = coList.find(
-              (c) => (c.email && c.email.toLowerCase() === parsed.email?.toLowerCase()) || parsed.email?.toLowerCase().includes("coadmin")
+              (c) => (c.email && c.email.toLowerCase() === finalUser.email?.toLowerCase()) || finalUser.email?.toLowerCase().includes("coadmin")
             );
             if (matched && matched.status === "Deactivated") {
               localStorage.removeItem("dj_user");
@@ -110,7 +196,8 @@ export default function Header() {
           }
         }
 
-        setCurrentUser(parsed);
+        setCurrentUser(finalUser);
+        saveUserProfile(finalUser);
       }
 
       const savedToast = localStorage.getItem("dj_toast");
@@ -124,6 +211,7 @@ export default function Header() {
       }
     } catch (e) {
       console.error(e);
+      setCurrentUser(null);
     }
   }, []);
 
@@ -131,6 +219,7 @@ export default function Header() {
     localStorage.removeItem("dj_user");
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_writer_user");
+    localStorage.setItem("dj_signed_out", "true");
     setCurrentUser(null);
     setIsUserDropdownOpen(false);
     localStorage.setItem("dj_toast", "You have successfully signed out.");
@@ -250,52 +339,120 @@ export default function Header() {
         {/* RIGHT ACTION BUTTONS */}
         <div className="flex items-center gap-3 text-[13px] font-medium flex-shrink-0">
           
-          {/* Newsletter Link */}
-          <Link 
-            href="/newsletters" 
-            className="hidden md:flex items-center gap-1.5 text-gray-700 hover:text-[#BF1E2D] transition-colors"
+          {/* Red Newsletter Signup Button (Left of Profile) */}
+          <Link
+            href="/newsletters"
+            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm"
           >
-            <Mail size={16} strokeWidth={2} />
-            <span className="font-semibold text-[13px]">Newsletter</span>
+            Newsletter Signup
           </Link>
-
-          <span className="hidden md:inline text-gray-300">|</span>
 
           {/* User Sign In / Profile Dropdown */}
           {currentUser ? (
-            <div className="relative hidden md:block">
+            <div className="relative hidden md:block" ref={userDropdownRef}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center gap-2 text-gray-800 hover:text-[#BF1E2D] cursor-pointer font-bold text-[13px]"
+                className="relative flex items-center gap-2 cursor-pointer focus:outline-none"
+                aria-label="User Account Menu"
               >
-                <div className="w-7 h-7 rounded-full bg-[#BF1E2D] text-white flex items-center justify-center text-[12px] font-bold uppercase">
-                  {currentUser.name ? currentUser.name.charAt(0) : "U"}
+                <div className="relative w-9 h-9">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200/90 shadow-xs flex-shrink-0">
+                    <img
+                      src={currentUser.avatar || "/author_bluesuit.jpg"}
+                      alt={currentUser.name || "rushdhi"}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                  {/* Green status online dot */}
+                  <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white absolute bottom-0 right-0 shadow-xs z-10"></span>
                 </div>
-                <span className="hidden lg:inline text-gray-900 font-semibold">
-                  {currentUser.name}
-                </span>
-                <span className="text-[10px] text-gray-500">▼</span>
               </button>
 
+              {/* USER ACCOUNT DROPDOWN POPOVER */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 rounded shadow-xl z-50 py-2 text-left">
-                  <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">{currentUser.name}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{currentUser.email}</p>
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200/90 shadow-lg rounded-lg text-left z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+                  
+                  {/* Section 1: User Profile Header */}
+                  <div className="px-3.5 py-2.5 bg-white border-b border-gray-100">
+                    <p className="text-[13px] font-extrabold text-gray-900 leading-snug tracking-tight">
+                      {currentUser.name || "rushdhi"}
+                    </p>
+                    <p className="text-[10.5px] text-gray-500 font-mono tracking-tight font-normal mt-0.5 block truncate">
+                      {currentUser.email || "rushdhiriyaj2005@gmail.com"}
+                    </p>
                   </div>
-                  {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || currentUser.role === "admin") && (
-                    <Link href="/admin" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-xs font-semibold hover:bg-gray-100 text-gray-800">
-                      🛡️ Admin Dashboard
+
+                  {/* Admin Dashboard Option (Admin & Co-Admin) */}
+                  {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("admin")) && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-emerald-50/60 transition-colors cursor-pointer group"
+                    >
+                      <ShieldCheck size={15} className="text-emerald-600 flex-shrink-0" />
+                      <span className="text-emerald-700 font-bold text-[12px] tracking-tight">
+                        Admin Dashboard
+                      </span>
                     </Link>
                   )}
-                  {(currentUser.role === "Writer" || currentUser.role === "Admin") && (
-                    <Link href="/writer" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-xs font-semibold hover:bg-gray-100 text-gray-800">
-                      ✍️ Writer Studio
+
+                  {/* Author Workspace Option (Writer, Admin & Co-Admin) */}
+                  {(currentUser.role === "Writer" || currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("writer")) && (
+                    <Link
+                      href="/writer"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                    >
+                      <PenTool size={15} className="text-[#1B50E8] flex-shrink-0" />
+                      <span className="text-[#1B50E8] font-bold text-[12px] tracking-tight">
+                        Author Workspace
+                      </span>
                     </Link>
                   )}
-                  <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 border-t border-gray-100 mt-1">
-                    Sign Out
+
+                  {/* Reader Dashboard Option */}
+                  {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && (
+                    <Link
+                      href="/reader"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
+                    >
+                      <BookOpen size={15} className="text-[#BF1E2D] flex-shrink-0" />
+                      <span className="text-[#BF1E2D] font-bold text-[12px] tracking-tight">
+                        Reader Dashboard
+                      </span>
+                    </Link>
+                  )}
+
+                  {/* Section 3: Profile Settings */}
+                  <button
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      setIsProfileSettingsOpen(true);
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
+                  >
+                    <User size={15} className="text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                    <span className="text-slate-800 font-bold text-[12px] tracking-tight">
+                      Profile Settings
+                    </span>
                   </button>
+
+                  {/* Section 4: Sign Out Terminal */}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-3.5 py-2.5 flex items-center gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer group"
+                  >
+                    <LogOut size={15} className="text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                    <span className="text-slate-800 font-bold text-[12px] tracking-tight">
+                      Sign Out Terminal
+                    </span>
+                  </button>
+
                 </div>
               )}
             </div>
@@ -309,13 +466,15 @@ export default function Header() {
             </Link>
           )}
 
-          {/* Red Newsletter Signup Button */}
+          {/* Red Subscribe Button (Right Next to Profile) */}
           <Link
-            href="/newsletters"
-            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm"
+            href="/subscribe"
+            className="hidden md:inline-block bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2 rounded-none transition-colors whitespace-nowrap shadow-sm uppercase tracking-wider"
           >
-            Newsletter Signup
+            Subscribe
           </Link>
+
+
 
           {/* Mobile Menu Toggle */}
           <button
@@ -340,7 +499,13 @@ export default function Header() {
               <div
                 key={cat.name}
                 className="relative flex items-center py-0.5"
-                onMouseEnter={() => (cat.name === "World" || cat.hasSub) && setActiveMenu("WORLD")}
+                onMouseEnter={() => {
+                  if (cat.name === "World") {
+                    setActiveMenu("WORLD");
+                  } else {
+                    setActiveMenu(null);
+                  }
+                }}
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {cat.name === "World" ? (
@@ -542,6 +707,135 @@ export default function Header() {
                 {cat.name}
               </Link>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Profile Settings Modal matching user screenshot */}
+      {isProfileSettingsOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 font-sans">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl relative text-left overflow-hidden border-t-[5px] border-[#BF1E2D]">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setIsProfileSettingsOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header Title Section */}
+            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+              <h2 className="text-[22px] font-serif font-bold text-slate-900 leading-snug">
+                Profile Settings
+              </h2>
+              <p className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase mt-0.5 font-sans">
+                MANAGE YOUR ACCOUNT
+              </p>
+            </div>
+
+            {/* Avatar & Photo Section */}
+            <div className="flex items-center gap-4 px-6 pt-6 pb-2">
+              <img
+                src={profileAvatar || currentUser?.avatar || "/author_bluesuit.jpg"}
+                alt={profileName || "Nesto Super"}
+                className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0"
+              />
+
+              <div>
+                <label className="text-[#005691] font-bold text-xs sm:text-sm hover:underline cursor-pointer block">
+                  Change photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-xs text-slate-500 font-sans tracking-tight mt-0.5">
+                  {currentUser?.email || "nestosuper2024@gmail.com"}
+                </p>
+                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-wider rounded uppercase inline-block mt-1.5 font-sans">
+                  {currentUser?.role || "READER"}
+                </span>
+              </div>
+            </div>
+
+            {/* Profile Form */}
+            <form onSubmit={handleSaveProfileSettings} className="px-6 pt-4 pb-6 space-y-4 font-sans">
+              
+              {/* Field 1: FULL NAME */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  FULL NAME
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all"
+                />
+              </div>
+
+              {/* Field 2: BIO */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  BIO
+                </label>
+                <textarea
+                  rows={3}
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  placeholder="New Washington Global Times subscriber via Google."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all leading-relaxed"
+                />
+              </div>
+
+              {/* Field 3: LINKEDIN PROFILE */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  LINKEDIN PROFILE
+                </label>
+                <div className="relative rounded-xl border-2 border-[#005691] px-3.5 py-2.5 flex items-center gap-2.5 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                  <svg
+                    className="w-5 h-5 text-[#005691] fill-[#005691] flex-shrink-0"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                  <input
+                    type="url"
+                    placeholder="https://www.linkedin.com/in/your-profile"
+                    value={profileLinkedin}
+                    onChange={(e) => setProfileLinkedin(e.target.value)}
+                    className="w-full bg-transparent text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 font-normal mt-1.5 leading-normal">
+                  Shown on your article bylines so readers can connect with you.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileSettingsOpen(false)}
+                  className="flex-1 py-3.5 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider hover:bg-slate-50 transition-colors cursor-pointer text-center"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3.5 px-4 bg-[#005691] hover:bg-[#00416d] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer text-center"
+                >
+                  SAVE CHANGES
+                </button>
+              </div>
+
+            </form>
+
           </div>
         </div>
       )}

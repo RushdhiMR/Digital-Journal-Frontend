@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
 import { UserCheck, Bookmark, Bell, Sparkles } from "lucide-react";
 
 export default function RegisterPage() {
@@ -78,6 +79,7 @@ export default function RegisterPage() {
         });
       }
 
+      localStorage.removeItem("dj_signed_out");
       localStorage.setItem("dj_user", JSON.stringify({ name: newUserObj.name, email: newUserObj.email, role: "Reader" }));
       localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${newUserObj.name}! Your account has been created.`);
 
@@ -87,6 +89,7 @@ export default function RegisterPage() {
       }, 1000);
     } catch (err) {
       console.warn("Register API error:", err);
+      localStorage.removeItem("dj_signed_out");
       localStorage.setItem("dj_user", JSON.stringify({ name: newUserObj.name, email: newUserObj.email, role: "Reader" }));
       localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${newUserObj.name}! Your account has been created.`);
 
@@ -131,12 +134,20 @@ export default function RegisterPage() {
       console.warn("Could not persist device google account:", e);
     }
 
-    localStorage.setItem("dj_user", JSON.stringify({ name: acc.name, email: acc.email }));
-    localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${acc.name}! You are signed in with Google.`);
+    const savedProfile = getUserProfile(acc.email);
+    const role = savedProfile?.role || "Reader";
+    const userObj = { name: acc.name, email: acc.email, role };
 
-    setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Redirecting...`);
+    saveUserProfile(userObj);
+    localStorage.removeItem("dj_signed_out");
+    localStorage.setItem("dj_user", JSON.stringify(userObj));
+    localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${acc.name}! Your account is active.`);
+
+    const dest = (role === "Admin" || role === "Co-Admin") ? "/admin" : role === "Writer" ? "/writer" : "/reader";
+
+    setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Opening Reader Hub...`);
     setTimeout(() => {
-      router.push("/");
+      router.push(dest);
     }, 1000);
   };
 
