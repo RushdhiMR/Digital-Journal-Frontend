@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, ChevronDown, User, Mail, Menu, X, PenTool, LogOut, Settings, BookOpen, ShieldCheck } from "lucide-react";
 import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
 
@@ -117,6 +117,9 @@ export default function Header() {
 
     setCurrentUser(updatedUser);
     saveUserProfile(updatedUser);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("dj_auth_change"));
+    }
 
     setToastMessage("🎉 Profile settings saved successfully!");
     setIsProfileSettingsOpen(false);
@@ -134,32 +137,34 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
+  const syncCurrentUser = useCallback(() => {
     try {
       const isSignedOut = localStorage.getItem("dj_signed_out");
       const savedUser = localStorage.getItem("dj_user");
+      const savedAdmin = localStorage.getItem("dj_admin_user");
       const savedWriter = localStorage.getItem("dj_writer_user");
 
       let activeUser = null;
       if (savedUser) {
         activeUser = JSON.parse(savedUser);
+      } else if (savedAdmin) {
+        activeUser = JSON.parse(savedAdmin);
       } else if (savedWriter) {
         activeUser = JSON.parse(savedWriter);
       }
 
-      if (isSignedOut === "true") {
-        setCurrentUser(null);
-      } else {
-        const targetEmail = activeUser?.email || "rushdhiriyaj2005@gmail.com";
+      if (activeUser) {
+        localStorage.removeItem("dj_signed_out");
+        const targetEmail = activeUser.email || "rushdhiriyaj2005@gmail.com";
         const savedProfile = getUserProfile(targetEmail);
 
         const finalUser = {
-          name: savedProfile?.name || activeUser?.name || "rushdhi",
+          name: savedProfile?.name || activeUser.name || "rushdhi",
           email: targetEmail,
-          role: savedProfile?.role || activeUser?.role || "Writer",
-          avatar: savedProfile?.avatar || activeUser?.avatar || "/author_bluesuit.jpg",
-          bio: savedProfile?.bio || activeUser?.bio,
-          linkedin: savedProfile?.linkedin || activeUser?.linkedin
+          role: savedProfile?.role || activeUser.role || "Writer",
+          avatar: savedProfile?.avatar || activeUser.avatar || "/author_bluesuit.jpg",
+          bio: savedProfile?.bio || activeUser.bio,
+          linkedin: savedProfile?.linkedin || activeUser.linkedin
         };
 
         // Check if Writer account is deactivated
@@ -198,22 +203,50 @@ export default function Header() {
 
         setCurrentUser(finalUser);
         saveUserProfile(finalUser);
+      } else if (isSignedOut === "true") {
+        setCurrentUser(null);
+      } else {
+        const defaultUser = {
+          name: "rushdhi",
+          email: "rushdhiriyaj2005@gmail.com",
+          role: "Writer",
+          avatar: "/author_bluesuit.jpg"
+        };
+        const savedProfile = getUserProfile(defaultUser.email);
+        const finalUser = {
+          ...defaultUser,
+          ...savedProfile
+        };
+        setCurrentUser(finalUser);
+        saveUserProfile(finalUser);
       }
 
       const savedToast = localStorage.getItem("dj_toast");
       if (savedToast) {
         setToastMessage(savedToast);
         localStorage.removeItem("dj_toast");
-        const timer = setTimeout(() => {
+        setTimeout(() => {
           setToastMessage(null);
         }, 5000);
-        return () => clearTimeout(timer);
       }
     } catch (e) {
       console.error(e);
       setCurrentUser(null);
     }
   }, []);
+
+  useEffect(() => {
+    syncCurrentUser();
+
+    const handleAuthChange = () => syncCurrentUser();
+    window.addEventListener("storage", handleAuthChange);
+    window.addEventListener("dj_auth_change", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("dj_auth_change", handleAuthChange);
+    };
+  }, [syncCurrentUser]);
 
   const handleSignOut = () => {
     localStorage.removeItem("dj_user");
@@ -222,8 +255,11 @@ export default function Header() {
     localStorage.setItem("dj_signed_out", "true");
     setCurrentUser(null);
     setIsUserDropdownOpen(false);
-    localStorage.setItem("dj_toast", "You have successfully signed out.");
-    window.location.href = "/";
+    setToastMessage("👋 You have successfully signed out.");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("dj_auth_change"));
+    }
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {

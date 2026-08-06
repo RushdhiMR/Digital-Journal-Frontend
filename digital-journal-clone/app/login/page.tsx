@@ -256,6 +256,9 @@ export default function LoginPage() {
     if (finalAccount.role === "Writer") {
       localStorage.setItem("dj_writer_user", JSON.stringify(finalAccount));
     }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("dj_auth_change"));
+    }
     localStorage.setItem("dj_toast", `Welcome back, ${finalAccount.name}! Signed in as ${finalAccount.role}.`);
 
     setSuccessMessage(`✓ Security Verified! Signed in as ${finalAccount.role}. Opening ${targetDestination}...`);
