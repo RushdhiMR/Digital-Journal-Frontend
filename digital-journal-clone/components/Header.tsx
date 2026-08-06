@@ -280,12 +280,12 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full overflow-hidden">
         
         {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group flex-shrink min-w-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink min-w-0">
           {/* Red Layered Digital Journal Logo Icon */}
-          <div className="relative w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0">
             <Image
               src="/logo.png"
               alt="Digital Journal Logo"
@@ -500,7 +500,7 @@ export default function Header() {
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
       <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full relative z-40">
-        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between w-max md:w-full min-w-0">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between w-max md:w-full min-w-0">
           
           {/* Main Horizontal Category Nav Items */}
           <nav className="flex items-center space-x-4 sm:space-x-6 py-2 sm:py-2.5 text-[12.5px] sm:text-[13.5px] font-bold relative z-40">
