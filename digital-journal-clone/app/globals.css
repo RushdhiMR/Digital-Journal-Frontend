@@ -12,7 +12,10 @@
     tab-size: 4;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
-  body {
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
     margin: 0;
     line-height: inherit;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -22,7 +25,6 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: #ffffff;
     color: #111827;
-    overflow-x: hidden;
   }
 }
 

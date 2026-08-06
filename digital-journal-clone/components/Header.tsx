@@ -280,26 +280,26 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 flex items-center justify-between gap-4">
+      <div className="max-w-[1400px] mx-auto px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full overflow-hidden">
         
         {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+        <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group flex-shrink min-w-0">
           {/* Red Layered Digital Journal Logo Icon */}
-          <div className="relative w-9 h-9 flex items-center justify-center flex-shrink-0">
+          <div className="relative w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0">
             <Image
               src="/logo.png"
               alt="Digital Journal Logo"
               width={36}
               height={36}
-              className="w-9 h-9 object-contain"
+              className="w-7 h-7 sm:w-9 sm:h-9 object-contain"
               priority
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif">
+          <div className="flex flex-col min-w-0">
+            <span className="text-base sm:text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif truncate">
               DIGITAL JOURNAL
             </span>
-            <span className="text-[10px] text-gray-500 font-medium tracking-wide mt-0.5">
+            <span className="hidden sm:inline-block text-[10px] text-gray-500 font-medium tracking-wide mt-0.5">
               Smart News. Real Impact.
             </span>
           </div>
@@ -499,11 +499,11 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto md:overflow-visible scrollbar-none max-w-full relative z-40">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between min-w-max md:min-w-0">
+      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full relative z-40">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between w-max md:w-full min-w-0">
           
           {/* Main Horizontal Category Nav Items */}
-          <nav className="flex items-center space-x-6 py-2.5 text-[13.5px] font-bold relative z-40">
+          <nav className="flex items-center space-x-4 sm:space-x-6 py-2 sm:py-2.5 text-[12.5px] sm:text-[13.5px] font-bold relative z-40">
             {navCategories.map((cat) => (
               <div
                 key={cat.name}
