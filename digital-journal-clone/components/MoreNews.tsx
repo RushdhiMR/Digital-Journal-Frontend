@@ -179,7 +179,7 @@ export default function MoreNews() {
   ];
 
   return (
-    <section ref={sectionRef} className="max-w-[1400px] mx-auto px-4 md:px-8 py-10 font-standard-sans">
+    <section ref={sectionRef} className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 font-standard-sans">
       <div className="mb-2">
         <h2 className="text-[28px] md:text-[34px] font-bold text-[#BF1E2D] tracking-tight leading-none">
           News from around the world

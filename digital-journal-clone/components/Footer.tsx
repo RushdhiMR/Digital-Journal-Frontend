@@ -7,7 +7,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 export default function Footer() {
   return (
     <footer className="bg-black text-white py-16 mt-16 border-t border-zinc-900">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         
         {/* LOGO SECTION */}
         <div className="mb-12">

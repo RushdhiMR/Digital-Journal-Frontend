@@ -605,8 +605,8 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 3: TRENDING TOPICS & WEATHER UTILITY BAR ================= */}
-      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 px-4 md:px-6 text-xs font-medium text-gray-700">
-        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 text-xs font-medium text-gray-700">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex flex-wrap items-center justify-between gap-3">
           
           {/* LEFT: TRENDING LABEL & TOPICS */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">

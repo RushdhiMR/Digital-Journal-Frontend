@@ -35,7 +35,7 @@ export default function IndustryInsightsGrid() {
   ];
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 border-t border-gray-200 font-standard-sans">
+    <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 border-t border-gray-200 font-standard-sans">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-black uppercase">
           Industry <span className="bg-[#E2F0D9] text-black px-2 py-0.5 ml-1">Insights</span>
