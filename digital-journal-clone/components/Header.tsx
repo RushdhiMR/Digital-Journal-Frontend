@@ -518,18 +518,25 @@ export default function Header() {
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {cat.name === "World" ? (
-                  <button
-                    type="button"
-                    onMouseEnter={() => setActiveMenu("WORLD")}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setActiveMenu(activeMenu === "WORLD" ? null : "WORLD");
-                    }}
-                    className="flex items-center gap-1 whitespace-nowrap transition-colors text-gray-900 border-b-2 border-[#BF1E2D] pb-1 font-bold cursor-pointer bg-transparent border-t-0 border-x-0 outline-none"
-                  >
-                    <span>World</span>
-                    <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5" />
-                  </button>
+                  <div className="flex items-center gap-1 border-b-2 border-[#BF1E2D] pb-1">
+                    <Link
+                      href="/news/world"
+                      className="transition-colors text-gray-900 font-bold hover:text-[#BF1E2D]"
+                    >
+                      <span>World</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveMenu(activeMenu === "WORLD" ? null : "WORLD");
+                      }}
+                      className="cursor-pointer bg-transparent border-none outline-none p-0.5"
+                      aria-label="Toggle World Menu"
+                    >
+                      <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5 hover:text-[#BF1E2D]" />
+                    </button>
+                  </div>
                 ) : (
                   <Link
                     href={cat.href}
@@ -555,9 +562,11 @@ export default function Header() {
 
                       <div className="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto scrollbar-thin">
                         {topCountriesList.map((country, i) => (
-                          <div
+                          <Link
                             key={i}
-                            className="flex items-center justify-between py-2 px-3 rounded-md text-gray-800 cursor-default pointer-events-none select-none opacity-90"
+                            href={country.href}
+                            onClick={() => setActiveMenu(null)}
+                            className="flex items-center justify-between py-2 px-3 rounded-md text-gray-800 hover:bg-red-50 hover:text-[#BF1E2D] cursor-pointer transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-base leading-none">{country.flag}</span>
@@ -566,7 +575,7 @@ export default function Header() {
                             <span className="text-[10px] text-gray-400 font-medium">
                               {country.region}
                             </span>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </div>
