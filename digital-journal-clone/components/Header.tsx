@@ -500,7 +500,7 @@ export default function Header() {
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
       <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full relative z-40">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between w-max md:w-full min-w-0">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between w-full min-w-0">
           
           {/* Main Horizontal Category Nav Items */}
           <nav className="flex items-center space-x-4 sm:space-x-6 py-2 sm:py-2.5 text-[12.5px] sm:text-[13.5px] font-bold relative z-40">
@@ -605,11 +605,11 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 3: TRENDING TOPICS & WEATHER UTILITY BAR ================= */}
-      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 px-4 text-xs font-medium text-gray-700">
+      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 px-4 md:px-6 text-xs font-medium text-gray-700">
         <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3">
           
-          {/* LEFT: TRENDING LABEL & TOPICS (MOBILE RESPONSIVE, SHIFTED ~1 INCH RIGHT ON DESKTOP) */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 pl-2 md:pl-24">
+          {/* LEFT: TRENDING LABEL & TOPICS */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
             <span className="text-[#BF1E2D] font-extrabold uppercase text-[11px] tracking-wider flex-shrink-0">
               TRENDING
             </span>
