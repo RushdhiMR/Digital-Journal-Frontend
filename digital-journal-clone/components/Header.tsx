@@ -283,7 +283,7 @@ export default function Header() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full overflow-hidden">
         
         {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink min-w-0 ml-14 sm:ml-28">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink min-w-0 ml-20 sm:ml-36">
           {/* Red Layered Digital Journal Logo Icon */}
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0">
             <Image
