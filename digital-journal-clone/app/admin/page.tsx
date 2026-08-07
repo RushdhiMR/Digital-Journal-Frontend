@@ -588,32 +588,40 @@ export default function AdminDashboardPage() {
 
   // Editorial Review Actions
   const handleApproveWriterSubmission = (sub: SubmittedDraft) => {
+    const authorName = (sub as any).authorName || "Jennifer Friesen";
     const newArt: Article = {
       id: Date.now(),
       title: sub.title,
-      slug: sub.title.toLowerCase().replace(/\s+/g, '-'),
+      slug: sub.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
       description: sub.summary,
       category_name: sub.category,
-      author_name: "Jennifer Friesen",
+      author_name: authorName,
       is_featured: false,
       is_editors_pick: true,
       published_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
     };
 
     setArticles([newArt, ...articles]);
-    setWriterSubmissions(writerSubmissions.filter(s => s.id !== sub.id));
+    
+    // Update status to Published in localStorage and state
+    const localSubsStr = localStorage.getItem("dj_writer_submitted_articles");
+    let localSubs: any[] = localSubsStr ? JSON.parse(localSubsStr) : writerSubmissions;
+    const updatedSubs = localSubs.map((s) => (s.id === sub.id ? { ...s, status: "Published" } : s));
+    
+    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedSubs));
+    setWriterSubmissions(updatedSubs);
     setStats(prev => ({ ...prev, totalArticles: prev.totalArticles + 1 }));
 
-    // Update local drafts
-    const updatedSubs = writerSubmissions.map(s => s.id === sub.id ? { ...s, status: "Published" as const } : s);
-    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedSubs));
-
-    showNotification(`Approved & Published story: "${sub.title}"!`);
+    showNotification(`✓ Approved & Published story: "${sub.title}" live!`);
   };
 
   const handleRejectWriterSubmission = (id: string) => {
-    setWriterSubmissions(writerSubmissions.filter(s => s.id !== id));
-    showNotification("Writer draft submission rejected.");
+    const localSubsStr = localStorage.getItem("dj_writer_submitted_articles");
+    let localSubs: any[] = localSubsStr ? JSON.parse(localSubsStr) : writerSubmissions;
+    const updatedSubs = localSubs.filter((s) => s.id !== id);
+    localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedSubs));
+    setWriterSubmissions(updatedSubs);
+    showNotification("Writer submission rejected.");
   };
 
   // Writer Actions
@@ -1510,11 +1518,11 @@ export default function AdminDashboardPage() {
                     <p className="text-xs text-zinc-500">Review draft stories submitted by journalists from Writer Studio.</p>
                   </div>
                   <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
-                    {writerSubmissions.length} Pending Submissions
+                    {writerSubmissions.filter((s) => s.status !== "Published").length} Pending Submissions
                   </span>
                 </div>
 
-                {writerSubmissions.length === 0 ? (
+                {writerSubmissions.filter((s) => s.status !== "Published").length === 0 ? (
                   <div className="p-12 text-center text-zinc-400 bg-zinc-50 rounded-lg border border-dashed border-zinc-300">
                     <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
                     <p className="font-bold text-zinc-700">Queue Cleared!</p>
@@ -1522,48 +1530,50 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {writerSubmissions.map((sub) => (
-                      <div key={sub.id} className="p-5 border border-zinc-200 rounded-xl bg-zinc-50/60 hover:border-zinc-300 transition-all">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                          <div>
-                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded uppercase tracking-wider">
-                              {sub.category}
-                            </span>
-                            <h3 className="text-base font-bold font-serif text-zinc-900 mt-1">
-                              {sub.title}
-                            </h3>
-                            <p className="text-xs text-zinc-500 mt-0.5">Submitted by Jennifer Friesen on {sub.date}</p>
+                    {writerSubmissions
+                      .filter((s) => s.status !== "Published")
+                      .map((sub) => (
+                        <div key={sub.id} className="p-5 border border-zinc-200 rounded-xl bg-zinc-50/60 hover:border-zinc-300 transition-all">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                            <div>
+                              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded uppercase tracking-wider">
+                                {sub.category}
+                              </span>
+                              <h3 className="text-base font-bold font-serif text-zinc-900 mt-1">
+                                {sub.title}
+                              </h3>
+                              <p className="text-xs text-zinc-500 mt-0.5">Submitted by {(sub as any).authorName || "Staff Reporter"} on {sub.date}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setPreviewModalArticle(sub)}
+                                className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer flex items-center gap-1"
+                              >
+                                <Eye size={14} /> Preview
+                              </button>
+
+                              <button
+                                onClick={() => handleApproveWriterSubmission(sub)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                              >
+                                <Check size={14} /> Approve & Publish Live
+                              </button>
+
+                              <button
+                                onClick={() => handleRejectWriterSubmission(sub.id)}
+                                className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer"
+                              >
+                                Reject
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setPreviewModalArticle(sub)}
-                              className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer flex items-center gap-1"
-                            >
-                              <Eye size={14} /> Preview
-                            </button>
-
-                            <button
-                              onClick={() => handleApproveWriterSubmission(sub)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
-                            >
-                              <Check size={14} /> Approve & Publish Live
-                            </button>
-
-                            <button
-                              onClick={() => handleRejectWriterSubmission(sub.id)}
-                              className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-3 py-2 rounded transition-colors cursor-pointer"
-                            >
-                              Reject
-                            </button>
-                          </div>
+                          <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed bg-white p-3 rounded border border-zinc-200">
+                            {sub.summary}
+                          </p>
                         </div>
-
-                        <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed bg-white p-3 rounded border border-zinc-200">
-                          {sub.summary}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </div>

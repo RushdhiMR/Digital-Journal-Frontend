@@ -547,7 +547,7 @@ export default function CreatePostPage() {
       return;
     }
     setSubmittingAction("publish");
-    savePost("Published");
+    savePost("Pending review");
   };
 
   const savePost = (status: "Published" | "Draft" | "Pending review") => {
@@ -625,6 +625,12 @@ export default function CreatePostPage() {
       }
 
       localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
+      localStorage.setItem(
+        "dj_toast",
+        status === "Pending review"
+          ? `✓ Story "${title.trim()}" submitted for review! Admin approval is pending before publication.`
+          : "✓ Draft saved successfully."
+      );
     } catch (err) {
       console.warn("Error saving post to localStorage:", err);
     }
