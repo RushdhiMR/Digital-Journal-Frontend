@@ -316,26 +316,26 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full relative z-40">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 relative z-40">
         
         {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink min-w-0 ml-20 sm:ml-36">
+        <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
           {/* Red Layered Digital Journal Logo Icon */}
-          <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
             <Image
               src="/logo.png"
               alt="Digital Journal Logo"
-              width={36}
-              height={36}
-              className="w-7 h-7 sm:w-9 sm:h-9 object-contain"
+              width={40}
+              height={40}
+              className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
               priority
             />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-base sm:text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif truncate">
+            <span className="text-xl sm:text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif">
               DIGITAL JOURNAL
             </span>
-            <span className="hidden sm:inline-block text-[10px] text-gray-500 font-medium tracking-wide mt-0.5">
+            <span className="hidden sm:inline-block text-[10.5px] text-gray-500 font-semibold tracking-wider uppercase mt-1">
               Smart News. Real Impact.
             </span>
           </div>
@@ -344,7 +344,7 @@ export default function Header() {
         {/* SEARCH INPUT BAR */}
         <form 
           onSubmit={handleSearchSubmit} 
-          className="hidden md:flex items-center relative flex-1 max-w-[480px] mx-4"
+          className="hidden md:flex items-center relative flex-1 max-w-[440px] lg:max-w-[520px] mx-4"
         >
           <input
             type="text"
@@ -361,26 +361,27 @@ export default function Header() {
                 window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
               }
             }}
-            className="w-full pl-4 pr-10 py-2 text-[13px] border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] focus:ring-1 focus:ring-[#BF1E2D] bg-white text-gray-800 placeholder-gray-400 transition-all cursor-pointer"
+            className="w-full pl-4 pr-10 py-2 text-[13px] border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] focus:ring-1 focus:ring-[#BF1E2D] bg-gray-50/60 hover:bg-white focus:bg-white text-gray-800 placeholder-gray-400 transition-all cursor-pointer shadow-2xs"
           />
           <button
             type="submit"
-            className="absolute right-3 text-gray-400 hover:text-[#BF1E2D] cursor-pointer"
+            className="absolute right-3.5 text-gray-400 hover:text-[#BF1E2D] cursor-pointer transition-colors"
             aria-label="Submit Search"
           >
-            <Search size={17} strokeWidth={2.2} />
+            <Search size={16} strokeWidth={2.2} />
           </button>
         </form>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-2 sm:gap-3 text-[13px] font-medium flex-shrink-0 mr-8 sm:mr-44">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 text-[13px] font-medium flex-shrink-0">
           
-          {/* Red Newsletter Signup Button (Desktop Large) */}
+          {/* Newsletter Signup Button */}
           <Link
             href="/newsletters"
-            className="hidden lg:inline-block bg-gray-900 hover:bg-black text-white font-bold text-[12px] px-3.5 py-2 rounded-none transition-colors whitespace-nowrap shadow-xs"
+            className="hidden lg:inline-flex items-center gap-1.5 bg-gray-900 hover:bg-black text-white font-bold text-[12px] px-3.5 py-2 rounded-md transition-colors whitespace-nowrap shadow-xs"
           >
-            Newsletter Signup
+            <Mail size={14} />
+            <span>Newsletter Signup</span>
           </Link>
 
           {/* User Sign In / Profile Dropdown (BOTH MOBILE & DESKTOP) */}
@@ -509,17 +510,17 @@ export default function Header() {
           ) : (
             <Link 
               href="/login" 
-              className="flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-bold text-xs sm:text-sm px-2 py-1.5 rounded transition-colors"
+              className="flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-bold text-xs sm:text-sm px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
             >
-              <User size={18} strokeWidth={2.2} className="text-[#BF1E2D]" />
+              <User size={17} strokeWidth={2.2} className="text-[#BF1E2D]" />
               <span className="hidden sm:inline">Sign In</span>
             </Link>
           )}
 
-          {/* Red Subscribe Button (VISIBLE ON BOTH MOBILE & DESKTOP) */}
+          {/* Red Subscribe Button */}
           <Link
             href="/subscribe"
-            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[11px] sm:text-[12px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-none transition-colors whitespace-nowrap shadow-xs uppercase tracking-wider flex items-center justify-center"
+            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[11px] sm:text-[12px] px-3 sm:px-4 py-2 rounded-md transition-colors whitespace-nowrap shadow-xs uppercase tracking-wider flex items-center justify-center"
           >
             Subscribe
           </Link>
@@ -527,7 +528,7 @@ export default function Header() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded hover:bg-gray-100 transition-colors"
+            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-md hover:bg-gray-100 transition-colors"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -538,15 +539,15 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white overflow-x-auto scrollbar-none max-w-full relative z-40">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex items-center justify-between w-full min-w-0">
+      <div className="w-full border-t border-b border-gray-200 bg-white relative z-40">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
           
           {/* Main Horizontal Category Nav Items */}
-          <nav className="flex items-center space-x-4 sm:space-x-6 py-2 sm:py-2.5 text-[12.5px] sm:text-[13.5px] font-bold relative z-40">
+          <nav className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 lg:space-x-4 py-2.5 text-[12.5px] sm:text-[13.5px] font-bold overflow-x-auto scrollbar-none">
             {navCategories.map((cat) => (
               <div
                 key={cat.name}
-                className="relative flex items-center py-0.5"
+                className="relative flex items-center"
                 onMouseEnter={() => {
                   if (cat.name === "World") {
                     setActiveMenu("WORLD");
@@ -557,7 +558,7 @@ export default function Header() {
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {cat.name === "World" ? (
-                  <div className="flex items-center gap-1 border-b-2 border-[#BF1E2D] pb-1">
+                  <div className="flex items-center gap-1 border-b-2 border-[#BF1E2D] pb-0.5 px-1.5">
                     <Link
                       href="/news/world"
                       className="transition-colors text-gray-900 font-bold hover:text-[#BF1E2D]"
@@ -573,13 +574,13 @@ export default function Header() {
                       className="cursor-pointer bg-transparent border-none outline-none p-0.5"
                       aria-label="Toggle World Menu"
                     >
-                      <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 mt-0.5 hover:text-[#BF1E2D]" />
+                      <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 hover:text-[#BF1E2D]" />
                     </button>
                   </div>
                 ) : (
                   <Link
                     href={cat.href}
-                    className="flex items-center gap-1 whitespace-nowrap transition-colors text-gray-800 hover:text-[#BF1E2D]"
+                    className="flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded transition-colors text-gray-800 hover:text-[#BF1E2D] hover:bg-gray-50"
                   >
                     <span>{cat.name}</span>
                   </Link>
@@ -591,7 +592,7 @@ export default function Header() {
                     onMouseEnter={() => setActiveMenu("WORLD")}
                     className="absolute top-full left-0 pt-1 w-80 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
                   >
-                    <div className="bg-white border border-gray-200 shadow-2xl rounded-none p-4 text-left font-sans">
+                    <div className="bg-white border border-gray-200 shadow-2xl rounded-xl p-4 text-left font-sans">
                       <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
                         <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
                           Top Countries & Regions
@@ -605,7 +606,7 @@ export default function Header() {
                             key={i}
                             href={country.href}
                             onClick={() => setActiveMenu(null)}
-                            className="flex items-center justify-between py-2 px-3 rounded-md text-gray-800 hover:bg-red-50 hover:text-[#BF1E2D] cursor-pointer transition-colors"
+                            className="flex items-center justify-between py-2 px-3 rounded-lg text-gray-800 hover:bg-red-50 hover:text-[#BF1E2D] cursor-pointer transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-base leading-none">{country.flag}</span>
@@ -625,22 +626,22 @@ export default function Header() {
           </nav>
 
           {/* Far Right Edition Selector */}
-          <div className="hidden lg:flex items-center pl-4 border-l border-gray-200 relative">
+          <div className="hidden lg:flex items-center pl-4 border-l border-gray-200 relative flex-shrink-0">
             <button
               onClick={() => setIsEditionOpen(!isEditionOpen)}
-              className="flex items-center gap-1 text-[13px] font-bold text-gray-800 hover:text-[#BF1E2D] cursor-pointer py-2.5"
+              className="flex items-center gap-1.5 text-[12.5px] font-bold text-gray-700 hover:text-[#BF1E2D] cursor-pointer py-1 px-2 rounded-md hover:bg-gray-50 transition-colors"
             >
               <span>{selectedEdition}</span>
-              <ChevronDown size={13} strokeWidth={2.5} className="text-gray-500" />
+              <ChevronDown size={12} strokeWidth={2.5} className="text-gray-400" />
             </button>
 
             {isEditionOpen && (
-              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-none shadow-md z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-1.5 overflow-hidden">
                 {["US Edition", "Canada Edition", "Global Edition", "UK Edition"].map((ed) => (
                   <button
                     key={ed}
                     onClick={() => { setSelectedEdition(ed); setIsEditionOpen(false); }}
-                    className="w-full text-left px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 hover:text-[#BF1E2D]"
+                    className="w-full text-left px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-red-50 hover:text-[#BF1E2D] transition-colors"
                   >
                     {ed}
                   </button>
@@ -653,38 +654,37 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 3: TRENDING TOPICS & WEATHER UTILITY BAR ================= */}
-      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-2 text-xs font-medium text-gray-700">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="w-full bg-[#F8F9FA] border-b border-gray-200 py-1.5 text-xs font-medium text-gray-700">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
           
           {/* LEFT: TRENDING LABEL & TOPICS */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
-            <span className="text-[#BF1E2D] font-extrabold uppercase text-[11px] tracking-wider flex-shrink-0">
+          <div className="flex items-center gap-2.5 overflow-x-auto scrollbar-none py-0.5">
+            <span className="bg-[#BF1E2D]/10 text-[#BF1E2D] font-extrabold uppercase text-[10px] sm:text-[11px] px-2 py-0.5 rounded tracking-wider flex-shrink-0">
               TRENDING
             </span>
-            <span className="text-gray-300">|</span>
 
-            <div className="flex items-center gap-2 text-[12px] whitespace-nowrap text-gray-700">
+            <div className="flex items-center gap-2.5 text-[12px] whitespace-nowrap text-gray-700">
               {trendingTopics.map((topic, index) => (
-                <div key={topic.name} className="flex items-center gap-2">
+                <div key={topic.name} className="flex items-center gap-2.5">
                   <Link href={topic.href} className="hover:text-[#BF1E2D] transition-colors font-medium">
                     {topic.name}
                   </Link>
-                  {index < trendingTopics.length - 1 && <span className="text-gray-300">|</span>}
+                  {index < trendingTopics.length - 1 && <span className="text-gray-300">•</span>}
                 </div>
               ))}
             </div>
           </div>
 
           {/* RIGHT: DATE, LOCATION & WEATHER WIDGET */}
-          <div className="hidden sm:flex items-center gap-3 text-[11.5px] text-gray-500 font-medium flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-3 text-[11.5px] text-gray-500 font-medium flex-shrink-0">
             <span>Tuesday, July 13, 2026</span>
-            <span className="text-gray-300">|</span>
+            <span className="text-gray-300">•</span>
             <span>New York, USA</span>
-            <span className="text-gray-300">|</span>
+            <span className="text-gray-300">•</span>
             
             {/* Weather Pill */}
-            <div className="flex items-center gap-1 text-gray-800 font-semibold cursor-pointer hover:text-[#BF1E2D]">
-              <span className="text-amber-500 text-sm">⛅</span>
+            <div className="flex items-center gap-1 text-gray-800 font-semibold cursor-pointer hover:text-[#BF1E2D] bg-white px-2 py-0.5 rounded border border-gray-200 shadow-2xs transition-colors">
+              <span className="text-amber-500 text-xs">⛅</span>
               <span>26°C</span>
               <ChevronDown size={11} strokeWidth={2.5} className="text-gray-400" />
             </div>
