@@ -203,8 +203,11 @@ export default function CreatePostPage() {
       let diffX = moveEvent.clientX - startX;
       if (handlePos.includes("left")) diffX = -diffX;
       const newWidth = Math.max(120, Math.min(1100, startWidth + diffX));
-      selectedImg.style.width = `${newWidth}px`;
-      selectedImg.style.maxWidth = "100%";
+      const parentFigure = (selectedImg.closest("figure") as HTMLElement) || selectedImg;
+      parentFigure.style.maxWidth = `${newWidth}px`;
+      parentFigure.style.width = "100%";
+      selectedImg.style.width = "100%";
+      selectedImg.style.display = "block";
       setSelectedImgWidth(newWidth);
       updateImgBoundingRect();
     };
@@ -224,8 +227,11 @@ export default function CreatePostPage() {
 
   const handleResizeImage = (widthPx: number) => {
     if (selectedImg) {
-      selectedImg.style.width = `${widthPx}px`;
-      selectedImg.style.maxWidth = "100%";
+      const parentFigure = (selectedImg.closest("figure") as HTMLElement) || selectedImg;
+      parentFigure.style.maxWidth = `${widthPx}px`;
+      parentFigure.style.width = "100%";
+      selectedImg.style.width = "100%";
+      selectedImg.style.display = "block";
       setSelectedImgWidth(widthPx);
       setTimeout(updateImgBoundingRect, 50);
       if (editorRef.current) {
@@ -244,18 +250,19 @@ export default function CreatePostPage() {
         parentFigure.style.margin = "0.5rem 1.25rem 0.5rem 0";
         parentFigure.style.display = "inline-block";
         selectedImg.style.display = "block";
+        selectedImg.style.width = "100%";
       } else if (alignment === "right") {
         parentFigure.style.float = "right";
         parentFigure.style.margin = "0.5rem 0 0.5rem 1.25rem";
         parentFigure.style.display = "inline-block";
         selectedImg.style.display = "block";
+        selectedImg.style.width = "100%";
       } else {
         parentFigure.style.float = "none";
-        parentFigure.style.margin = "1rem auto";
+        parentFigure.style.margin = "1.25rem auto";
         parentFigure.style.display = "block";
         selectedImg.style.display = "block";
-        selectedImg.style.marginLeft = "auto";
-        selectedImg.style.marginRight = "auto";
+        selectedImg.style.width = "100%";
       }
       setTimeout(updateImgBoundingRect, 50);
       if (editorRef.current) {
@@ -334,18 +341,18 @@ export default function CreatePostPage() {
       // UPDATE EXISTING SELECTED IMAGE
       selectedImg.src = imageUrl.trim();
       selectedImg.alt = imageCaption.trim() || "Article Image";
+      selectedImg.style.cssText = "width: 100%; display: block; border-radius: 0.75rem; object-fit: cover;";
 
-      let widthStyle = "max-width: 450px; width: 100%;";
-      if (imageSize.includes("Small")) widthStyle = "max-width: 300px; width: 100%;";
-      if (imageSize.includes("Full")) widthStyle = "width: 100%;";
-      selectedImg.style.cssText = `${widthStyle} border-radius: 0.75rem; object-fit: cover;`;
+      let maxWidthVal = "450px";
+      if (imageSize.includes("Small")) maxWidthVal = "300px";
+      if (imageSize.includes("Full")) maxWidthVal = "100%";
 
       const fig = selectedImg.closest("figure");
       if (fig) {
-        let alignStyle = "margin: 1rem auto; display: block;";
-        if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1rem 0.5rem 0;";
-        if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.5rem 1rem;";
-        fig.style.cssText = alignStyle;
+        let alignStyle = "margin: 1.25rem auto; display: block;";
+        if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1.5rem 0.75rem 0; display: inline-block;";
+        if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.75rem 1.5rem; display: inline-block;";
+        fig.style.cssText = `${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;`;
 
         let figcaption = fig.querySelector("figcaption");
         if (imageCaption.trim() || imageCredit.trim()) {
@@ -358,7 +365,7 @@ export default function CreatePostPage() {
             figcaption.innerHTML = captionHtml;
           } else {
             const newCap = document.createElement("figcaption");
-            newCap.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif;";
+            newCap.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif; box-sizing: border-box;";
             newCap.innerHTML = captionHtml;
             fig.appendChild(newCap);
           }
@@ -389,24 +396,24 @@ export default function CreatePostPage() {
     }
 
     // INSERT NEW IMAGE
-    let widthStyle = "max-width: 450px; width: 100%;";
-    if (imageSize.includes("Small")) widthStyle = "max-width: 300px; width: 100%;";
-    if (imageSize.includes("Full")) widthStyle = "width: 100%;";
+    let maxWidthVal = "450px";
+    if (imageSize.includes("Small")) maxWidthVal = "300px";
+    if (imageSize.includes("Full")) maxWidthVal = "100%";
 
-    let alignStyle = "margin: 1rem auto; display: block;";
-    if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1rem 0.5rem 0;";
-    if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.5rem 1rem;";
+    let alignStyle = "margin: 1.25rem auto; display: block;";
+    if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1.5rem 0.75rem 0; display: inline-block;";
+    if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.75rem 1.5rem; display: inline-block;";
 
     const captionHtml = (imageCaption.trim() || imageCredit.trim())
-      ? `<figcaption style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif;">
+      ? `<figcaption style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif; box-sizing: border-box;">
           <span style="font-style: italic; color: #475569;">${imageCaption.trim()}</span>
           ${imageCredit.trim() ? `<span style="font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">(PHOTO: ${imageCredit.trim().toUpperCase()})</span>` : ''}
         </figcaption>`
       : "";
 
-    const imgTag = `<figure style="${alignStyle}"><img src="${imageUrl.trim()}" alt="${
+    const imgTag = `<figure style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;"><img src="${imageUrl.trim()}" alt="${
       imageCaption.trim() || "Article Image"
-    }" style="${widthStyle} border-radius: 0.75rem; object-fit: cover;" />${captionHtml}</figure><p><br/></p>`;
+    }" style="width: 100%; border-radius: 0.75rem; object-fit: cover; display: block;" />${captionHtml}</figure><p><br/></p>`;
 
     if (editorRef.current) {
       editorRef.current.focus();
