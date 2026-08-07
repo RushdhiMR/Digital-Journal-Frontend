@@ -48,42 +48,32 @@ export function generateSlug(title: string): string {
 }
 
 /**
- * Intelligently extract the primary focus keyword directly from the article title
+ * Intelligently extract the primary focus keyword as the first three key words of the title
  */
 export function extractFocusKeyword(title: string, category: string = ''): string {
   if (!title || !title.trim()) {
     return category ? category.toLowerCase() : 'business';
   }
 
-  const stopWords = new Set([
-    'a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-    'have', 'has', 'had', 'do', 'does', 'did', 'to', 'from', 'in', 'out', 'on', 'off', 'over',
-    'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
-    'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
-    'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will',
-    'just', 'don', 'should', 'now', 'this', 'that', 'these', 'those', 'with', 'for', 'about',
-    'digital', 'journal', 'latest', 'global', 'news', 'insights', 'three', 'one', 'two', 'four',
-    'five', 'six', 'seven', 'eight', 'nine', 'ten', 'as', 'after', 'at', 'by', 'of', 'into',
-    'killed', 'injured', 'reported', 'says', 'said', 'according', 'new', 'after', 'how', 'what',
-    'why', 'when', 'where', 'who', 'takes', 'take', 'make', 'makes', 'using', 'used'
+  // Only filter out minor grammatical connectors so title key words are preserved in order
+  const minorConnectors = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'by', 'of', 'for', 
+    'with', 'to', 'from', 'as', 'into', 'is', 'are', 'was', 'were', 'be', 'been', 
+    'being', 'that', 'this', 'these', 'those', 'its', 'their', 'your', 'our'
   ]);
 
-  const cleanTitle = title
-    .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const rawWords = title
+    .trim()
+    .split(/\s+/)
+    .map(w => w.toLowerCase().replace(/[^\w]/g, ''))
+    .filter(w => w.length > 0 && !minorConnectors.has(w));
 
-  const titleWords = cleanTitle
-    .split(' ')
-    .filter(w => w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w));
-
-  if (titleWords.length >= 3) {
-    return titleWords.slice(0, 3).join(' ');
-  } else if (titleWords.length === 2) {
-    return titleWords.join(' ');
-  } else if (titleWords.length === 1) {
-    return titleWords[0];
+  if (rawWords.length >= 3) {
+    return `${rawWords[0]} ${rawWords[1]} ${rawWords[2]}`;
+  } else if (rawWords.length === 2) {
+    return `${rawWords[0]} ${rawWords[1]}`;
+  } else if (rawWords.length === 1) {
+    return rawWords[0];
   }
 
   return category ? category.toLowerCase() : 'business';
