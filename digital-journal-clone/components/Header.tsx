@@ -316,7 +316,7 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 relative z-40">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 relative z-50">
         
         {/* LOGO & SUBTITLE */}
         <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
@@ -386,7 +386,7 @@ export default function Header() {
 
           {/* User Sign In / Profile Dropdown (BOTH MOBILE & DESKTOP) */}
           {currentUser ? (
-            <div className="relative block z-50" ref={userDropdownRef}>
+            <div className="relative block z-[100]" ref={userDropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsUserDropdownOpen((prev) => !prev)}
@@ -413,7 +413,7 @@ export default function Header() {
 
               {/* USER ACCOUNT DROPDOWN POPOVER */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-[100] overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-[1000] overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
                   
                   {/* Section 1: User Profile Header */}
                   <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-150 flex items-center gap-3">
@@ -466,7 +466,7 @@ export default function Header() {
                   )}
 
                   {/* Reader Dashboard Option */}
-                  {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && (
+                  {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && currentUser.role !== "Writer" && !(currentUser.role || "").toLowerCase().includes("writer") && (
                     <Link
                       href="/reader"
                       onClick={() => setIsUserDropdownOpen(false)}
