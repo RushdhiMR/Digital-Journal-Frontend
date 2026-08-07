@@ -337,10 +337,33 @@ export default function CreatePostPage() {
       return;
     }
 
+    let rawCap = imageCaption.trim();
+    let rawCred = imageCredit.trim();
+
+    if (!rawCred && rawCap) {
+      const match = rawCap.match(/\((?:photo:?\s*)?([^)]+)\)$/i);
+      if (match) {
+        rawCred = match[1].trim().toUpperCase();
+        rawCap = rawCap.replace(match[0], "").trim();
+      }
+    }
+
+    const leftSpan = rawCap
+      ? `<span style="font-style: italic; color: #475569; font-size: 0.75rem;">${rawCap}</span>`
+      : `<span></span>`;
+
+    const rightSpan = rawCred
+      ? `<span style="font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; flex-shrink: 0;">${
+          rawCred.startsWith("PHOTO:") ? `(${rawCred})` : `(PHOTO: ${rawCred.toUpperCase()})`
+        }</span>`
+      : "";
+
+    const captionInnerHtml = `${leftSpan}${rightSpan}`;
+
     if (selectedImg) {
       // UPDATE EXISTING SELECTED IMAGE
       selectedImg.src = imageUrl.trim();
-      selectedImg.alt = imageCaption.trim() || "Article Image";
+      selectedImg.alt = rawCap || "Article Image";
       selectedImg.style.cssText = "width: 100%; display: block; border-radius: 0.75rem; object-fit: cover;";
 
       let maxWidthVal = "450px";
@@ -355,18 +378,13 @@ export default function CreatePostPage() {
         fig.style.cssText = `${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;`;
 
         let figcaption = fig.querySelector("figcaption");
-        if (imageCaption.trim() || imageCredit.trim()) {
-          const captionHtml = `<span style="font-style: italic; color: #475569;">${imageCaption.trim()}</span>${
-            imageCredit.trim()
-              ? `<span style="font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">(PHOTO: ${imageCredit.trim().toUpperCase()})</span>`
-              : ""
-          }`;
+        if (rawCap || rawCred) {
           if (figcaption) {
-            figcaption.innerHTML = captionHtml;
+            figcaption.innerHTML = captionInnerHtml;
           } else {
             const newCap = document.createElement("figcaption");
             newCap.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif; box-sizing: border-box;";
-            newCap.innerHTML = captionHtml;
+            newCap.innerHTML = captionInnerHtml;
             fig.appendChild(newCap);
           }
         } else if (figcaption) {
@@ -404,15 +422,14 @@ export default function CreatePostPage() {
     if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1.5rem 0.75rem 0; display: inline-block;";
     if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.75rem 1.5rem; display: inline-block;";
 
-    const captionHtml = (imageCaption.trim() || imageCredit.trim())
+    const captionHtml = (rawCap || rawCred)
       ? `<figcaption style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif; box-sizing: border-box;">
-          <span style="font-style: italic; color: #475569;">${imageCaption.trim()}</span>
-          ${imageCredit.trim() ? `<span style="font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">(PHOTO: ${imageCredit.trim().toUpperCase()})</span>` : ''}
+          ${captionInnerHtml}
         </figcaption>`
       : "";
 
     const imgTag = `<figure style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;"><img src="${imageUrl.trim()}" alt="${
-      imageCaption.trim() || "Article Image"
+      rawCap || "Article Image"
     }" style="width: 100%; border-radius: 0.75rem; object-fit: cover; display: block;" />${captionHtml}</figure><p><br/></p>`;
 
     if (editorRef.current) {
