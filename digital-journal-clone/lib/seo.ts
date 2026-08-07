@@ -48,6 +48,45 @@ export function generateSlug(title: string): string {
 }
 
 /**
+ * Intelligently extract the primary focus keyword directly from the article title
+ */
+export function extractFocusKeyword(title: string, category: string = ''): string {
+  if (!title || !title.trim()) {
+    return category ? category.toLowerCase() : 'business';
+  }
+
+  const stopWords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'to', 'from', 'in', 'out', 'on', 'off', 'over',
+    'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
+    'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
+    'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will',
+    'just', 'don', 'should', 'now', 'this', 'that', 'these', 'those', 'with', 'for', 'about',
+    'digital', 'journal', 'latest', 'global', 'news', 'insights', 'three', 'one', 'two', 'four',
+    'five', 'six', 'seven', 'eight', 'nine', 'ten', 'as', 'after', 'at', 'by', 'of', 'into',
+    'killed', 'reported', 'says', 'said', 'according', 'new', 'after'
+  ]);
+
+  const cleanTitle = title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const titleWords = cleanTitle
+    .split(' ')
+    .filter(w => w.length > 2 && !stopWords.has(w));
+
+  if (titleWords.length >= 2) {
+    return `${titleWords[0]} ${titleWords[1]}`;
+  } else if (titleWords.length === 1) {
+    return titleWords[0];
+  }
+
+  return category ? category.toLowerCase() : 'business';
+}
+
+/**
  * Extract relevant keywords from article text and metadata
  */
 export function extractKeywords(title: string, content: string = '', category: string = '', subcategory: string = ''): string[] {
@@ -62,23 +101,31 @@ export function extractKeywords(title: string, content: string = '', category: s
   ]);
 
   const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+  const cleanTitle = title.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const titleWords = cleanTitle.split(' ').filter(w => w.length > 2 && !stopWords.has(w));
+
   const combinedText = `${title} ${cleanContent}`;
-  const words = combinedText.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+  const words = combinedText.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
   
   const frequencyMap: Record<string, number> = {};
   words.forEach(word => {
-    if (word.length > 3 && !stopWords.has(word)) {
+    if (word.length > 2 && !stopWords.has(word)) {
       frequencyMap[word] = (frequencyMap[word] || 0) + 1;
     }
   });
 
   const sorted = Object.keys(frequencyMap).sort((a, b) => frequencyMap[b] - frequencyMap[a]);
-  const baseKeywords = sorted.slice(0, 8);
 
   const result = new Set<string>();
+  
+  // Prioritize title keywords first
+  if (titleWords.length >= 2) {
+    result.add(`${titleWords[0]} ${titleWords[1]}`);
+  }
+  titleWords.forEach(k => result.add(k));
+  sorted.forEach(k => result.add(k));
   if (category && category !== 'news') result.add(category.toLowerCase());
   if (subcategory && subcategory !== 'world') result.add(subcategory.toLowerCase().replace(/-/g, ' '));
-  baseKeywords.forEach(k => result.add(k));
 
   const list = Array.from(result).slice(0, 10);
   return list.length > 0 ? list : [category ? category.toLowerCase() : 'business'];
@@ -131,7 +178,9 @@ export function generateAutoSEO(data: ArticleSEOData) {
     ? data.keywords 
     : extractKeywords(title, content, category, subcategory);
   
-  const focusKeyword = data.focusKeyword || keywords[0] || (category ? category.toLowerCase() : '');
+  const focusKeyword = (data.focusKeyword && data.focusKeyword.trim()) 
+    ? data.focusKeyword 
+    : extractFocusKeyword(title, category);
   const canonicalUrl = data.canonicalUrl || `${DOMAIN}/${category}/${subcategory}/${slug}`;
   const ogImage = data.ogImage || data.imageUrl || `${DOMAIN}/icon.png`;
 
