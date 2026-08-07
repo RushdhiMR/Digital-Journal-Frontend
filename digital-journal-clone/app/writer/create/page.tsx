@@ -428,8 +428,12 @@ export default function CreatePostPage() {
       imageUrl: imageUrl.trim()
     });
 
-    if (!isFocusKwCustom) {
-      setFocusKeyword(auto.focusKeyword);
+    const isGenericFocusKw = !focusKeyword || ["business", "news", "technology", "politics", "innovation", "world"].includes(focusKeyword.toLowerCase().trim());
+
+    if (!isFocusKwCustom || isGenericFocusKw) {
+      if (auto.focusKeyword) {
+        setFocusKeyword(auto.focusKeyword);
+      }
     }
     if (!isMetaDescCustom) {
       setMetaDescription(auto.metaDescription);
@@ -444,17 +448,23 @@ export default function CreatePostPage() {
     }
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));
-  }, [title, subheading, content, category, imageUrl, currentUser, isMetaDescCustom, isCardSummaryCustom, isFocusKwCustom]);
+  }, [title, subheading, content, category, imageUrl, currentUser, isMetaDescCustom, isCardSummaryCustom, isFocusKwCustom, focusKeyword]);
 
   const handleAutoGenerateSEO = () => {
     setIsMetaDescCustom(false);
     setIsCardSummaryCustom(false);
     setIsFocusKwCustom(false);
 
+    const cleanContent = content
+      .replace(/<[^>]*>?/gm, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
     const auto = generateAutoSEO({
       title: title.trim(),
       subheading: subheading.trim(),
-      content: content.trim(),
+      content: cleanContent,
       category: category.toLowerCase(),
       authorName: currentUser?.name || "Rushdhi Riyaj",
       imageUrl: imageUrl.trim()
@@ -462,7 +472,12 @@ export default function CreatePostPage() {
 
     setFocusKeyword(auto.focusKeyword);
     setMetaDescription(auto.metaDescription);
-    setCardSummary(subheading.trim() || auto.metaDescription.slice(0, 120));
+    const summarySource = subheading.trim() || cleanContent || title.trim();
+    setCardSummary(
+      summarySource
+        ? summarySource.slice(0, 140) + (summarySource.length > 140 ? "..." : "")
+        : "Digital Journal - Latest global news and technological insights."
+    );
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));
   };

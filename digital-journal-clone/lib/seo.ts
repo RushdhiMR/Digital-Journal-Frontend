@@ -64,7 +64,8 @@ export function extractFocusKeyword(title: string, category: string = ''): strin
     'just', 'don', 'should', 'now', 'this', 'that', 'these', 'those', 'with', 'for', 'about',
     'digital', 'journal', 'latest', 'global', 'news', 'insights', 'three', 'one', 'two', 'four',
     'five', 'six', 'seven', 'eight', 'nine', 'ten', 'as', 'after', 'at', 'by', 'of', 'into',
-    'killed', 'reported', 'says', 'said', 'according', 'new', 'after'
+    'killed', 'injured', 'reported', 'says', 'said', 'according', 'new', 'after', 'how', 'what',
+    'why', 'when', 'where', 'who', 'takes', 'take', 'make', 'makes', 'using', 'used'
   ]);
 
   const cleanTitle = title
@@ -75,10 +76,12 @@ export function extractFocusKeyword(title: string, category: string = ''): strin
 
   const titleWords = cleanTitle
     .split(' ')
-    .filter(w => w.length > 2 && !stopWords.has(w));
+    .filter(w => w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w));
 
-  if (titleWords.length >= 2) {
-    return `${titleWords[0]} ${titleWords[1]}`;
+  if (titleWords.length >= 3) {
+    return titleWords.slice(0, 3).join(' ');
+  } else if (titleWords.length === 2) {
+    return titleWords.join(' ');
   } else if (titleWords.length === 1) {
     return titleWords[0];
   }
