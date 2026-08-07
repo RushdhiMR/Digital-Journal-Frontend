@@ -179,10 +179,10 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none overflow-hidden flex flex-col lg:flex-row items-center lg:items-stretch lg:h-[285px]">
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none flex flex-col lg:flex-row items-stretch lg:min-h-[310px] h-auto overflow-hidden">
           
-          {/* REDUCED HEIGHT WIDESCREEN RECTANGLE IMAGE (56% Width, 285px Height, Sharp Edges) */}
-          <div className="lg:w-[56%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[285px] flex-shrink-0 group overflow-hidden">
+          {/* REDUCED HEIGHT WIDESCREEN RECTANGLE IMAGE (48% Width, Flexible Height, Sharp Edges) */}
+          <div className="lg:w-[48%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
@@ -200,8 +200,8 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (44% Width Desktop, Full Width Mobile, Compact Typography & Bottom Controls) */}
-          <div className="w-full lg:w-[44%] p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full bg-white">
+          {/* RIGHT TEXT DETAILS (52% Width Desktop, Full Width Mobile, Compact Typography & Bottom Controls) */}
+          <div className="w-full lg:w-[52%] p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full bg-white min-w-0">
             <div>
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-[11px] tracking-wider uppercase mb-1.5 block font-sans">
@@ -209,14 +209,14 @@ export default function HeroSection() {
               </span>
 
               {/* Main Title */}
-              <h1 className="text-base sm:text-lg lg:text-[21px] font-bold leading-snug mb-2 text-gray-900 font-serif">
+              <h1 className="text-base sm:text-lg lg:text-[20px] font-bold leading-snug mb-2 text-gray-900 font-serif break-words">
                 <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
                   {activeArticle.title}
                 </Link>
               </h1>
 
               {/* Excerpt */}
-              <p className="text-gray-600 text-xs leading-relaxed mb-3 font-sans line-clamp-2">
+              <p className="text-gray-600 text-xs sm:text-[13px] leading-relaxed mb-3 font-sans break-words line-clamp-3">
                 {activeArticle.excerpt}
               </p>
 
@@ -233,7 +233,7 @@ export default function HeroSection() {
                     <span>{(activeArticle.author || "RM").slice(0, 2).toUpperCase()}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-sans">
+                <div className="flex items-center gap-1 text-[11px] font-sans flex-wrap">
                   <span className="font-bold text-gray-900">
                     By {activeArticle.author}
                   </span>
@@ -288,8 +288,8 @@ export default function HeroSection() {
 
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD HEIGHT 285px DESKTOP) */}
-        <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:h-[285px]">
+        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD MIN HEIGHT DESKTOP) */}
+        <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:min-h-[310px]">
           <div className="flex flex-col justify-between h-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-100">
@@ -304,7 +304,7 @@ export default function HeroSection() {
               </Link>
             </div>
 
-            {/* 4 Numbered List Items (Scaled to Fit 285px Height) */}
+            {/* 4 Numbered List Items */}
             <div className="space-y-1.5 flex-1 flex flex-col justify-around">
               {trendingNowItems.map((item, idx) => (
                 <div
@@ -321,7 +321,7 @@ export default function HeroSection() {
                       <span className="text-[9px] font-black text-[#D31220] uppercase tracking-wider block leading-none mb-0.5">
                         {item.category}
                       </span>
-                      <h3 className="text-[11.5px] font-bold text-gray-900 leading-tight hover:text-[#D31220] transition-colors truncate">
+                      <h3 className="text-[11.5px] font-bold text-gray-900 leading-tight hover:text-[#D31220] transition-colors break-words line-clamp-2">
                         <Link href={item.href} title={item.title}>
                           {item.title}
                         </Link>
