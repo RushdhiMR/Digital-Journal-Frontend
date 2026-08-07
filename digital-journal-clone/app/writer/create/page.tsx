@@ -1733,9 +1733,6 @@ export default function CreatePostPage() {
                 {/* HASHTAGS SECTION IN PREVIEW - TEXT ONLY NO BORDERS NO BACKGROUND COLOURS */}
                 {tags.length > 0 && (
                   <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      TAGS:
-                    </span>
                     {tags.map((t) => (
                       <span
                         key={t}
