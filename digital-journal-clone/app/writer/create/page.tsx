@@ -36,7 +36,8 @@ import {
   Bookmark,
   Share2,
   MessageSquare,
-  Loader2
+  Loader2,
+  Edit3
 } from "lucide-react";
 
 export default function CreatePostPage() {
@@ -299,6 +300,24 @@ export default function CreatePostPage() {
     }
   };
 
+  const handleEditSelectedImage = () => {
+    if (selectedImg) {
+      setImageUrl(selectedImg.src || "");
+      const fig = selectedImg.closest("figure");
+      if (fig) {
+        const captionElem = fig.querySelector("figcaption span:first-child") || fig.querySelector("figcaption");
+        if (captionElem) {
+          setImageCaption(captionElem.textContent?.replace(/\(PHOTO:.*\)/gi, "").trim() || "");
+        } else {
+          setImageCaption(selectedImg.alt || "");
+        }
+      } else {
+        setImageCaption(selectedImg.alt || "");
+      }
+      setShowImageModal(true);
+    }
+  };
+
   // Textarea / ContentEditable Ref
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -311,6 +330,65 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (selectedImg) {
+      // UPDATE EXISTING SELECTED IMAGE
+      selectedImg.src = imageUrl.trim();
+      selectedImg.alt = imageCaption.trim() || "Article Image";
+
+      let widthStyle = "max-width: 450px; width: 100%;";
+      if (imageSize.includes("Small")) widthStyle = "max-width: 300px; width: 100%;";
+      if (imageSize.includes("Full")) widthStyle = "width: 100%;";
+      selectedImg.style.cssText = `${widthStyle} border-radius: 0.75rem; object-fit: cover;`;
+
+      const fig = selectedImg.closest("figure");
+      if (fig) {
+        let alignStyle = "margin: 1rem auto; display: block;";
+        if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1rem 0.5rem 0;";
+        if (imageAlignment.includes("Right")) alignStyle = "float: right; margin: 0.5rem 0 0.5rem 1rem;";
+        fig.style.cssText = alignStyle;
+
+        let figcaption = fig.querySelector("figcaption");
+        if (imageCaption.trim() || imageCredit.trim()) {
+          const captionHtml = `<span style="font-style: italic; color: #475569;">${imageCaption.trim()}</span>${
+            imageCredit.trim()
+              ? `<span style="font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">(PHOTO: ${imageCredit.trim().toUpperCase()})</span>`
+              : ""
+          }`;
+          if (figcaption) {
+            figcaption.innerHTML = captionHtml;
+          } else {
+            const newCap = document.createElement("figcaption");
+            newCap.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #64748B; margin-top: 0.5rem; width: 100%; font-family: sans-serif;";
+            newCap.innerHTML = captionHtml;
+            fig.appendChild(newCap);
+          }
+        } else if (figcaption) {
+          figcaption.remove();
+        }
+      }
+
+      if (editorRef.current) {
+        setContent(editorRef.current.innerHTML);
+        setTimeout(() => {
+          if (selectedImg && editorRef.current) {
+            const rect = selectedImg.getBoundingClientRect();
+            const parentRect = editorRef.current.getBoundingClientRect();
+            setImgBoundingRect({
+              top: rect.top - parentRect.top,
+              left: rect.left - parentRect.left,
+              width: rect.width,
+              height: rect.height,
+            });
+            setSelectedImgWidth(Math.round(rect.width));
+          }
+        }, 50);
+      }
+
+      setShowImageModal(false);
+      return;
+    }
+
+    // INSERT NEW IMAGE
     let widthStyle = "max-width: 450px; width: 100%;";
     if (imageSize.includes("Small")) widthStyle = "max-width: 300px; width: 100%;";
     if (imageSize.includes("Full")) widthStyle = "width: 100%;";
@@ -1003,6 +1081,18 @@ export default function CreatePostPage() {
 
                   <button
                     type="button"
+                    onClick={handleEditSelectedImage}
+                    className="p-1 px-2 hover:bg-slate-800 bg-amber-500/20 text-amber-300 hover:text-amber-200 border border-amber-500/30 rounded transition-colors cursor-pointer flex items-center gap-1 font-bold"
+                    title="Edit / Replace Image & Caption"
+                  >
+                    <Edit3 size={13} />
+                    <span className="text-[10px] uppercase">Edit Image</span>
+                  </button>
+
+                  <span className="text-slate-600 font-normal">|</span>
+
+                  <button
+                    type="button"
                     onClick={handleMoveImageUp}
                     className="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors cursor-pointer"
                     title="Move Up"
@@ -1299,7 +1389,7 @@ export default function CreatePostPage() {
             <div className="flex items-center gap-2.5 mb-5">
               <ImageIcon size={20} className="text-[#F97316] flex-shrink-0" />
               <h3 className="text-lg font-serif font-bold text-slate-900">
-                Insert Article Image
+                {selectedImg ? "Edit / Replace Image" : "Insert Article Image"}
               </h3>
             </div>
 
@@ -1437,7 +1527,7 @@ export default function CreatePostPage() {
                   onClick={handleInsertImageToCanvas}
                   className="flex-1 py-3 px-4 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors cursor-pointer text-center"
                 >
-                  INSERT IMAGE
+                  {selectedImg ? "UPDATE IMAGE" : "INSERT IMAGE"}
                 </button>
               </div>
 
