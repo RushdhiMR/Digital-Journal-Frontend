@@ -824,22 +824,30 @@ export default function CreatePostPage() {
               </button>
             </div>
 
-            {/* TITLE INPUT */}
-            <input
-              type="text"
+            {/* TITLE INPUT - MULTI-LINE AUTO-EXPANDING TEXTAREA */}
+            <textarea
               placeholder="Add Title..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full font-serif text-3xl sm:text-4xl font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none border-none py-2 mb-2 bg-transparent"
+              rows={2}
+              className="w-full font-serif text-3xl sm:text-4xl font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none border-none py-2 mb-2 bg-transparent resize-none leading-tight overflow-hidden whitespace-normal break-words"
+              onInput={(e: any) => {
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
             />
 
-            {/* SUBHEADING / DECK INPUT */}
-            <input
-              type="text"
+            {/* SUBHEADING / DECK INPUT - MULTI-LINE AUTO-EXPANDING TEXTAREA */}
+            <textarea
               placeholder="Add Subheading / Deck..."
               value={subheading}
               onChange={(e) => setSubheading(e.target.value)}
-              className="w-full font-serif text-lg sm:text-xl font-normal text-slate-600 placeholder:text-slate-300 focus:outline-none border-none py-2 mb-6 bg-transparent"
+              rows={1}
+              className="w-full font-serif text-lg sm:text-xl font-normal text-slate-600 placeholder:text-slate-300 focus:outline-none border-none py-2 mb-6 bg-transparent resize-none leading-relaxed overflow-hidden whitespace-normal break-words"
+              onInput={(e: any) => {
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
             />
 
             {/* BODY PARAGRAPHS RICH TEXT EDITABLE CANVAS CONTAINER */}
