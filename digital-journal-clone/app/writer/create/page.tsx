@@ -1395,40 +1395,30 @@ export default function CreatePostPage() {
 
             <div className="space-y-4">
               
-              {/* Field 1: PASTE IMAGE URL */}
+              {/* CHOOSE COMPUTER FILE / UPLOAD IMAGE */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                  PASTE IMAGE URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-100 transition-all"
-                />
-              </div>
-
-              {/* Divider: OR UPLOAD FILE */}
-              <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-slate-200"></div>
-                <span className="flex-shrink mx-3 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  OR UPLOAD FILE
-                </span>
-                <div className="flex-grow border-t border-slate-200"></div>
-              </div>
-
-              {/* Field 2: CHOOSE COMPUTER FILE */}
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                  CHOOSE COMPUTER FILE
+                  CHOOSE IMAGE FILE
                 </label>
                 
-                <label className="border-2 border-dashed border-slate-200 hover:border-orange-300 rounded-xl p-3 bg-slate-50/50 hover:bg-slate-100/50 transition-all flex items-center justify-between cursor-pointer group">
-                  <span className="text-xs font-mono font-medium text-slate-700 truncate">
-                    {imageFileName}
-                  </span>
-                  <span className="text-[11px] font-bold text-orange-600 group-hover:underline shrink-0">
+                <label className="border-2 border-dashed border-slate-200 hover:border-orange-300 rounded-xl p-4 bg-slate-50/50 hover:bg-slate-100/50 transition-all flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Preview" className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+                        <ImageIcon size={20} />
+                      </div>
+                    )}
+                    <div className="truncate">
+                      <span className="text-xs font-semibold text-slate-800 block truncate">
+                        {imageFileName || (imageUrl ? "Selected Image" : "No file selected")}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">Click to select an image from your computer</span>
+                    </div>
+                  </div>
+
+                  <span className="text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1.5 rounded-lg shrink-0 transition-colors shadow-2xs">
                     Browse
                   </span>
                   <input
