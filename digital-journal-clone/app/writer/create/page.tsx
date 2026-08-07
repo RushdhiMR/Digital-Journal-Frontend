@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SEOAssistantPanel from "@/components/SEOAssistantPanel";
-import { generateAutoSEO } from "@/lib/seo";
+import { generateAutoSEO, extractFocusKeyword } from "@/lib/seo";
 import { getUserProfile } from "@/lib/userProfiles";
 import {
   ArrowLeft,
@@ -428,13 +428,12 @@ export default function CreatePostPage() {
       imageUrl: imageUrl.trim()
     });
 
-    const isGenericFocusKw = !focusKeyword || ["business", "news", "technology", "politics", "innovation", "world"].includes(focusKeyword.toLowerCase().trim());
-
-    if (!isFocusKwCustom || isGenericFocusKw) {
-      if (auto.focusKeyword) {
-        setFocusKeyword(auto.focusKeyword);
-      }
+    if (title.trim()) {
+      setFocusKeyword(extractFocusKeyword(title.trim(), category));
+    } else {
+      setFocusKeyword(category.toLowerCase());
     }
+
     if (!isMetaDescCustom) {
       setMetaDescription(auto.metaDescription);
     }
@@ -448,7 +447,7 @@ export default function CreatePostPage() {
     }
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));
-  }, [title, subheading, content, category, imageUrl, currentUser, isMetaDescCustom, isCardSummaryCustom, isFocusKwCustom, focusKeyword]);
+  }, [title, subheading, content, category, imageUrl, currentUser]);
 
   const handleAutoGenerateSEO = () => {
     setIsMetaDescCustom(false);
@@ -843,7 +842,11 @@ export default function CreatePostPage() {
             <textarea
               placeholder="Add Title..."
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                const newTitle = e.target.value;
+                setTitle(newTitle);
+                setFocusKeyword(extractFocusKeyword(newTitle, category));
+              }}
               rows={2}
               className="w-full font-serif text-3xl sm:text-4xl font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none border-none py-2 mb-2 bg-transparent resize-none leading-tight overflow-hidden whitespace-normal break-words"
               onInput={(e: any) => {
