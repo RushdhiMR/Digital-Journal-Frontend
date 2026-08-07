@@ -179,10 +179,10 @@ export default function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none flex flex-col lg:flex-row items-stretch lg:min-h-[310px] h-auto overflow-hidden">
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none flex flex-col lg:flex-row items-stretch min-h-[320px] h-auto">
           
-          {/* REDUCED HEIGHT WIDESCREEN RECTANGLE IMAGE (48% Width, Flexible Height, Sharp Edges) */}
-          <div className="lg:w-[48%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] flex-shrink-0 group overflow-hidden">
+          {/* WIDESCREEN RECTANGLE IMAGE (42% Width, Flexible Height, Sharp Edges) */}
+          <div className="lg:w-[42%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[260px] flex-shrink-0 group overflow-hidden">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
@@ -200,28 +200,28 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (52% Width Desktop, Full Width Mobile, Compact Typography & Bottom Controls) */}
-          <div className="w-full lg:w-[52%] p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full bg-white min-w-0">
-            <div>
+          {/* RIGHT TEXT DETAILS (58% Width Desktop, Full Width Mobile, Full Typography & Bottom Controls) */}
+          <div className="w-full lg:w-[58%] p-4 sm:p-6 flex flex-col justify-between h-auto bg-white min-w-0">
+            <div className="w-full">
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-[11px] tracking-wider uppercase mb-1.5 block font-sans">
                 {activeArticle.category}
               </span>
 
-              {/* Main Title */}
-              <h1 className="text-base sm:text-lg lg:text-[20px] font-bold leading-snug mb-2 text-gray-900 font-serif break-words">
-                <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors">
+              {/* Main Title - FULL UNTRUNCATED TITLE */}
+              <h1 className="text-base sm:text-lg lg:text-[21px] font-bold leading-snug mb-2.5 text-gray-900 font-serif whitespace-normal break-words">
+                <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors block">
                   {activeArticle.title}
                 </Link>
               </h1>
 
-              {/* Excerpt */}
-              <p className="text-gray-600 text-xs sm:text-[13px] leading-relaxed mb-3 font-sans break-words line-clamp-3">
+              {/* Excerpt - FULL UNTRUNCATED DESCRIPTION */}
+              <p className="text-gray-600 text-xs sm:text-[13px] leading-relaxed mb-4 font-sans whitespace-normal break-words">
                 {activeArticle.excerpt}
               </p>
 
               {/* Author Row */}
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1E293B] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
                   {activeArticle.authorAvatar && activeArticle.authorAvatar.length > 5 ? (
                     <img
@@ -248,7 +248,7 @@ export default function HeroSection() {
             </div>
 
             {/* Bottom Control Bar: Dots & Nav Arrows */}
-            <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 mt-auto">
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto w-full">
               {/* Carousel Dots */}
               <div className="flex items-center gap-1.5">
                 {carouselArticles.map((_, idx) => (
