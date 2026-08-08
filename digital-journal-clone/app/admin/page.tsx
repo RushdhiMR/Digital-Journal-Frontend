@@ -40,6 +40,7 @@ import {
   Check,
   Clock
 } from "lucide-react";
+import { isEmailAlreadyRegistered } from "@/lib/userProfiles";
 
 interface Article {
   id: number;
@@ -631,6 +632,12 @@ export default function AdminDashboardPage() {
 
     const email = newWriterEmail.trim().toLowerCase();
     const pass = newWriterPassword.trim();
+
+    const checkDuplicate = isEmailAlreadyRegistered(email);
+    if (checkDuplicate.exists) {
+      alert(`⚠️ An account with email address "${email}" is already registered. Only one user per email address is permitted.`);
+      return;
+    }
 
     const newW: Writer = {
       id: Date.now(),

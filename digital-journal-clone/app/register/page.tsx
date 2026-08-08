@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
-import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
+import { getUserProfile, saveUserProfile, isEmailAlreadyRegistered } from "@/lib/userProfiles";
 import { UserCheck, Bookmark, Bell, Sparkles } from "lucide-react";
 
 export default function RegisterPage() {
@@ -40,6 +40,12 @@ export default function RegisterPage() {
 
     if (password.length < 4) {
       setErrorMessage("Password must be at least 4 characters long.");
+      return;
+    }
+
+    const checkDuplicate = isEmailAlreadyRegistered(email);
+    if (checkDuplicate.exists) {
+      setErrorMessage(`⚠️ An account with this email address (${email.trim()}) already exists. Only one user per email is permitted. Please sign in instead.`);
       return;
     }
 

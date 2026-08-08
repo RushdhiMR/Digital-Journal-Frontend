@@ -119,7 +119,13 @@ export default function GoogleAccountChooserModal({
   };
 
   const processAccountSelection = (acc: Account) => {
-    // If requirePasswordSetup is true (on Register page) AND account is NOT registered yet -> Prompt to set password
+    // If requirePasswordSetup is true (on Register page) AND account is ALREADY registered -> Log into existing account with alert
+    if (requirePasswordSetup && isEmailRegistered(acc.email)) {
+      alert(`⚠️ An account with email "${acc.email}" is already registered. Only one user per email is permitted. Logging you into your existing account.`);
+      completeSignIn(acc);
+      return;
+    }
+
     if (requirePasswordSetup && !isEmailRegistered(acc.email)) {
       setPendingAccount(acc);
       setNewPassword("");

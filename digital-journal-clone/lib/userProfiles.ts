@@ -101,3 +101,56 @@ export function getUserProfile(email?: string | null): UserProfileData | null {
 
   return null;
 }
+
+/**
+ * Checks whether an email address is already registered to ensure strict 1 user per email.
+ */
+export function isEmailAlreadyRegistered(email?: string | null): { exists: boolean; role?: string; user?: any } {
+  if (!email) return { exists: false };
+  const target = email.toLowerCase().trim();
+
+  try {
+    // 1. Check central profiles DB
+    const existingDbStr = typeof window !== "undefined" ? localStorage.getItem("dj_user_profiles_db") : null;
+    if (existingDbStr) {
+      const profilesDb: Record<string, UserProfileData> = JSON.parse(existingDbStr);
+      if (profilesDb[target]) {
+        return { exists: true, role: profilesDb[target].role, user: profilesDb[target] };
+      }
+    }
+
+    // 2. Check registered users list
+    const regStr = typeof window !== "undefined" ? localStorage.getItem("dj_registered_users") : null;
+    if (regStr) {
+      const regList: any[] = JSON.parse(regStr);
+      const found = regList.find((u) => u.email && u.email.toLowerCase().trim() === target);
+      if (found) {
+        return { exists: true, role: found.role, user: found };
+      }
+    }
+
+    // 3. Check writers list
+    const writerStr = typeof window !== "undefined" ? localStorage.getItem("dj_writers_list") : null;
+    if (writerStr) {
+      const writerList: any[] = JSON.parse(writerStr);
+      const found = writerList.find((w) => w.email && w.email.toLowerCase().trim() === target);
+      if (found) {
+        return { exists: true, role: "Writer", user: found };
+      }
+    }
+
+    // 4. Check co-admins list
+    const coStr = typeof window !== "undefined" ? localStorage.getItem("dj_co_admins_list") : null;
+    if (coStr) {
+      const coList: any[] = JSON.parse(coStr);
+      const found = coList.find((c) => c.email && c.email.toLowerCase().trim() === target);
+      if (found) {
+        return { exists: true, role: "Co-Admin", user: found };
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to check duplicate email:", err);
+  }
+
+  return { exists: false };
+}
