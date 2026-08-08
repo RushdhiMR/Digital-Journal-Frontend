@@ -37,9 +37,7 @@ import {
   Share2,
   MessageSquare,
   Loader2,
-  Edit3,
-  Move,
-  GripVertical
+  Edit3
 } from "lucide-react";
 
 export default function CreatePostPage() {
@@ -210,72 +208,11 @@ export default function CreatePostPage() {
     }
   }, []);
 
-  // Interactive Drag-to-Position Image Re-ordering Logic
-  const [dragYPosition, setDragYPosition] = useState<number | null>(null);
-  const [dragInsertIndex, setDragInsertIndex] = useState<number | null>(null);
-
-  const handleStartMoveDrag = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!selectedImg || !editorRef.current) return;
-
-    const targetElem = selectedImg.closest("figure") || selectedImg;
-    const paragraphs = Array.from(editorRef.current.children) as HTMLElement[];
-    document.body.style.cursor = "grabbing";
-
-    let targetIdx = 0;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!editorRef.current) return;
-      const editorRect = editorRef.current.getBoundingClientRect();
-      const mouseY = moveEvent.clientY;
-
-      let minDistance = Infinity;
-      paragraphs.forEach((p, idx) => {
-        const pRect = p.getBoundingClientRect();
-        const dist = Math.abs(mouseY - (pRect.top + pRect.height / 2));
-        if (dist < minDistance) {
-          minDistance = dist;
-          targetIdx = idx;
-        }
-      });
-
-      const targetP = paragraphs[targetIdx];
-      if (targetP) {
-        const pRect = targetP.getBoundingClientRect();
-        const relativeTop = pRect.top - editorRect.top;
-        setDragYPosition(mouseY < pRect.top + pRect.height / 2 ? relativeTop : relativeTop + pRect.height);
-        setDragInsertIndex(targetIdx);
-      }
-    };
-
-    const handleMouseUp = (moveEvent: MouseEvent) => {
-      document.body.style.cursor = "default";
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-
-      if (editorRef.current && paragraphs.length > 0) {
-        const targetP = paragraphs[targetIdx];
-        if (targetP && targetP !== targetElem) {
-          if (moveEvent.clientY < targetP.getBoundingClientRect().top + targetP.getBoundingClientRect().height / 2) {
-            targetP.before(targetElem);
-          } else {
-            targetP.after(targetElem);
-          }
-        }
-      }
-
-      setDragYPosition(null);
-      setDragInsertIndex(null);
-      setTimeout(updateImgBoundingRect, 50);
-      if (editorRef.current) {
-        setContent(editorRef.current.innerHTML);
-      }
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  };
+  useEffect(() => {
+    updateImgBoundingRect();
+    window.addEventListener("resize", updateImgBoundingRect);
+    return () => window.removeEventListener("resize", updateImgBoundingRect);
+  }, [selectedImg, selectedImgWidth, selectedImgAlign]);
 
   // Smooth Drag Handle Resize Logic (Corners & Side Edges)
   const handleStartResizeDrag = (e: React.MouseEvent, handlePos: string) => {
@@ -516,7 +453,7 @@ export default function CreatePostPage() {
         </figcaption>`
       : "";
 
-    const imgTag = `<figure draggable="true" style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left; cursor: grab;"><img src="${imageUrl.trim()}" alt="${
+    const imgTag = `<figure style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;"><img src="${imageUrl.trim()}" alt="${
       rawCap || "Article Image"
     }" style="width: 100%; border-radius: 0.75rem; object-fit: cover; display: block;" />${captionHtml}</figure><p><br/></p>`;
 
@@ -1205,18 +1142,6 @@ export default function CreatePostPage() {
 
                   <button
                     type="button"
-                    onMouseDown={handleStartMoveDrag}
-                    className="p-1 px-2 hover:bg-slate-800 bg-blue-500/20 text-blue-300 hover:text-blue-200 border border-blue-500/30 rounded transition-colors cursor-grab active:cursor-grabbing flex items-center gap-1 font-bold"
-                    title="Click & Drag Image to Re-position in Article"
-                  >
-                    <Move size={13} />
-                    <span className="text-[10px] uppercase">Drag to Move</span>
-                  </button>
-
-                  <span className="text-slate-600 font-normal">|</span>
-
-                  <button
-                    type="button"
                     onClick={handleMoveImageUp}
                     className="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors cursor-pointer"
                     title="Move Up"
@@ -1246,18 +1171,6 @@ export default function CreatePostPage() {
                 </div>
               )}
 
-              {/* LIVE DRAG DROP INSERTION INDICATOR LINE */}
-              {dragYPosition !== null && (
-                <div
-                  style={{ top: `${dragYPosition}px` }}
-                  className="absolute left-0 right-0 z-40 border-b-2 border-blue-600 shadow-md flex items-center justify-center"
-                >
-                  <span className="bg-blue-600 text-white text-[9.5px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md animate-bounce">
-                    ↓ Drop Image Here
-                  </span>
-                </div>
-              )}
-
               {/* BLUE SELECTION BORDER AND INTERACTIVE DRAG HANDLES */}
               {imgBoundingRect && selectedImg && (
                 <div
@@ -1269,17 +1182,6 @@ export default function CreatePostPage() {
                   }}
                   className="absolute pointer-events-none border-2 border-blue-500 z-20 transition-all duration-75"
                 >
-                  {/* Top-Center Drag Handle Pill */}
-                  <div
-                    data-resize-handle="true"
-                    onMouseDown={handleStartMoveDrag}
-                    className="pointer-events-auto absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white text-[9.5px] font-extrabold px-2.5 py-0.5 rounded-full cursor-grab active:cursor-grabbing shadow-md flex items-center gap-1 ring-2 ring-white select-none z-30 tracking-wider"
-                    title="Click & Drag to move image up or down in article"
-                  >
-                    <GripVertical size={11} />
-                    <span>DRAG TO MOVE</span>
-                  </div>
-
                   {/* Left Edge Drag Strip */}
                   <div
                     data-resize-handle="true"
