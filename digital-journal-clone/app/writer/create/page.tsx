@@ -208,11 +208,75 @@ export default function CreatePostPage() {
     }
   }, []);
 
-  useEffect(() => {
-    updateImgBoundingRect();
-    window.addEventListener("resize", updateImgBoundingRect);
-    return () => window.removeEventListener("resize", updateImgBoundingRect);
-  }, [selectedImg, selectedImgWidth, selectedImgAlign]);
+  // Interactive Drag-to-Position Image Re-ordering Logic
+  const [dragYPosition, setDragYPosition] = useState<number | null>(null);
+
+  const handleStartMoveDrag = (e: React.MouseEvent) => {
+    // Do not trigger position drag if clicking edge resize handles
+    const targetTarget = e.target as HTMLElement;
+    if (targetTarget && targetTarget.getAttribute("data-resize-handle") === "true") {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedImg || !editorRef.current) return;
+
+    const targetElem = selectedImg.closest("figure") || selectedImg;
+    const paragraphs = Array.from(editorRef.current.children) as HTMLElement[];
+    document.body.style.cursor = "grabbing";
+
+    let targetIdx = 0;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!editorRef.current) return;
+      const editorRect = editorRef.current.getBoundingClientRect();
+      const mouseY = moveEvent.clientY;
+
+      let minDistance = Infinity;
+      paragraphs.forEach((p, idx) => {
+        const pRect = p.getBoundingClientRect();
+        const dist = Math.abs(mouseY - (pRect.top + pRect.height / 2));
+        if (dist < minDistance) {
+          minDistance = dist;
+          targetIdx = idx;
+        }
+      });
+
+      const targetP = paragraphs[targetIdx];
+      if (targetP) {
+        const pRect = targetP.getBoundingClientRect();
+        const relativeTop = pRect.top - editorRect.top;
+        setDragYPosition(mouseY < pRect.top + pRect.height / 2 ? relativeTop : relativeTop + pRect.height);
+      }
+    };
+
+    const handleMouseUp = (moveEvent: MouseEvent) => {
+      document.body.style.cursor = "default";
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+
+      if (editorRef.current && paragraphs.length > 0) {
+        const targetP = paragraphs[targetIdx];
+        if (targetP && targetP !== targetElem) {
+          if (moveEvent.clientY < targetP.getBoundingClientRect().top + targetP.getBoundingClientRect().height / 2) {
+            targetP.before(targetElem);
+          } else {
+            targetP.after(targetElem);
+          }
+        }
+      }
+
+      setDragYPosition(null);
+      setTimeout(updateImgBoundingRect, 50);
+      if (editorRef.current) {
+        setContent(editorRef.current.innerHTML);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
 
   // Smooth Drag Handle Resize Logic (Corners & Side Edges)
   const handleStartResizeDrag = (e: React.MouseEvent, handlePos: string) => {
@@ -1171,6 +1235,18 @@ export default function CreatePostPage() {
                 </div>
               )}
 
+              {/* LIVE DRAG DROP INSERTION INDICATOR LINE */}
+              {dragYPosition !== null && (
+                <div
+                  style={{ top: `${dragYPosition}px` }}
+                  className="absolute left-0 right-0 z-40 border-b-2 border-blue-600 shadow-md flex items-center justify-center pointer-events-none"
+                >
+                  <span className="bg-blue-600 text-white text-[9.5px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md animate-bounce">
+                    ↓ Drop Image Here
+                  </span>
+                </div>
+              )}
+
               {/* BLUE SELECTION BORDER AND INTERACTIVE DRAG HANDLES */}
               {imgBoundingRect && selectedImg && (
                 <div
@@ -1180,7 +1256,9 @@ export default function CreatePostPage() {
                     width: `${imgBoundingRect.width}px`,
                     height: `${imgBoundingRect.height}px`,
                   }}
-                  className="absolute pointer-events-none border-2 border-blue-500 z-20 transition-all duration-75"
+                  onMouseDown={handleStartMoveDrag}
+                  className="absolute pointer-events-auto border-2 border-blue-500 z-20 transition-all duration-75 cursor-grab active:cursor-grabbing"
+                  title="Click & Drag image up or down to re-position in article"
                 >
                   {/* Left Edge Drag Strip */}
                   <div
