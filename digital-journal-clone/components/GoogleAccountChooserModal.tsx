@@ -398,50 +398,67 @@ export default function GoogleAccountChooserModal({
               </p>
 
               <div className="space-y-1 divide-y divide-zinc-800/80 max-h-[260px] overflow-y-auto pr-1">
-                {accounts.map((acc, index) => (
-                  <div
-                    key={index}
-                    onClick={() => processAccountSelection(acc)}
-                    className="flex items-center justify-between py-3.5 px-3 rounded-lg hover:bg-zinc-800/70 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow">
-                        {acc.avatar}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-[15px] font-medium text-zinc-100 group-hover:text-white">
-                            {acc.name}
-                          </h3>
-                          {acc.isDevice && (
-                            <span className="text-[9px] bg-blue-500/20 text-blue-300 font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider">
-                              Device
-                            </span>
+                {accounts.map((acc, index) => {
+                  const initials = acc.name
+                    ? acc.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : acc.email.slice(0, 2).toUpperCase();
+
+                  const isImageUrl = acc.avatar && (acc.avatar.startsWith("http") || acc.avatar.startsWith("data:image"));
+
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => processAccountSelection(acc)}
+                      className="flex items-center justify-between py-3.5 px-3 rounded-lg hover:bg-zinc-800/70 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-2">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow overflow-hidden">
+                          {isImageUrl ? (
+                            <img src={acc.avatar} alt={acc.name} className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            <span className="font-bold text-sm text-white select-none">{initials}</span>
                           )}
                         </div>
-                        <p className="text-[13px] text-zinc-400 font-normal">
-                          {acc.email}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-[15px] font-medium text-zinc-100 group-hover:text-white truncate">
+                              {acc.name}
+                            </h3>
+                            {acc.isDevice && (
+                              <span className="text-[9px] bg-blue-500/20 text-blue-300 font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                                Device
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[13px] text-zinc-400 font-normal truncate">
+                            {acc.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {acc.status && (
+                          <span className="text-[12px] text-zinc-500 font-normal">
+                            {acc.status}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveAccount(e, acc.email)}
+                          className="text-zinc-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove account from device"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      {acc.status && (
-                        <span className="text-[12px] text-zinc-500 font-normal">
-                          {acc.status}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => handleRemoveAccount(e, acc.email)}
-                        className="text-zinc-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Remove account from device"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div
                   onClick={() => setIsAddingAccount(true)}

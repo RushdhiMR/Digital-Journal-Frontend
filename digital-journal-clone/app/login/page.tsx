@@ -366,10 +366,6 @@ export default function LoginPage() {
               </span>
             </Link>
 
-            <span className="text-[10px] font-extrabold text-[#BF1E2D] uppercase tracking-widest bg-red-50 px-3 py-1 rounded-full border border-red-200 mb-2">
-              Official Identity &amp; Auth Portal
-            </span>
-
             <h1 className="text-xl font-bold text-slate-900">Sign in to your account</h1>
             <p className="text-xs text-slate-500 font-medium mt-1">
               Access your Reader Hub, Author Studio, or Management Console.
@@ -498,49 +494,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Quick Demo Credential Pills */}
-            <div className="pt-2">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                1-CLICK DEMO CREDENTIALS:
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("admin@digitaljournal.com");
-                    setPassword("admin123");
-                    setSelectedRole("Admin");
-                  }}
-                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border border-slate-200"
-                >
-                  Main Admin
-                </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("writer@digitaljournal.com");
-                    setPassword("writer123");
-                    setSelectedRole("Writer");
-                  }}
-                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border border-slate-200"
-                >
-                  Author / Writer
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("reader@digitaljournal.com");
-                    setPassword("reader123");
-                    setSelectedRole("Reader");
-                  }}
-                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border border-slate-200"
-                >
-                  Reader Account
-                </button>
-              </div>
-            </div>
 
             <div className="pt-3">
               <button

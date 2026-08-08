@@ -202,10 +202,6 @@ export default function RegisterPage() {
               </span>
             </Link>
 
-            <span className="text-[10px] font-extrabold text-[#BF1E2D] uppercase tracking-widest bg-red-50 px-3 py-1 rounded-full border border-red-200 mb-2">
-              New Account Registration
-            </span>
-
             <h1 className="text-xl font-bold text-slate-900">Create your account</h1>
             <p className="text-xs text-slate-500 font-medium mt-1">
               Join Digital Journal to access personalized feeds, bookmarks, and author tools.
