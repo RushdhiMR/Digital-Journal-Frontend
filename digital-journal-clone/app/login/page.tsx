@@ -576,6 +576,12 @@ export default function LoginPage() {
       </main>
 
       <Footer />
+
+      <GoogleAccountChooserModal
+        isOpen={showGoogleChooser}
+        onClose={() => setShowGoogleChooser(false)}
+        onSelectAccount={handleSelectGoogleAccount}
+      />
     </div>
   );
 }

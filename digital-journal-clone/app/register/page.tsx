@@ -403,6 +403,13 @@ export default function RegisterPage() {
       </main>
 
       <Footer />
+
+      <GoogleAccountChooserModal
+        isOpen={showGoogleChooser}
+        onClose={() => setShowGoogleChooser(false)}
+        onSelectAccount={handleSelectGoogleAccount}
+        requirePasswordSetup={true}
+      />
     </div>
   );
 }
