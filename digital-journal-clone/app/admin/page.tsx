@@ -483,8 +483,14 @@ export default function AdminDashboardPage() {
   const handleLogout = () => {
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_user");
+    localStorage.removeItem("dj_writer_user");
+    localStorage.setItem("dj_signed_out", "true");
+    localStorage.setItem("dj_toast", "👋 You have successfully signed out.");
     setIsAuthenticated(false);
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("dj_auth_change"));
+      window.location.href = "/";
+    }
   };
 
   const showNotification = (msg: string) => {

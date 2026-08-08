@@ -296,13 +296,13 @@ export default function Header() {
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_writer_user");
     localStorage.setItem("dj_signed_out", "true");
+    localStorage.setItem("dj_toast", "👋 You have successfully signed out.");
     setCurrentUser(null);
     setIsUserDropdownOpen(false);
-    setToastMessage("👋 You have successfully signed out.");
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("dj_auth_change"));
+      window.location.href = "/";
     }
-    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
