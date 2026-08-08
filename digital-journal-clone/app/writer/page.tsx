@@ -552,20 +552,20 @@ export default function WriterDashboardPage() {
       <main className="max-w-7xl w-full mx-auto px-5 sm:px-6 pt-10 pb-16 flex-1">
         
         {/* Title & Primary Action Button Bar */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Posts</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Posts</h1>
 
           <Link
             href="/writer/create"
-            className="bg-[#1B50E8] hover:bg-[#1542C3] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="bg-[#1B50E8] hover:bg-[#1542C3] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer self-start sm:self-auto"
           >
             <Plus size={18} className="stroke-[2.5]" />
-            Create New Post
+            <span>Create New Post</span>
           </Link>
         </div>
 
         {/* Navigation Filter Tabs Bar */}
-        <div className="flex items-center justify-between border-b border-gray-200 text-xs sm:text-sm font-medium mb-6">
+        <div className="flex items-center justify-between border-b border-gray-200 text-xs sm:text-sm font-medium mb-6 overflow-x-auto scrollbar-none max-w-full">
           <div className="flex items-center gap-6 sm:gap-8">
             {(["Published", "Drafts", "Pending review", "Trash"] as const).map((tab) => {
               const isActive = activeTab === tab;

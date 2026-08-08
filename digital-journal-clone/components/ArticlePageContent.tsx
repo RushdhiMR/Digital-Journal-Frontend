@@ -483,12 +483,12 @@ export default function ArticlePageContent({
         {(() => {
           const info = parseCaptionAndCredit(activeNewsData.caption, (activeNewsData as any).credit);
           return (
-            <div className="flex items-center justify-between gap-4 mt-2.5 mb-8 font-sans text-[12px] text-zinc-500 border-b border-zinc-100 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mt-2.5 mb-8 font-sans text-[12px] text-zinc-500 border-b border-zinc-100 pb-3">
               <span className="italic leading-normal font-sans text-zinc-600">
                 {info.caption}
               </span>
               {info.credit && (
-                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider font-sans flex-shrink-0">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider font-sans shrink-0">
                   {info.credit}
                 </span>
               )}

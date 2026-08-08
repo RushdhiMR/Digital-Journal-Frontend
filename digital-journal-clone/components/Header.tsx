@@ -810,74 +810,91 @@ export default function Header() {
 
           {/* User Profile Section in Mobile Drawer */}
           {currentUser ? (
-            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-3 font-sans">
-              
-              {/* Profile Overview */}
-              <div className="flex items-center gap-3 pb-2.5 border-b border-slate-200/80">
-                <div className="relative w-11 h-11">
-                  <div className="w-11 h-11 rounded-full overflow-hidden border border-slate-300 flex-shrink-0">
-                    <img
-                      src={currentUser.avatar || "/author_bluesuit.jpg"}
-                      alt={currentUser.name || "User Avatar"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white absolute bottom-0 right-0 z-10"></span>
+            <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 space-y-3 font-sans">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#BF1E2D] text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase overflow-hidden shrink-0">
+                  {currentUser.avatar && (currentUser.avatar.startsWith("/") || currentUser.avatar.startsWith("data:")) ? (
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{(currentUser.name || "U").charAt(0)}</span>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-extrabold text-slate-900 leading-snug truncate">
+                  <p className="text-xs font-bold text-gray-900 truncate">
                     {currentUser.name || "rushdhi"}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 font-mono truncate">
+                  </p>
+                  <p className="text-[10px] text-gray-500 truncate font-mono">
                     {currentUser.email || "rushdhiriyaj2005@gmail.com"}
                   </p>
-                  <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-[#BF1E2D] font-extrabold text-[9px] uppercase tracking-wider rounded">
-                    {currentUser.role || "WRITER"}
+                  <span className="inline-block mt-0.5 px-2 py-0.2 bg-red-100 text-[#BF1E2D] font-extrabold text-[8.5px] uppercase tracking-wider rounded">
+                    {currentUser.role || "READER"}
                   </span>
                 </div>
               </div>
 
-              {/* Quick Navigation Links */}
-              <div className="grid grid-cols-1 gap-1.5 pt-0.5">
+              <div className="grid grid-cols-1 gap-2 pt-2 border-t border-gray-200">
                 {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("admin")) && (
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 py-2 px-3 bg-emerald-50/80 text-emerald-800 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                    className="flex items-center gap-2.5 py-2.5 px-3 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
                   >
                     <ShieldCheck size={16} className="text-emerald-600" />
                     <span>Admin Dashboard</span>
                   </Link>
                 )}
 
-                {(currentUser.role === "Writer" || currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("writer")) && (
-                  <Link
-                    href="/writer"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 py-2 px-3 bg-blue-50/80 text-[#1B50E8] rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
-                  >
-                    <PenTool size={16} className="text-[#1B50E8]" />
-                    <span>Author Workspace</span>
-                  </Link>
-                )}
+                {(() => {
+                  const email = (currentUser.email || "").toLowerCase().trim();
+                  const isSystemWriterOrAdmin =
+                    email === "writer@digitaljournal.com" ||
+                    email === "admin@digitaljournal.com" ||
+                    email === "coadmin@digitaljournal.com" ||
+                    email.includes("admin");
 
-                {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && (
-                  <Link
-                    href="/reader"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 py-2 px-3 bg-red-50/80 text-[#BF1E2D] rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
-                  >
-                    <BookOpen size={16} className="text-[#BF1E2D]" />
-                    <span>Reader Dashboard</span>
-                  </Link>
-                )}
+                  let isApproved = isSystemWriterOrAdmin;
+                  if (!isApproved && email && typeof window !== "undefined") {
+                    const writersListStr = localStorage.getItem("dj_writers_list");
+                    if (writersListStr) {
+                      try {
+                        const wList: any[] = JSON.parse(writersListStr);
+                        isApproved = wList.some((w: any) => w.email && w.email.toLowerCase().trim() === email && w.status === "Active");
+                      } catch (e) {
+                        console.warn(e);
+                      }
+                    }
+                  }
+
+                  if (isApproved) {
+                    return (
+                      <Link
+                        href="/writer"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-2.5 py-2.5 px-3 bg-blue-50/80 text-[#1B50E8] rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                      >
+                        <PenTool size={16} className="text-[#1B50E8]" />
+                        <span>Author Workspace</span>
+                      </Link>
+                    );
+                  }
+                  return (
+                    <Link
+                      href="/reader"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 py-2.5 px-3 bg-red-50/80 text-[#BF1E2D] rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                    >
+                      <BookOpen size={16} className="text-[#BF1E2D]" />
+                      <span>Reader Dashboard</span>
+                    </Link>
+                  );
+                })()}
 
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     setIsProfileSettingsOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 py-2 px-3 bg-white text-slate-800 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 py-2.5 px-3 bg-white text-slate-800 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors text-left"
                 >
                   <User size={16} className="text-slate-500" />
                   <span>Profile Settings</span>
@@ -888,7 +905,7 @@ export default function Header() {
                     setIsMobileMenuOpen(false);
                     handleSignOut();
                   }}
-                  className="w-full flex items-center gap-2.5 py-2 px-3 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 py-2.5 px-3 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors text-left"
                 >
                   <LogOut size={16} className="text-red-500" />
                   <span>Sign Out</span>

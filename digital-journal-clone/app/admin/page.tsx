@@ -1137,7 +1137,7 @@ export default function AdminDashboardPage() {
               <p className="text-[10px] font-extrabold uppercase text-zinc-400 tracking-wider">ADMIN CONTROL MENU</p>
             </div>
 
-            <nav className="p-2 space-y-1">
+            <nav className="p-2 flex md:flex-col overflow-x-auto scrollbar-none gap-1 space-y-0 md:space-y-1 max-w-full">
               <button
                 onClick={() => setActiveTab("overview")}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
