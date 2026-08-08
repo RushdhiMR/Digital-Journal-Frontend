@@ -533,10 +533,12 @@ export default function CreatePostPage() {
 
     const sel = window.getSelection();
     let targetP: HTMLElement | null = null;
+
+    // 1. Try to find container paragraph or block element
     if (sel && sel.rangeCount > 0) {
       let node: Node | null = sel.getRangeAt(0).startContainer;
       while (node && node !== editorRef.current) {
-        if (node.nodeName === "P") {
+        if (node.nodeType === Node.ELEMENT_NODE && (node.nodeName === "P" || node.nodeName === "DIV")) {
           targetP = node as HTMLElement;
           break;
         }
@@ -544,35 +546,51 @@ export default function CreatePostPage() {
       }
     }
 
+    // 2. Fallback to first p or div in editor canvas
     if (!targetP) {
-      targetP = editorRef.current.querySelector("p");
+      targetP = (editorRef.current.querySelector("p") || editorRef.current.querySelector("div")) as HTMLElement;
+    }
+
+    // 3. Ultimate Fallback: If text was typed directly into contentEditable without p wrapper
+    if (!targetP) {
+      const rawText = editorRef.current.innerText || editorRef.current.textContent || "";
+      if (rawText.trim()) {
+        const newP = document.createElement("p");
+        newP.innerHTML = editorRef.current.innerHTML;
+        editorRef.current.innerHTML = "";
+        editorRef.current.appendChild(newP);
+        targetP = newP;
+      }
     }
 
     if (!targetP) return;
 
-    const pText = targetP.textContent || "";
-    if (!pText.trim()) return;
-
-    const existingCap = targetP.querySelector("span.first-letter-cap");
-    let firstChar = pText.trim().charAt(0);
-    let restText = pText.trim().slice(1);
-
-    if (existingCap) {
-      firstChar = existingCap.textContent || firstChar;
-      existingCap.remove();
-      restText = targetP.textContent || "";
+    // Check existing first-letter-cap
+    const existingSpan = targetP.querySelector("span.first-letter-cap");
+    if (existingSpan) {
+      const char = existingSpan.textContent || "";
+      existingSpan.remove();
+      if (!targetP.textContent?.startsWith(char)) {
+        targetP.prepend(document.createTextNode(char));
+      }
     }
+
+    const fullText = (targetP.textContent || "").trim();
+    if (!fullText) return;
+
+    const firstChar = fullText.charAt(0);
+    const restText = fullText.slice(1);
 
     const currentSize = customSizeRem || firstLetterSize;
 
-    let styleCss = `float: left; font-size: ${currentSize}rem; line-height: 0.85; margin-right: 0.5rem; margin-top: 0.1rem; font-weight: 800; display: inline-block; select: none;`;
+    let styleCss = `float: left; font-size: ${currentSize}rem; line-height: 0.85; margin-right: 0.5rem; margin-top: 0.1rem; font-weight: 800; display: inline-block; user-select: none;`;
 
     if (styleType === "serif") {
       styleCss += ` font-family: Georgia, Cambria, 'Times New Roman', Times, serif; color: #0F172A;`;
     } else if (styleType === "red") {
       styleCss += ` font-family: Georgia, Cambria, 'Times New Roman', Times, serif; color: #BF1E2D;`;
     } else if (styleType === "box") {
-      const boxSize = Math.max(1.6, currentSize * 0.7);
+      const boxSize = Math.max(1.5, currentSize * 0.7);
       styleCss += ` font-family: sans-serif; background-color: #0F172A; color: #FFFFFF; padding: 2px 8px; border-radius: 4px; line-height: 1; font-size: ${boxSize}rem;`;
     }
 
@@ -591,8 +609,8 @@ export default function CreatePostPage() {
     if (editorRef.current) {
       const activeCap = editorRef.current.querySelector("span.first-letter-cap") as HTMLElement;
       if (activeCap) {
-        const parentP = activeCap.closest("p");
-        const styleType = parentP?.getAttribute("data-drop-style") as "serif" | "red" | "box" || "serif";
+        const parentP = activeCap.closest("p") || activeCap.closest("div");
+        const styleType = (parentP?.getAttribute("data-drop-style") as "serif" | "red" | "box") || "serif";
         handleApplyFirstLetterStyle(styleType, newSize);
       } else {
         handleApplyFirstLetterStyle("serif", newSize);
