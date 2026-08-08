@@ -359,23 +359,23 @@ export default function Header() {
       )}
 
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 relative z-50">
+      <div className="max-w-[1400px] mx-auto px-2.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4 relative z-50 w-full max-w-full">
         
         {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+        <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group shrink min-w-0">
           {/* Red Layered Digital Journal Logo Icon */}
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+          <div className="relative w-7 h-7 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
             <Image
               src="/logo.png"
               alt="Digital Journal Logo"
               width={40}
               height={40}
-              className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+              className="w-7 h-7 sm:w-10 sm:h-10 object-contain"
               priority
             />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xl sm:text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif">
+            <span className="text-[15px] sm:text-2xl md:text-[26px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif truncate">
               DIGITAL JOURNAL
             </span>
             <span className="hidden sm:inline-block text-[10.5px] text-gray-500 font-semibold tracking-wider uppercase mt-1">
@@ -416,7 +416,7 @@ export default function Header() {
         </form>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5 text-[13px] font-medium flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3.5 text-[13px] font-medium shrink-0">
           
           {/* Newsletter Signup Button */}
           <Link
@@ -585,7 +585,7 @@ export default function Header() {
           {/* Red Subscribe Button */}
           <Link
             href="/subscribe"
-            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[11px] sm:text-[12px] px-3 sm:px-4 py-2 rounded-md transition-colors whitespace-nowrap shadow-xs uppercase tracking-wider flex items-center justify-center"
+            className="bg-[#BF1E2D] hover:bg-red-700 text-white font-bold text-[10px] sm:text-[12px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors whitespace-nowrap shadow-xs uppercase tracking-wider flex items-center justify-center shrink-0"
           >
             Subscribe
           </Link>
@@ -593,10 +593,10 @@ export default function Header() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+            className="md:hidden text-gray-800 hover:text-[#BF1E2D] p-1 rounded-md hover:bg-gray-100 transition-colors shrink-0 cursor-pointer"
             aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
         </div>
@@ -604,11 +604,11 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white relative z-40">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
+      <div className="w-full border-t border-b border-gray-200 bg-white relative z-40 max-w-full overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-2 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 w-full max-w-full">
           
           {/* Main Horizontal Category Nav Items */}
-          <nav className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 lg:space-x-4 py-2.5 text-[12.5px] sm:text-[13.5px] font-bold overflow-x-auto scrollbar-none">
+          <nav className="flex items-center space-x-1.5 sm:space-x-3 lg:space-x-4 py-2 text-[12px] sm:text-[13.5px] font-bold overflow-x-auto scrollbar-none w-full max-w-full">
             {navCategories.map((cat) => (
               <div
                 key={cat.name}
