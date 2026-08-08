@@ -5,8 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
 import { getUserProfile, saveUserProfile, isEmailAlreadyRegistered } from "@/lib/userProfiles";
+import { triggerGoogleOAuth } from "@/lib/googleAuth";
 import { UserCheck, Bookmark, Bell, Sparkles } from "lucide-react";
 
 export default function RegisterPage() {
@@ -115,10 +115,18 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignIn = () => {
-    setShowGoogleChooser(true);
+    setErrorMessage("");
+    triggerGoogleOAuth(
+      (user) => {
+        handleSelectGoogleAccount({ name: user.name, email: user.email, avatar: user.avatar });
+      },
+      (err) => {
+        setErrorMessage(`⚠️ Google Sign-In: ${err}`);
+      }
+    );
   };
 
-  const handleSelectGoogleAccount = async (acc: { name: string; email: string }) => {
+  const handleSelectGoogleAccount = async (acc: { name: string; email: string; avatar?: string }) => {
     setShowGoogleChooser(false);
     setIsSubmitting(true);
     setErrorMessage("");
@@ -375,13 +383,6 @@ export default function RegisterPage() {
       </main>
 
       <Footer />
-
-      <GoogleAccountChooserModal
-        isOpen={showGoogleChooser}
-        onClose={() => setShowGoogleChooser(false)}
-        onSelectAccount={handleSelectGoogleAccount}
-        requirePasswordSetup={true}
-      />
     </div>
   );
 }

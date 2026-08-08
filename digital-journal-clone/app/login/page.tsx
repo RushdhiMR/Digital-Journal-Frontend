@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
 import { ShieldCheck, TrendingUp, Edit3, Lock } from "lucide-react";
 import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
+import { triggerGoogleOAuth } from "@/lib/googleAuth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -263,10 +264,18 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = () => {
-    setShowGoogleChooser(true);
+    setErrorMessage("");
+    triggerGoogleOAuth(
+      (user) => {
+        handleSelectGoogleAccount({ name: user.name, email: user.email, avatar: user.avatar });
+      },
+      (err) => {
+        setErrorMessage(`⚠️ Google Sign-In: ${err}`);
+      }
+    );
   };
 
-  const handleSelectGoogleAccount = async (acc: { name: string; email: string }) => {
+  const handleSelectGoogleAccount = async (acc: { name: string; email: string; avatar?: string }) => {
     setShowGoogleChooser(false);
     setIsSubmitting(true);
     setErrorMessage("");
@@ -494,13 +503,6 @@ export default function LoginPage() {
       </main>
 
       <Footer />
-
-      <GoogleAccountChooserModal
-        isOpen={showGoogleChooser}
-        onClose={() => setShowGoogleChooser(false)}
-        onSelectAccount={handleSelectGoogleAccount}
-        requirePasswordSetup={true}
-      />
     </div>
   );
 }
