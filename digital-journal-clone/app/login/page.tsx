@@ -119,6 +119,11 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
+        if (matchedWriter.status === "Deactivated") {
+          setErrorMessage(`❌ Access Denied: Your Writer account '${lowerEmail}' has been deactivated by the Main Admin.`);
+          setIsSubmitting(false);
+          return;
+        }
         authenticatedAccount = { name: matchedWriter.name, email: lowerEmail, role: "Writer" };
       } else if (matchedUser) {
         if (matchedUser.password && matchedUser.password !== lowerPass) {
@@ -126,27 +131,11 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
-        const userRole = matchedUser.role || (lowerEmail.includes("coadmin") ? "Co-Admin" : lowerEmail.includes("writer") || lowerEmail.endsWith("@digitaljournal.com") ? "Writer" : lowerEmail.includes("admin") ? "Admin" : "Reader");
+        let userRole: "Admin" | "Co-Admin" | "Writer" | "Reader" = "Reader";
+        if (matchedUser.role === "Writer" || matchedUser.role === "Admin" || matchedUser.role === "Co-Admin") {
+          userRole = matchedUser.role;
+        }
         authenticatedAccount = { name: matchedUser.name || lowerEmail.split('@')[0], email: lowerEmail, role: userRole };
-      } else if (lowerEmail.includes("coadmin")) {
-        const validCoAdminPasswords = ["coadmin", "coadmin123", "coadmin2026"];
-        if (!validCoAdminPasswords.includes(lowerPass)) {
-          setErrorMessage(`❌ Access Denied: Incorrect password for Co-Admin account '${lowerEmail}'.`);
-          setIsSubmitting(false);
-          return;
-        }
-        authenticatedAccount = { name: "Operations Co-Admin", email: lowerEmail, role: "Co-Admin" };
-      } else if (lowerEmail.includes("writer") || lowerEmail.endsWith("@digitaljournal.com") || lowerEmail.includes("journal")) {
-        if (lowerPass.length < 3) {
-          setErrorMessage(`❌ Access Denied: Please enter your password for account '${lowerEmail}'.`);
-          setIsSubmitting(false);
-          return;
-        }
-        const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
-        const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
-        const savedProf = getUserProfile(lowerEmail);
-        const userRole: "Admin" | "Writer" | "Reader" | "Co-Admin" = (savedProf?.role as any) || (lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader");
-        authenticatedAccount = { name: formattedName || "Reader", email: lowerEmail, role: userRole };
       } else if (lowerEmail.includes("@")) {
         if (lowerPass.length < 3) {
           setErrorMessage(`❌ Access Denied: Please enter your password for account '${lowerEmail}'.`);
@@ -156,7 +145,12 @@ export default function LoginPage() {
         const rawName = lowerEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
         const formattedName = rawName.replace(/\b\w/g, (c) => c.toUpperCase());
         const savedProf = getUserProfile(lowerEmail);
-        const userRole: "Admin" | "Writer" | "Reader" | "Co-Admin" = (savedProf?.role as any) || (lowerEmail.includes("admin") ? "Admin" : lowerEmail.includes("coadmin") ? "Co-Admin" : "Reader");
+        
+        let userRole: "Admin" | "Writer" | "Reader" | "Co-Admin" = "Reader";
+        if (savedProf?.role === "Writer" || savedProf?.role === "Admin" || savedProf?.role === "Co-Admin") {
+          userRole = savedProf.role as any;
+        }
+
         authenticatedAccount = { name: formattedName || "Reader", email: lowerEmail, role: userRole };
       } else {
         setErrorMessage(`❌ Access Denied: Invalid email format '${lowerEmail}'. Please enter a valid email address.`);

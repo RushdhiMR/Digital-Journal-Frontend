@@ -55,20 +55,45 @@ export default function CreatePostPage() {
 
   useEffect(() => {
     try {
-      const savedUserStr = localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_user");
+      const savedUserStr = localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_user") || localStorage.getItem("dj_admin_user");
+      let activeUser: any = null;
       if (savedUserStr) {
-        const parsed = JSON.parse(savedUserStr);
-        const role = parsed.role;
-        if (role !== "Writer" && role !== "Admin" && role !== "Co-Admin") {
-          localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can write stories.");
-          window.location.href = "/reader";
-          return;
+        try {
+          activeUser = JSON.parse(savedUserStr);
+        } catch (e) {
+          console.warn(e);
         }
-        setCurrentUser(parsed);
-      } else {
-        window.location.href = "/login";
+      }
+
+      const userEmail = (activeUser?.email || "").toLowerCase().trim();
+      const isSystemWriterOrAdmin =
+        userEmail === "admin@digitaljournal.com" ||
+        userEmail === "coadmin@digitaljournal.com" ||
+        userEmail === "writer@digitaljournal.com" ||
+        userEmail.includes("admin");
+
+      let isApprovedWriter = isSystemWriterOrAdmin;
+      if (!isApprovedWriter && userEmail) {
+        const writersListStr = localStorage.getItem("dj_writers_list");
+        if (writersListStr) {
+          try {
+            const wList: any[] = JSON.parse(writersListStr);
+            const foundW = wList.find((w: any) => w.email && w.email.toLowerCase().trim() === userEmail && w.status === "Active");
+            if (foundW) {
+              isApprovedWriter = true;
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+
+      if (!activeUser || !isApprovedWriter) {
+        localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can write stories.");
+        window.location.href = "/reader";
         return;
       }
+      setCurrentUser(activeUser);
 
       // Check if editing existing post
       const storedEditingPost = localStorage.getItem("dj_editing_post");

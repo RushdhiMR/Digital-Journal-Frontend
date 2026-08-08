@@ -143,7 +143,7 @@ export default function WriterDashboardPage() {
           console.warn("Invalid saved writer data:", e);
         }
       }
-      
+
       if (!activeUser && savedUserStr) {
         try {
           const parsed = JSON.parse(savedUserStr);
@@ -157,8 +157,32 @@ export default function WriterDashboardPage() {
         }
       }
 
+      // Verify if activeUser is explicitly an approved Writer in dj_writers_list or system account
+      const userEmail = (activeUser?.email || "").toLowerCase().trim();
+      const isSystemWriterOrAdmin =
+        userEmail === "admin@digitaljournal.com" ||
+        userEmail === "coadmin@digitaljournal.com" ||
+        userEmail === "writer@digitaljournal.com" ||
+        userEmail.includes("admin");
+
+      let isApprovedWriter = isSystemWriterOrAdmin;
+      if (!isApprovedWriter && userEmail) {
+        const writersListStr = localStorage.getItem("dj_writers_list");
+        if (writersListStr) {
+          try {
+            const wList: any[] = JSON.parse(writersListStr);
+            const foundW = wList.find((w: any) => w.email && w.email.toLowerCase().trim() === userEmail && w.status === "Active");
+            if (foundW) {
+              isApprovedWriter = true;
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+
       // If user is NOT an approved Writer or Admin -> Block access & redirect to /reader
-      if (!activeUser) {
+      if (!activeUser || !isApprovedWriter) {
         localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can access the Writer Studio.");
         window.location.href = "/reader";
         return;
