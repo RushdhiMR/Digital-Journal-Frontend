@@ -144,7 +144,7 @@ export function generateMetaTitle(title: string): string {
  */
 export function generateMetaDescription(title: string, subheading: string = '', content: string = ''): string {
   const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
-  const source = (subheading.trim() || cleanContent || title.trim());
+  const source = cleanContent || title.trim();
   if (!source) return `${BRAND_NAME} - Latest global news and technological insights.`;
 
   if (source.length <= 160) return source;

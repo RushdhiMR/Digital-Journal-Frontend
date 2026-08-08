@@ -565,7 +565,7 @@ export default function CreatePostPage() {
       setMetaDescription(auto.metaDescription);
     }
     if (!isCardSummaryCustom) {
-      const summarySource = subheading.trim() || cleanContent || title.trim();
+      const summarySource = cleanContent || title.trim();
       setCardSummary(
         summarySource
           ? summarySource.slice(0, 140) + (summarySource.length > 140 ? "..." : "")
@@ -598,7 +598,7 @@ export default function CreatePostPage() {
 
     setFocusKeyword(auto.focusKeyword);
     setMetaDescription(auto.metaDescription);
-    const summarySource = subheading.trim() || cleanContent || title.trim();
+    const summarySource = cleanContent || title.trim();
     setCardSummary(
       summarySource
         ? summarySource.slice(0, 140) + (summarySource.length > 140 ? "..." : "")
