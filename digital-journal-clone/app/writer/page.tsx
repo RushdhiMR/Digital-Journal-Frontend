@@ -22,7 +22,8 @@ import {
   RotateCcw,
   Sparkles,
   PenTool,
-  User
+  User,
+  Bell
 } from "lucide-react";
 import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
 
@@ -537,6 +538,41 @@ export default function WriterDashboardPage() {
             <Plus size={18} className="stroke-[2.5]" />
             Create New Post
           </Link>
+        </div>
+
+        {/* ARTICLE STATUS NOTIFICATION BANNER */}
+        <div className="mb-6 bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${posts.length === 0 ? "bg-slate-100 text-slate-600" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`}>
+              <Bell size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  ARTICLE NOTIFICATION
+                </span>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${posts.length === 0 ? "bg-slate-100 text-slate-700 font-mono" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                  {posts.length === 0 ? "NO ARTICLES FOUND" : posts.filter((p) => p.status === "Pending review").length > 0 ? `${posts.filter((p) => p.status === "Pending review").length} PENDING REVIEW` : `${posts.length} ARTICLES ACTIVE`}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                {posts.length === 0
+                  ? "There are currently NO articles created or submitted in your account. Click 'Create New Article' below to publish your first story!"
+                  : posts.filter((p) => p.status === "Pending review").length > 0
+                  ? `Your story "${posts.find((p) => p.status === "Pending review")?.title}" has been submitted and is currently waiting in the Editorial Queue for Admin approval.`
+                  : `All ${posts.length} article(s) in your workspace are up to date and active.`}
+              </p>
+            </div>
+          </div>
+          {posts.length === 0 && (
+            <Link
+              href="/writer/create"
+              className="bg-[#1B50E8] hover:bg-[#1542C3] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shrink-0 self-start sm:self-center shadow-xs"
+            >
+              <Plus size={15} />
+              <span>Create First Article</span>
+            </Link>
+          )}
         </div>
 
         {/* Navigation Filter Tabs Bar */}
