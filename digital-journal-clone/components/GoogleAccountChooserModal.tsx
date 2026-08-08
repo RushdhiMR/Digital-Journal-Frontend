@@ -38,6 +38,24 @@ export default function GoogleAccountChooserModal({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
+  // Helper to parse real Google Identity Services JWT OAuth credentials
+  const parseGoogleJwtToken = (token: string) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.warn("Error parsing Google OAuth JWT token:", e);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -48,6 +66,15 @@ export default function GoogleAccountChooserModal({
     setNewPassword("");
     setConfirmPassword("");
     setPasswordError("");
+
+    // Load Google Identity Services Client Script dynamically if needed
+    if (typeof window !== "undefined" && !(window as any).google) {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
 
     try {
       const savedAccountsStr = localStorage.getItem("dj_device_google_accounts");
@@ -70,7 +97,7 @@ export default function GoogleAccountChooserModal({
             deviceList.unshift({
               name: activeUser.name || activeUser.email.split("@")[0],
               email: activeUser.email,
-              avatar: initials,
+              avatar: activeUser.avatar || initials,
               status: "Signed in",
               isDevice: true,
             });
@@ -93,6 +120,12 @@ export default function GoogleAccountChooserModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Helper to validate real email address format strictly
+  const isValidRealEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
 
   // Helper to check if an email is already registered in local user registry
   const isEmailRegistered = (email: string): boolean => {
@@ -212,8 +245,8 @@ export default function GoogleAccountChooserModal({
     setEmailError("");
 
     const trimmedEmail = customEmail.trim();
-    if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setEmailError("Please enter a valid Google email address.");
+    if (!trimmedEmail || !isValidRealEmail(trimmedEmail)) {
+      setEmailError("Please enter a valid real email address (e.g. user@gmail.com).");
       return;
     }
 

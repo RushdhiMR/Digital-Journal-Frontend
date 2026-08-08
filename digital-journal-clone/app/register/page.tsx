@@ -33,6 +33,12 @@ export default function RegisterPage() {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setErrorMessage("Please enter a valid real email address (e.g. yourname@gmail.com).");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match. Please verify passcodes.");
       return;
