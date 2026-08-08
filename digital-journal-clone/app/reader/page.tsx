@@ -235,18 +235,6 @@ export default function ReaderDashboardPage() {
                 <span className="text-[12.5px] font-bold">Profile Settings</span>
               </button>
 
-              {/* Author / Admin links if user has permissions */}
-              {(currentUser?.role === "Writer" || currentUser?.role === "Admin" || currentUser?.role === "Co-Admin") && (
-                <Link
-                  href="/writer"
-                  onClick={() => setIsUserDropdownOpen(false)}
-                  className="px-4 py-2.5 flex items-center gap-2.5 hover:bg-blue-50/40 text-blue-700 font-bold border-t border-slate-100 transition-colors cursor-pointer"
-                >
-                  <PenTool size={15} className="text-blue-600" />
-                  <span className="text-[12.5px]">Writer Workspace</span>
-                </Link>
-              )}
-
               {/* Sign Out */}
               <button
                 onClick={handleSignOut}
