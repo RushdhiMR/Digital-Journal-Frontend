@@ -11,9 +11,18 @@ export interface GoogleUserCredential {
 
 export function triggerGoogleOAuth(
   onSuccess: (user: GoogleUserCredential) => void,
+  onFallbackModal: () => void,
   onError?: (errMessage: string) => void
 ) {
   if (typeof window === "undefined") return;
+
+  const realClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  // If no real Google Client ID is set in environment, open Google Account Chooser Modal
+  if (!realClientId || realClientId.includes("demo") || realClientId.length < 10) {
+    onFallbackModal();
+    return;
+  }
 
   const handleCredentialResponse = (response: any) => {
     if (response && response.credential) {
@@ -40,25 +49,23 @@ export function triggerGoogleOAuth(
         console.warn("Could not parse Google OAuth credential payload:", err);
       }
     }
-    if (onError) onError("Google Sign-In credential parsing failed.");
+    onFallbackModal();
   };
-
-  const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "1083928172918-demo.apps.googleusercontent.com";
 
   if ((window as any).google?.accounts?.id) {
     try {
       (window as any).google.accounts.id.initialize({
-        client_id: CLIENT_ID,
+        client_id: realClientId,
         callback: handleCredentialResponse,
         auto_select: false,
       });
       (window as any).google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          openGoogleOAuthPopup(CLIENT_ID, onSuccess, onError);
+          onFallbackModal();
         }
       });
     } catch (e) {
-      openGoogleOAuthPopup(CLIENT_ID, onSuccess, onError);
+      onFallbackModal();
     }
   } else {
     // Inject official Google Identity Services Client Script
@@ -70,43 +77,20 @@ export function triggerGoogleOAuth(
       if ((window as any).google?.accounts?.id) {
         try {
           (window as any).google.accounts.id.initialize({
-            client_id: CLIENT_ID,
+            client_id: realClientId,
             callback: handleCredentialResponse,
           });
           (window as any).google.accounts.id.prompt();
         } catch (e) {
-          openGoogleOAuthPopup(CLIENT_ID, onSuccess, onError);
+          onFallbackModal();
         }
       } else {
-        openGoogleOAuthPopup(CLIENT_ID, onSuccess, onError);
+        onFallbackModal();
       }
     };
     script.onerror = () => {
-      openGoogleOAuthPopup(CLIENT_ID, onSuccess, onError);
+      onFallbackModal();
     };
     document.head.appendChild(script);
-  }
-}
-
-function openGoogleOAuthPopup(
-  clientId: string,
-  onSuccess: (user: GoogleUserCredential) => void,
-  onError?: (errMessage: string) => void
-) {
-  const width = 500;
-  const height = 600;
-  const left = window.screen.width / 2 - width / 2;
-  const top = window.screen.height / 2 - height / 2;
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${encodeURIComponent(
-    clientId
-  )}&redirect_uri=${encodeURIComponent(
-    window.location.origin + "/login"
-  )}&scope=email%20profile&prompt=select_account`;
-
-  const popup = window.open(authUrl, "GoogleOAuth", `width=${width},height=${height},top=${top},left=${left}`);
-
-  if (!popup) {
-    if (onError) onError("Popup blocked. Please allow popups for Google Sign-In.");
   }
 }

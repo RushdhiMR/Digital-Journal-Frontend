@@ -269,6 +269,9 @@ export default function LoginPage() {
       (user) => {
         handleSelectGoogleAccount({ name: user.name, email: user.email, avatar: user.avatar });
       },
+      () => {
+        setShowGoogleChooser(true);
+      },
       (err) => {
         setErrorMessage(`⚠️ Google Sign-In: ${err}`);
       }
@@ -503,6 +506,12 @@ export default function LoginPage() {
       </main>
 
       <Footer />
+
+      <GoogleAccountChooserModal
+        isOpen={showGoogleChooser}
+        onClose={() => setShowGoogleChooser(false)}
+        onSelectAccount={handleSelectGoogleAccount}
+      />
     </div>
   );
 }
