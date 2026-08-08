@@ -541,37 +541,66 @@ export default function WriterDashboardPage() {
         </div>
 
         {/* ARTICLE STATUS NOTIFICATION BANNER */}
-        <div className="mb-6 bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${posts.length === 0 ? "bg-slate-100 text-slate-600" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`}>
-              <Bell size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                  ARTICLE NOTIFICATION
-                </span>
-                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${posts.length === 0 ? "bg-slate-100 text-slate-700 font-mono" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
-                  {posts.length === 0 ? "NO ARTICLES FOUND" : posts.filter((p) => p.status === "Pending review").length > 0 ? `${posts.filter((p) => p.status === "Pending review").length} PENDING REVIEW` : `${posts.length} ARTICLES ACTIVE`}
-                </span>
+        <div className="mb-6 bg-white border border-gray-200/90 rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${posts.length === 0 ? "bg-slate-100 text-slate-600" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-100 text-amber-600 animate-pulse" : "bg-emerald-100 text-emerald-600"}`}>
+                <Bell size={20} />
               </div>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                {posts.length === 0
-                  ? "There are currently NO articles created or submitted in your account. Click 'Create New Article' below to publish your first story!"
-                  : posts.filter((p) => p.status === "Pending review").length > 0
-                  ? `Your story "${posts.find((p) => p.status === "Pending review")?.title}" has been submitted and is currently waiting in the Editorial Queue for Admin approval.`
-                  : `All ${posts.length} article(s) in your workspace are up to date and active.`}
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    ARTICLE NOTIFICATION STATUS
+                  </span>
+                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${posts.length === 0 ? "bg-slate-100 text-slate-700 font-mono" : posts.filter((p) => p.status === "Pending review").length > 0 ? "bg-amber-500 text-white shadow-2xs" : "bg-emerald-100 text-emerald-800"}`}>
+                    {posts.length === 0 ? "NO ARTICLES FOUND" : posts.filter((p) => p.status === "Pending review").length > 0 ? `${posts.filter((p) => p.status === "Pending review").length} PENDING REVIEW` : `${posts.length} ARTICLES ACTIVE`}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {posts.filter((p) => p.status === "Pending review").length > 0
+                    ? `You currently have ${posts.filter((p) => p.status === "Pending review").length} article(s) waiting in the Editorial Queue for Admin approval:`
+                    : posts.length === 0
+                    ? "There are currently NO articles created or submitted in your account."
+                    : `All ${posts.length} article(s) in your workspace are up to date and active.`}
+                </p>
+              </div>
             </div>
+
+            {posts.length === 0 && (
+              <Link
+                href="/writer/create"
+                className="bg-[#1B50E8] hover:bg-[#1542C3] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shrink-0 shadow-xs"
+              >
+                <Plus size={15} />
+                <span>Create First Article</span>
+              </Link>
+            )}
           </div>
-          {posts.length === 0 && (
-            <Link
-              href="/writer/create"
-              className="bg-[#1B50E8] hover:bg-[#1542C3] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shrink-0 self-start sm:self-center shadow-xs"
-            >
-              <Plus size={15} />
-              <span>Create First Article</span>
-            </Link>
+
+          {/* LIST ALL PENDING ARTICLE SUBJECTS / TITLES HERE */}
+          {posts.filter((p) => p.status === "Pending review").length > 0 && (
+            <div className="mt-1 pt-3 border-t border-gray-100 space-y-2">
+              <span className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider block">
+                Pending Review Subjects ({posts.filter((p) => p.status === "Pending review").length}):
+              </span>
+              <div className="space-y-2">
+                {posts
+                  .filter((p) => p.status === "Pending review")
+                  .map((item, idx) => (
+                    <div key={item.id} className="flex items-center gap-2.5 bg-amber-50/70 border border-amber-200/90 p-2.5 rounded-xl text-xs">
+                      <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0 shadow-2xs">
+                        {idx + 1}
+                      </span>
+                      <p className="font-bold text-gray-900 truncate flex-1">
+                        "{item.title}"
+                      </p>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full shrink-0">
+                        Awaiting Admin Approval
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -580,17 +609,33 @@ export default function WriterDashboardPage() {
           <div className="flex items-center gap-6 sm:gap-8">
             {(["Published", "Drafts", "Pending review", "Trash"] as const).map((tab) => {
               const isActive = activeTab === tab;
+              const count = posts.filter((p) => {
+                if (tab === "Drafts") return p.status === "Draft";
+                if (tab === "Pending review") return p.status === "Pending review";
+                if (tab === "Trash") return p.status === "Trash";
+                return p.status === "Published";
+              }).length;
+
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-3.5 transition-colors cursor-pointer relative ${
+                  className={`pb-3.5 transition-colors cursor-pointer relative flex items-center gap-2 ${
                     isActive
-                      ? "text-[#1B50E8] font-semibold border-b-2 border-[#1B50E8] -mb-[1px]"
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "text-[#1B50E8] font-bold border-b-2 border-[#1B50E8] -mb-[1px]"
+                      : "text-gray-600 hover:text-gray-900 font-medium"
                   }`}
                 >
-                  {tab}
+                  <span>{tab}</span>
+                  <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full transition-all ${
+                    tab === "Pending review" && count > 0
+                      ? "bg-amber-500 text-white shadow-2xs"
+                      : isActive
+                      ? "bg-blue-100 text-[#1B50E8]"
+                      : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {count}
+                  </span>
                 </button>
               );
             })}
