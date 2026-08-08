@@ -343,12 +343,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-gray-900 selection:bg-red-100 selection:text-red-900">
       <Header />
 
-      {/* TOP SECURITY BAR BANNER */}
-      <div className="bg-[#0F172A] text-slate-300 text-[11px] font-bold py-2 px-4 text-center border-b border-slate-800 flex items-center justify-center gap-2">
-        <ShieldCheck size={14} className="text-emerald-400" />
-        <span>256-BIT SSL ENCRYPTED ENTERPRISE SINGLE SIGN-ON (SSO) PORTAL</span>
-      </div>
-
       {/* MAIN AUTH CONTAINER */}
       <main className="flex-1 bg-gradient-to-b from-slate-100 to-white py-12 lg:py-16 flex items-center justify-center px-4">
         <div className="w-full max-w-[480px] bg-white border border-slate-200/90 shadow-2xl rounded-2xl p-6 sm:p-10 font-sans">
