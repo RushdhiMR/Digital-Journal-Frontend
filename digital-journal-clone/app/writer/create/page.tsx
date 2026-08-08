@@ -38,7 +38,9 @@ import {
   MessageSquare,
   Loader2,
   Edit3,
-  Type
+  Type,
+  Plus,
+  Minus
 } from "lucide-react";
 
 export default function CreatePostPage() {
@@ -519,13 +521,17 @@ export default function CreatePostPage() {
     }
   };
 
-  // Drop Cap (First Letter) Paragraph Styling Function
+  // Drop Cap (First Letter) Paragraph Styling & Size Adjustment Functions
   const [showDropCapMenu, setShowDropCapMenu] = useState(false);
+  const [firstLetterSize, setFirstLetterSize] = useState<number>(3.5); // size in rem units
 
-  const handleApplyDropCap = (dropCapClass: string) => {
+  const handleApplyFirstLetterStyle = (
+    styleType: "serif" | "red" | "box",
+    customSizeRem?: number
+  ) => {
     if (!editorRef.current) return;
+
     const sel = window.getSelection();
-    
     let targetP: HTMLElement | null = null;
     if (sel && sel.rangeCount > 0) {
       let node: Node | null = sel.getRangeAt(0).startContainer;
@@ -542,11 +548,72 @@ export default function CreatePostPage() {
       targetP = editorRef.current.querySelector("p");
     }
 
-    if (targetP) {
-      targetP.classList.remove("has-drop-cap", "has-drop-cap-red", "has-drop-cap-box");
-      if (dropCapClass) {
-        targetP.classList.add(dropCapClass);
+    if (!targetP) return;
+
+    const pText = targetP.textContent || "";
+    if (!pText.trim()) return;
+
+    const existingCap = targetP.querySelector("span.first-letter-cap");
+    let firstChar = pText.trim().charAt(0);
+    let restText = pText.trim().slice(1);
+
+    if (existingCap) {
+      firstChar = existingCap.textContent || firstChar;
+      existingCap.remove();
+      restText = targetP.textContent || "";
+    }
+
+    const currentSize = customSizeRem || firstLetterSize;
+
+    let styleCss = `float: left; font-size: ${currentSize}rem; line-height: 0.85; margin-right: 0.5rem; margin-top: 0.1rem; font-weight: 800; display: inline-block; select: none;`;
+
+    if (styleType === "serif") {
+      styleCss += ` font-family: Georgia, Cambria, 'Times New Roman', Times, serif; color: #0F172A;`;
+    } else if (styleType === "red") {
+      styleCss += ` font-family: Georgia, Cambria, 'Times New Roman', Times, serif; color: #BF1E2D;`;
+    } else if (styleType === "box") {
+      const boxSize = Math.max(1.6, currentSize * 0.7);
+      styleCss += ` font-family: sans-serif; background-color: #0F172A; color: #FFFFFF; padding: 2px 8px; border-radius: 4px; line-height: 1; font-size: ${boxSize}rem;`;
+    }
+
+    targetP.setAttribute("data-drop-style", styleType);
+    targetP.innerHTML = `<span class="first-letter-cap" style="${styleCss}">${firstChar}</span>${restText}`;
+
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleAdjustFirstLetterSize = (deltaRem: number) => {
+    const newSize = Math.max(1.8, Math.min(6.0, Math.round((firstLetterSize + deltaRem) * 10) / 10));
+    setFirstLetterSize(newSize);
+
+    if (editorRef.current) {
+      const activeCap = editorRef.current.querySelector("span.first-letter-cap") as HTMLElement;
+      if (activeCap) {
+        const parentP = activeCap.closest("p");
+        const styleType = parentP?.getAttribute("data-drop-style") as "serif" | "red" | "box" || "serif";
+        handleApplyFirstLetterStyle(styleType, newSize);
+      } else {
+        handleApplyFirstLetterStyle("serif", newSize);
       }
+    }
+  };
+
+  const handleRemoveFirstLetterCap = () => {
+    if (!editorRef.current) return;
+    const caps = editorRef.current.querySelectorAll("span.first-letter-cap");
+    caps.forEach((cap) => {
+      const char = cap.textContent || "";
+      const textNode = document.createTextNode(char);
+      cap.parentNode?.replaceChild(textNode, cap);
+    });
+    const ps = editorRef.current.querySelectorAll("p");
+    ps.forEach((p) => {
+      p.removeAttribute("data-drop-style");
+      p.classList.remove("has-drop-cap", "has-drop-cap-red", "has-drop-cap-box");
+    });
+    if (editorRef.current) {
       setContent(editorRef.current.innerHTML);
     }
     setShowDropCapMenu(false);
@@ -1012,14 +1079,46 @@ export default function CreatePostPage() {
                 </button>
 
                 {showDropCapMenu && (
-                  <div className="absolute top-full left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-2 space-y-1 text-left font-sans animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
-                      FIRST LETTER STYLING
+                  <div className="absolute top-full left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-2.5 space-y-2 text-left font-sans animate-in fade-in zoom-in-95 duration-100">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        FIRST LETTER SIZE
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                        {firstLetterSize.toFixed(1)}rem
+                      </span>
+                    </div>
+
+                    {/* SIZE INCREASE / REDUCE STEPPER CONTROL BUTTONS */}
+                    <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80">
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustFirstLetterSize(-0.3)}
+                        className="flex-1 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 rounded-md font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                        title="Reduce Letter Size (-)"
+                      >
+                        <Minus size={13} strokeWidth={2.5} />
+                        <span>Reduce</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustFirstLetterSize(0.3)}
+                        className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                        title="Increase Letter Size (+)"
+                      >
+                        <Plus size={13} strokeWidth={2.5} />
+                        <span>Increase</span>
+                      </button>
+                    </div>
+
+                    <div className="px-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 pt-1">
+                      FIRST LETTER STYLES
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleApplyDropCap("has-drop-cap")}
+                      onClick={() => handleApplyFirstLetterStyle("serif")}
                       className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-100 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
                     >
                       <span className="font-serif font-black text-2xl text-slate-900 leading-none">D</span>
@@ -1031,7 +1130,7 @@ export default function CreatePostPage() {
 
                     <button
                       type="button"
-                      onClick={() => handleApplyDropCap("has-drop-cap-red")}
+                      onClick={() => handleApplyFirstLetterStyle("red")}
                       className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-red-50 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
                     >
                       <span className="font-serif font-black text-2xl text-[#BF1E2D] leading-none">D</span>
@@ -1043,7 +1142,7 @@ export default function CreatePostPage() {
 
                     <button
                       type="button"
-                      onClick={() => handleApplyDropCap("has-drop-cap-box")}
+                      onClick={() => handleApplyFirstLetterStyle("box")}
                       className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-100 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
                     >
                       <span className="bg-slate-900 text-white font-sans font-bold text-xs px-1.5 py-0.5 rounded">D</span>
@@ -1056,7 +1155,7 @@ export default function CreatePostPage() {
                     <div className="border-t border-slate-100 pt-1 mt-1">
                       <button
                         type="button"
-                        onClick={() => handleApplyDropCap("")}
+                        onClick={handleRemoveFirstLetterCap}
                         className="w-full text-left px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       >
                         Remove Drop Cap
