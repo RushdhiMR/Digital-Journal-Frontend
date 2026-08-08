@@ -176,12 +176,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-gray-900 selection:bg-red-100 selection:text-red-900">
+    <div className="min-h-screen bg-white flex flex-col font-sans text-slate-900 selection:bg-red-100 selection:text-red-900">
       <Header />
 
-      {/* MAIN AUTH CONTAINER */}
-      <main className="flex-1 bg-gradient-to-b from-slate-100 to-white py-12 lg:py-16 flex items-center justify-center px-4">
-        <div className="w-full max-w-[480px] bg-white border border-slate-200/90 shadow-2xl rounded-2xl p-6 sm:p-10 font-sans">
+      {/* MAIN PLAIN PAGE CONTAINER */}
+      <main className="flex-1 bg-white py-12 lg:py-16 flex items-center justify-center">
+        <div className="w-full max-w-[440px] mx-auto px-4 font-sans text-slate-900">
           
           {/* Logo & Corporate Title */}
           <div className="flex flex-col items-center mb-8 text-center">
