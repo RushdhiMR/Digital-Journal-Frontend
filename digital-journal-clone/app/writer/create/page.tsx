@@ -37,7 +37,8 @@ import {
   Share2,
   MessageSquare,
   Loader2,
-  Edit3
+  Edit3,
+  Type
 } from "lucide-react";
 
 export default function CreatePostPage() {
@@ -518,6 +519,39 @@ export default function CreatePostPage() {
     }
   };
 
+  // Drop Cap (First Letter) Paragraph Styling Function
+  const [showDropCapMenu, setShowDropCapMenu] = useState(false);
+
+  const handleApplyDropCap = (dropCapClass: string) => {
+    if (!editorRef.current) return;
+    const sel = window.getSelection();
+    
+    let targetP: HTMLElement | null = null;
+    if (sel && sel.rangeCount > 0) {
+      let node: Node | null = sel.getRangeAt(0).startContainer;
+      while (node && node !== editorRef.current) {
+        if (node.nodeName === "P") {
+          targetP = node as HTMLElement;
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+
+    if (!targetP) {
+      targetP = editorRef.current.querySelector("p");
+    }
+
+    if (targetP) {
+      targetP.classList.remove("has-drop-cap", "has-drop-cap-red", "has-drop-cap-box");
+      if (dropCapClass) {
+        targetP.classList.add(dropCapClass);
+      }
+      setContent(editorRef.current.innerHTML);
+    }
+    setShowDropCapMenu(false);
+  };
+
   // Article Settings State
   const [sidebarTab, setSidebarTab] = useState<"DETAILS" | "SEO">("DETAILS");
   const [category, setCategory] = useState("Business");
@@ -957,6 +991,80 @@ export default function CreatePostPage() {
               >
                 <Code size={15} />
               </button>
+
+              <span className="text-slate-300">|</span>
+
+              {/* DROP CAP (FIRST LETTER) ADJUSTMENT TOOL */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowDropCapMenu((prev) => !prev)}
+                  className={`p-1.5 px-2 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border ${
+                    showDropCapMenu
+                      ? "bg-slate-900 text-white border-slate-800"
+                      : "hover:bg-slate-100 text-slate-800 border-slate-300/80 bg-white"
+                  }`}
+                  title="Adjust Paragraph First Letter (Drop Cap)"
+                >
+                  <Type size={14} className="stroke-[2.5] text-red-600" />
+                  <span className="text-[11px] font-serif font-bold">¶ Drop Cap</span>
+                  <ChevronDown size={11} className="text-slate-400" />
+                </button>
+
+                {showDropCapMenu && (
+                  <div className="absolute top-full left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-2 space-y-1 text-left font-sans animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
+                      FIRST LETTER STYLING
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDropCap("has-drop-cap")}
+                      className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-100 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="font-serif font-black text-2xl text-slate-900 leading-none">D</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-900">Classic Serif Drop Cap</span>
+                        <span className="text-[10px] text-slate-500">Large dark serif initial</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDropCap("has-drop-cap-red")}
+                      className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-red-50 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="font-serif font-black text-2xl text-[#BF1E2D] leading-none">D</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[#BF1E2D]">Red Journal Drop Cap</span>
+                        <span className="text-[10px] text-slate-500">Signature red initial</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDropCap("has-drop-cap-box")}
+                      className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-100 rounded-lg flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="bg-slate-900 text-white font-sans font-bold text-xs px-1.5 py-0.5 rounded">D</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-900">Dark Box Drop Cap</span>
+                        <span className="text-[10px] text-slate-500">Solid inverted tile initial</span>
+                      </div>
+                    </button>
+
+                    <div className="border-t border-slate-100 pt-1 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleApplyDropCap("")}
+                        className="w-full text-left px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Remove Drop Cap
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <span className="text-slate-300">|</span>
 

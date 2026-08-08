@@ -48,3 +48,48 @@ next-image-wrapper {
   border-radius: 0px !important;
 }
 
+/* DROP CAP (PARAGRAPH FIRST LETTER) STYLING */
+.has-drop-cap::first-letter,
+.drop-cap::first-letter,
+p.has-drop-cap::first-letter {
+  float: left;
+  font-size: 3.25rem;
+  line-height: 0.82;
+  padding-top: 4px;
+  padding-right: 10px;
+  padding-bottom: 2px;
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.has-drop-cap-red::first-letter,
+.drop-cap-red::first-letter,
+p.has-drop-cap-red::first-letter {
+  float: left;
+  font-size: 3.35rem;
+  line-height: 0.82;
+  padding-top: 4px;
+  padding-right: 10px;
+  padding-bottom: 2px;
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 800;
+  color: #BF1E2D;
+}
+
+.has-drop-cap-box::first-letter,
+.drop-cap-box::first-letter,
+p.has-drop-cap-box::first-letter {
+  float: left;
+  font-size: 2.4rem;
+  line-height: 1;
+  padding: 4px 10px;
+  margin-right: 10px;
+  margin-top: 2px;
+  background-color: #0F172A;
+  color: #FFFFFF;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  border-radius: 4px;
+}
+
