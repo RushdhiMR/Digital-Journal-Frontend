@@ -40,7 +40,7 @@ import {
   Check,
   Clock
 } from "lucide-react";
-import { isEmailAlreadyRegistered } from "@/lib/userProfiles";
+import { isEmailAlreadyRegistered, getUserProfile, saveUserProfile } from "@/lib/userProfiles";
 
 interface Article {
   id: number;
@@ -70,7 +70,7 @@ interface Reader {
   id: number;
   name: string;
   email: string;
-  membershipType: "Subscriber" | "Registered Reader" | "VIP Member";
+  membershipType: "Subscriber" | "Registered Reader" | "VIP Member" | "Author Account";
   company?: string;
   joinedDate: string;
   status: "Active" | "Pending";
@@ -193,6 +193,7 @@ export default function AdminDashboardPage() {
     {
       id: 1,
       name: "Jennifer Friesen",
+      email: "writer@digitaljournal.com",
       role: "Associate Editor & Calgary Bureau Lead",
       articlesCount: 18,
       avatar: "/author_woman.jpg",
@@ -202,6 +203,7 @@ export default function AdminDashboardPage() {
     {
       id: 2,
       name: "Pramod Jain",
+      email: "pramod@digitaljournal.com",
       role: "Senior Reporter - Logistics & Telemetry",
       articlesCount: 12,
       avatar: "/author_bluesuit.jpg",
@@ -211,6 +213,7 @@ export default function AdminDashboardPage() {
     {
       id: 3,
       name: "Chris Hogg",
+      email: "chris@digitaljournal.com",
       role: "Executive Editor - Fintech & Strategy",
       articlesCount: 24,
       avatar: "/author_beard.jpg",
@@ -220,6 +223,7 @@ export default function AdminDashboardPage() {
     {
       id: 4,
       name: "April Hicke",
+      email: "april@digitaljournal.com",
       role: "Tech Analyst - Biotech & Open Science",
       articlesCount: 9,
       avatar: "/author_glasses.jpg",
@@ -229,6 +233,7 @@ export default function AdminDashboardPage() {
     {
       id: 5,
       name: "David Potter",
+      email: "potter@digitaljournal.com",
       role: "Senior Columnist - Architecture & DevOps",
       articlesCount: 15,
       avatar: "/author_bluesuit.jpg",
@@ -385,6 +390,34 @@ export default function AdminDashboardPage() {
       const savedWriters = localStorage.getItem("dj_writers_list");
       if (savedWriters) {
         setWriters(JSON.parse(savedWriters));
+      }
+
+      // Check registered users list and merge into readers
+      const regUsersStr = localStorage.getItem("dj_registered_users");
+      if (regUsersStr) {
+        try {
+          const regList: any[] = JSON.parse(regUsersStr);
+          const newReaders: Reader[] = regList.map((u, index) => ({
+            id: 1000 + index,
+            name: u.name || u.email.split("@")[0],
+            email: u.email,
+            membershipType: u.role === "Writer" ? "Author Account" : "Registered Reader",
+            company: u.company || "Independent",
+            joinedDate: u.registeredAt ? u.registeredAt.split("T")[0] : "2026-08-01",
+            status: "Active"
+          }));
+          setReaders((prev) => {
+            const combined = [...prev];
+            newReaders.forEach((nr) => {
+              if (!combined.some((c) => c.email && c.email.toLowerCase() === nr.email.toLowerCase())) {
+                combined.unshift(nr);
+              }
+            });
+            return combined;
+          });
+        } catch (err) {
+          console.warn("Could not sync registered users:", err);
+        }
       }
 
       // Check saved breaking news ticker
@@ -696,13 +729,60 @@ export default function AdminDashboardPage() {
     const updated = writers.map((w) => {
       if (w.id === id) {
         const nextStatus = w.status === "Active" ? ("Deactivated" as const) : ("Active" as const);
-        showNotification(`✓ Writer "${name}" publishing access updated to ${nextStatus.toUpperCase()}.`);
+        if (w.email) {
+          const profile = getUserProfile(w.email) || { name: w.name, email: w.email };
+          saveUserProfile({ ...profile, role: nextStatus === "Active" ? "Writer" : "Reader" });
+        }
+        showNotification(
+          nextStatus === "Active"
+            ? `✓ Granted Author Access to "${name}" (Active)!`
+            : `🚫 Revoked Author Access for "${name}" (Deactivated). Access blocked.`
+        );
         return { ...w, status: nextStatus };
       }
       return w;
     });
     setWriters(updated);
     localStorage.setItem("dj_writers_list", JSON.stringify(updated));
+  };
+
+  const handleGrantReaderWriterAccess = (reader: Reader) => {
+    const email = reader.email.toLowerCase().trim();
+    const existingIndex = writers.findIndex((w) => w.email && w.email.toLowerCase().trim() === email);
+
+    let updatedWriters = [...writers];
+    if (existingIndex >= 0) {
+      const current = updatedWriters[existingIndex];
+      const nextStatus = current.status === "Active" ? ("Deactivated" as const) : ("Active" as const);
+      updatedWriters[existingIndex].status = nextStatus;
+      if (email) {
+        const profile = getUserProfile(email) || { name: reader.name, email: email };
+        saveUserProfile({ ...profile, role: nextStatus === "Active" ? "Writer" : "Reader" });
+      }
+      showNotification(
+        nextStatus === "Active"
+          ? `✓ Granted Author Access to "${reader.name}"!`
+          : `🚫 Revoked Author Access for "${reader.name}".`
+      );
+    } else {
+      const newWriter: Writer = {
+        id: Date.now(),
+        name: reader.name,
+        email: email,
+        role: "Staff Journalist",
+        articlesCount: 0,
+        avatar: "/author_bluesuit.jpg",
+        bio: `${reader.name} is an accredited author for Digital Journal.`,
+        status: "Active"
+      };
+      updatedWriters.unshift(newWriter);
+      const profile = getUserProfile(email) || { name: reader.name, email: email };
+      saveUserProfile({ ...profile, role: "Writer" });
+      showNotification(`✓ Granted Author Access to "${reader.name}" (${email})!`);
+    }
+
+    setWriters(updatedWriters);
+    localStorage.setItem("dj_writers_list", JSON.stringify(updatedWriters));
   };
 
   const handleDeleteWriter = (id: number, name: string) => {
@@ -1600,48 +1680,56 @@ export default function AdminDashboardPage() {
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                   <div>
                     <h2 className="text-xl font-bold text-zinc-900 font-serif">Writers & Editors Bureau Roster</h2>
-                    <p className="text-xs text-zinc-500">Manage journalists, editors, and columnists across bureau desks.</p>
+                    <p className="text-xs text-zinc-500">Manage all registered authors, journalists, and grant/revoke publishing access.</p>
                   </div>
 
-                  <button
-                    onClick={() => setIsWriterModalOpen(true)}
-                    className="bg-zinc-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Add Staff Journalist
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-extrabold px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                      {writers.filter((w) => w.status === "Active").length} / {writers.length} Active Authors
+                    </span>
+                    <button
+                      onClick={() => setIsWriterModalOpen(true)}
+                      className="bg-zinc-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Add Staff Journalist
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {writers.map((w) => (
                     <div key={w.id} className={`p-5 border rounded-xl transition-all flex items-start gap-4 ${
-                      w.status === "Active" ? "border-zinc-200 bg-zinc-50/50 hover:bg-white" : "border-rose-200 bg-rose-50/40 opacity-80"
+                      w.status === "Active" ? "border-emerald-200 bg-emerald-50/20 hover:bg-white" : "border-rose-200 bg-rose-50/40 opacity-90"
                     }`}>
-                      <div className={`w-12 h-12 rounded-full font-bold flex items-center justify-center text-base uppercase shadow-sm ${
+                      <div className={`w-12 h-12 rounded-full font-bold flex items-center justify-center text-base uppercase shadow-sm shrink-0 ${
                         w.status === "Active" ? "bg-[#BF1E2D] text-white" : "bg-zinc-600 text-zinc-200"
                       }`}>
                         {w.name.charAt(0)}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-bold text-zinc-900 font-serif text-sm">{w.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 flex-wrap">
+                          <div>
+                            <h3 className="font-bold text-zinc-900 font-serif text-sm">{w.name}</h3>
+                            <p className="text-[11px] font-mono text-zinc-500 truncate">{w.email || `${w.name.toLowerCase().replace(/\s+/g, '')}@digitaljournal.com`}</p>
+                          </div>
                           
                           {/* ACTIVATE / DEACTIVATE PUBLISHING ACCESS BUTTON */}
                           <button
                             type="button"
                             onClick={() => handleToggleWriterStatus(w.id, w.name)}
-                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-colors ${
+                            className={`text-[10.5px] font-bold px-3 py-1 rounded-full cursor-pointer transition-all ${
                               w.status === "Active"
-                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
-                                : "bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200 font-extrabold"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 shadow-2xs"
+                                : "bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200 font-extrabold shadow-2xs"
                             }`}
-                            title="Click to toggle writer publishing access"
+                            title="Click to toggle author access permission"
                           >
-                            {w.status === "Active" ? "● Active (Deactivate)" : "🚫 Deactivated (Activate)"}
+                            {w.status === "Active" ? "● ACCESS GRANTED (Click to Revoke)" : "🚫 ACCESS REVOKED (Click to Grant)"}
                           </button>
                         </div>
 
-                        <p className="text-xs text-blue-600 font-medium mt-0.5">{w.role}</p>
+                        <p className="text-xs text-blue-600 font-medium mt-1">{w.role}</p>
                         <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2">{w.bio}</p>
 
                         <div className="mt-3 pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-400">
@@ -1686,38 +1774,58 @@ export default function AdminDashboardPage() {
                       <tr>
                         <th className="py-3 px-4">Name & Email</th>
                         <th className="py-3 px-4">Membership Tier</th>
+                        <th className="py-3 px-4">Author Permission</th>
                         <th className="py-3 px-4">Company / Organization</th>
                         <th className="py-3 px-4">Joined Date</th>
                         <th className="py-3 px-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-200 bg-white">
-                      {readers.map((r) => (
-                        <tr key={r.id} className="hover:bg-zinc-50/80 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <p className="font-bold text-zinc-900">{r.name}</p>
-                            <p className="text-[11px] text-zinc-400">{r.email}</p>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded ${
-                              r.membershipType === "VIP Member" ? "bg-purple-100 text-purple-800" :
-                              r.membershipType === "Subscriber" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-700"
-                            }`}>
-                              ★ {r.membershipType}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-medium text-zinc-800">{r.company || "Independent"}</td>
-                          <td className="py-3.5 px-4 text-zinc-500">{r.joinedDate}</td>
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() => handleDeleteReader(r.id, r.email)}
-                              className="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {readers.map((r) => {
+                        const writerEntry = writers.find((w) => w.email && w.email.toLowerCase().trim() === r.email.toLowerCase().trim());
+                        const isAuthor = writerEntry && writerEntry.status === "Active";
+
+                        return (
+                          <tr key={r.id} className="hover:bg-zinc-50/80 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <p className="font-bold text-zinc-900">{r.name}</p>
+                              <p className="text-[11px] font-mono text-zinc-500">{r.email}</p>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded ${
+                                r.membershipType === "VIP Member" ? "bg-purple-100 text-purple-800" :
+                                r.membershipType === "Subscriber" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-700"
+                              }`}>
+                                ★ {r.membershipType}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <button
+                                type="button"
+                                onClick={() => handleGrantReaderWriterAccess(r)}
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-all ${
+                                  isAuthor
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                                    : "bg-zinc-100 text-zinc-700 border border-zinc-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 font-bold"
+                                }`}
+                                title={isAuthor ? "Click to Revoke Author Access" : "Click to Grant Author Access"}
+                              >
+                                {isAuthor ? "● Approved Author (Revoke)" : "+ Grant Author Access"}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 font-medium text-zinc-800">{r.company || "Independent"}</td>
+                            <td className="py-3.5 px-4 text-zinc-500">{r.joinedDate}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => handleDeleteReader(r.id, r.email)}
+                                className="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
