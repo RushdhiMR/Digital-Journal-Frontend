@@ -684,11 +684,10 @@ export default function CreatePostPage() {
       setMetaDescription(auto.metaDescription);
     }
     if (!isCardSummaryCustom) {
-      const summarySource = cleanContent || title.trim();
       setCardSummary(
-        summarySource
-          ? summarySource.slice(0, 140) + (summarySource.length > 140 ? "..." : "")
-          : "Digital Journal - Latest global news and technological insights."
+        cleanContent
+          ? cleanContent.slice(0, 140) + (cleanContent.length > 140 ? "..." : "")
+          : ""
       );
     }
     setMetaTitle(auto.metaTitle);
@@ -717,11 +716,10 @@ export default function CreatePostPage() {
 
     setFocusKeyword(auto.focusKeyword);
     setMetaDescription(auto.metaDescription);
-    const summarySource = cleanContent || title.trim();
     setCardSummary(
-      summarySource
-        ? summarySource.slice(0, 140) + (summarySource.length > 140 ? "..." : "")
-        : "Digital Journal - Latest global news and technological insights."
+      cleanContent
+        ? cleanContent.slice(0, 140) + (cleanContent.length > 140 ? "..." : "")
+        : ""
     );
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));

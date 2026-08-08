@@ -144,12 +144,11 @@ export function generateMetaTitle(title: string): string {
  */
 export function generateMetaDescription(title: string, subheading: string = '', content: string = ''): string {
   const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
-  const source = cleanContent || title.trim();
-  if (!source) return `${BRAND_NAME} - Latest global news and technological insights.`;
+  if (!cleanContent) return '';
 
-  if (source.length <= 160) return source;
+  if (cleanContent.length <= 160) return cleanContent;
 
-  const truncated = source.slice(0, 157);
+  const truncated = cleanContent.slice(0, 157);
   const lastSpace = truncated.lastIndexOf(' ');
   return (lastSpace > 100 ? truncated.slice(0, lastSpace) : truncated) + '...';
 }
