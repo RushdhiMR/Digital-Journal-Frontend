@@ -315,31 +315,31 @@ export default function ArticlePageContent({
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const getAuthorLinkedin = () => {
+  const [authorLinkedinUrl, setAuthorLinkedinUrl] = useState<string>("https://www.linkedin.com");
+
+  useEffect(() => {
     try {
-      const activeUserStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user");
+      const activeUserStr = typeof window !== "undefined" ? (localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user")) : null;
       if (activeUserStr) {
         const activeUser = JSON.parse(activeUserStr);
         if (activeUser.linkedin && activeUser.linkedin.trim()) {
-          return activeUser.linkedin.trim();
+          setAuthorLinkedinUrl(activeUser.linkedin.trim());
+          return;
         }
       }
 
-      const dbStr = localStorage.getItem("dj_user_profiles_db");
+      const dbStr = typeof window !== "undefined" ? localStorage.getItem("dj_user_profiles_db") : null;
       if (dbStr) {
         const profiles = JSON.parse(dbStr);
         const match: any = Object.values(profiles).find(
           (p: any) => p.name && p.name.toLowerCase().trim() === newsData.authorName.toLowerCase().trim()
         );
         if (match?.linkedin && match.linkedin.trim()) {
-          return match.linkedin.trim();
+          setAuthorLinkedinUrl(match.linkedin.trim());
         }
       }
     } catch (e) {}
-    return "https://www.linkedin.com";
-  };
-
-  const authorLinkedinUrl = getAuthorLinkedin();
+  }, [newsData.authorName]);
 
   const autoSEO = generateAutoSEO({
     title: newsData.title,
@@ -456,6 +456,7 @@ export default function ArticlePageContent({
               {/* Author LinkedIn Icon Symbol */}
               <a
                 href={authorLinkedinUrl}
+                suppressHydrationWarning
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-1 inline-flex items-center text-[#0A66C2] hover:text-[#004182] transition-colors p-0.5"
