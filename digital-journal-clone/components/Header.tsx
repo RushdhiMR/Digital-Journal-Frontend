@@ -475,7 +475,7 @@ export default function Header() {
                         {currentUser.email || "rushdhiriyaj2005@gmail.com"}
                       </p>
                       <span className="inline-block mt-0.5 px-2 py-0.2 bg-red-100 text-[#BF1E2D] font-extrabold text-[9px] uppercase tracking-wider rounded">
-                        {currentUser.role || "WRITER"}
+                        {currentUser.role || "READER"}
                       </span>
                     </div>
                   </div>
@@ -494,33 +494,55 @@ export default function Header() {
                     </Link>
                   )}
 
-                  {/* Author Workspace Option (Writer, Admin & Co-Admin) */}
-                  {(currentUser.role === "Writer" || currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("writer")) && (
-                    <Link
-                      href="/writer"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
-                    >
-                      <PenTool size={16} className="text-[#1B50E8] flex-shrink-0" />
-                      <span className="text-[#1B50E8] font-bold text-[12px] tracking-tight">
-                        Author Workspace
-                      </span>
-                    </Link>
-                  )}
+                  {/* Author Workspace Option - ONLY shown if user is explicitly an Admin-approved Author */}
+                  {(() => {
+                    const email = (currentUser.email || "").toLowerCase().trim();
+                    const isSystemWriterOrAdmin =
+                      email === "writer@digitaljournal.com" ||
+                      email === "admin@digitaljournal.com" ||
+                      email === "coadmin@digitaljournal.com" ||
+                      email.includes("admin");
 
-                  {/* Reader Dashboard Option */}
-                  {currentUser.role !== "Admin" && currentUser.role !== "Co-Admin" && currentUser.role !== "Writer" && !(currentUser.role || "").toLowerCase().includes("writer") && (
-                    <Link
-                      href="/reader"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
-                    >
-                      <BookOpen size={16} className="text-[#BF1E2D] flex-shrink-0" />
-                      <span className="text-[#BF1E2D] font-bold text-[12px] tracking-tight">
-                        Reader Dashboard
-                      </span>
-                    </Link>
-                  )}
+                    let isApproved = isSystemWriterOrAdmin;
+                    if (!isApproved && email && typeof window !== "undefined") {
+                      const writersListStr = localStorage.getItem("dj_writers_list");
+                      if (writersListStr) {
+                        try {
+                          const wList: any[] = JSON.parse(writersListStr);
+                          isApproved = wList.some((w: any) => w.email && w.email.toLowerCase().trim() === email && w.status === "Active");
+                        } catch (e) {
+                          console.warn(e);
+                        }
+                      }
+                    }
+
+                    if (isApproved) {
+                      return (
+                        <Link
+                          href="/writer"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                        >
+                          <PenTool size={16} className="text-[#1B50E8] flex-shrink-0" />
+                          <span className="text-[#1B50E8] font-bold text-[12px] tracking-tight">
+                            Author Workspace
+                          </span>
+                        </Link>
+                      );
+                    }
+                    return (
+                      <Link
+                        href="/reader"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
+                      >
+                        <BookOpen size={16} className="text-[#BF1E2D] flex-shrink-0" />
+                        <span className="text-[#BF1E2D] font-bold text-[12px] tracking-tight">
+                          Reader Dashboard
+                        </span>
+                      </Link>
+                    );
+                  })()}
 
                   {/* Section 3: Profile Settings */}
                   <button
