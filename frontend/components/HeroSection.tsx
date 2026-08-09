@@ -1,56 +1,46 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Check, Play } from "lucide-react";
-
-import { getUserProfile } from "@/lib/userProfiles";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [userPublishedArticles, setUserPublishedArticles] = useState<any[]>([]);
 
+  // Load any published articles from localStorage to feature in Hero Carousel
   useEffect(() => {
     try {
-      const savedStr = localStorage.getItem("dj_writer_submitted_articles");
-      if (savedStr) {
-        const posts: any[] = JSON.parse(savedStr);
-        const approved = posts.filter((p) => p.status === "Published");
-        const formatted = approved.map((post, idx) => {
-          let authorName = post.authorName || "Staff Journalist";
-          let authorAvatar = post.authorAvatar;
-
-          if (post.authorEmail) {
-            const prof = getUserProfile(post.authorEmail);
-            if (prof) {
-              authorName = prof.name || authorName;
-              authorAvatar = prof.avatar || authorAvatar;
-            }
+      const stored = localStorage.getItem("dj_writer_submitted_articles");
+      if (stored) {
+        const posts: any[] = JSON.parse(stored);
+        const published = posts.filter((p) => p.status === "Published");
+        const formatted = published.map((post, index) => {
+          const cat = (post.category || "BUSINESS").toUpperCase();
+          const postSlug = (post.title || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .trim()
+            .replace(/\s+/g, "-");
+          
+          let rawAvatar = post.authorAvatar;
+          let rawName = post.authorName || "Rushdhi MR";
+          if (!rawAvatar || rawAvatar.includes("cart") || rawName.toLowerCase().includes("admin")) {
+            rawName = "Rushdhi MR";
+            rawAvatar = "/author_bluesuit.jpg";
           }
-          try {
-            const uStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user");
-            if (uStr) {
-              const u = JSON.parse(uStr);
-              if (u?.name && u.name.toLowerCase().trim() === authorName.toLowerCase().trim()) {
-                if (u.avatar) authorAvatar = u.avatar;
-              }
-            }
-          } catch (e) {}
-
-          const postSlug = (post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-          const cat = (post.category || "business").toLowerCase();
 
           return {
-            id: post.id || `pub-${idx}`,
-            category: (post.category || "WORLD").toUpperCase(),
+            id: `user-pub-${post.id || index}`,
+            category: cat,
             title: post.title,
-            excerpt: post.summary || post.content?.replace(/<[^>]+>/g, "").slice(0, 150) + "...",
-            author: authorName,
-            authorAvatar: authorAvatar || null,
+            excerpt: post.summary || (post.content || "").replace(/<[^>]*>?/gm, "").slice(0, 160) + "...",
+            author: rawName,
+            authorAvatar: rawAvatar,
             date: post.date || "Just now",
             readTime: post.readDuration || "4 MIN READ",
-            image: post.imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop",
-            href: `/${cat}/companies/${postSlug}`
+            image: post.imageUrl || "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&h=800&fit=crop",
+            href: `/${cat.toLowerCase()}/companies/${postSlug}?id=${post.id}`
           };
         });
         setUserPublishedArticles(formatted);
@@ -82,7 +72,7 @@ export default function HeroSection() {
       authorAvatar: "/author_woman.jpg",
       date: "July 28, 2026",
       readTime: "6 MIN READ",
-      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1000&h=750&fit=crop",
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop",
       href: "/technology/artificial-intelligence/can-space-ai-data-centres-solve-earths-computing-crisis"
     },
     {
@@ -94,7 +84,7 @@ export default function HeroSection() {
       authorAvatar: "/author_glasses.jpg",
       date: "July 27, 2026",
       readTime: "4 MIN READ",
-      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1000&h=750&fit=crop",
+      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&h=800&fit=crop",
       href: "/business/companies/canadian-mathematician-honoured-for-reshaping-global-data-networks"
     },
     {
@@ -106,7 +96,7 @@ export default function HeroSection() {
       authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
       date: "July 26, 2026",
       readTime: "5 MIN READ",
-      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&h=750&fit=crop",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=800&fit=crop",
       href: "/technology/innovations/chinas-kimi-k3-model-rattles-us-ai-technology-industry"
     },
     {
@@ -118,7 +108,7 @@ export default function HeroSection() {
       authorAvatar: "/author_bluesuit.jpg",
       date: "July 25, 2026",
       readTime: "4 MIN READ",
-      image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&h=750&fit=crop",
+      image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&h=800&fit=crop",
       href: "/business/startups/startups-bet-on-autonomous-ai-agents"
     }
   ];
@@ -178,11 +168,11 @@ export default function HeroSection() {
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 border-b border-gray-200 font-sans">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH) */}
-        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none flex flex-col lg:flex-row items-stretch min-h-[320px] h-auto">
+        {/* LEFT CARD: FEATURED ARTICLE CAROUSEL (~67% GRID WIDTH, FIXED HEIGHT FOR EXACT SAME IMAGE SIZE) */}
+        <div className="lg:col-span-8 bg-white border border-gray-200 rounded-none flex flex-col lg:flex-row items-stretch min-h-[360px] h-auto lg:h-[360px] overflow-hidden">
           
-          {/* WIDESCREEN RECTANGLE IMAGE (60% Width, Flexible Height, Sharp Edges) */}
-          <div className="lg:w-[60%] w-full relative aspect-[16/9] lg:aspect-auto lg:h-full min-h-[240px] sm:min-h-[280px] flex-shrink-0 group overflow-hidden">
+          {/* WIDESCREEN RECTANGLE IMAGE (60% Width, Exact Same Size & Aspect Ratio Across All Slides) */}
+          <div className="lg:w-[60%] w-full h-[260px] sm:h-[300px] lg:h-full relative flex-shrink-0 group overflow-hidden bg-gray-900">
             <Link href={activeArticle.href} className="block w-full h-full">
               <img
                 src={activeArticle.image}
@@ -200,8 +190,8 @@ export default function HeroSection() {
             </Link>
           </div>
 
-          {/* RIGHT TEXT DETAILS (40% Width Desktop, Full Width Mobile, Full Typography & Bottom Controls) */}
-          <div className="w-full lg:w-[40%] p-4 sm:p-5 flex flex-col justify-between h-auto bg-white min-w-0">
+          {/* RIGHT TEXT DETAILS (40% Width Desktop, Fixed Card Height Matching Image Height) */}
+          <div className="w-full lg:w-[40%] p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full bg-white min-w-0">
             <div className="w-full">
               {/* Category Subtitle */}
               <span className="text-[#D31220] font-black text-[11px] tracking-wider uppercase mb-1.5 block font-sans">
@@ -209,14 +199,14 @@ export default function HeroSection() {
               </span>
 
               {/* Main Title - FULL UNTRUNCATED TITLE */}
-              <h1 className="text-base sm:text-lg lg:text-[21px] font-bold leading-snug mb-2.5 text-gray-900 font-serif whitespace-normal break-words">
+              <h1 className="text-base sm:text-lg lg:text-[20px] font-bold leading-snug mb-2.5 text-gray-900 font-serif whitespace-normal break-words line-clamp-3">
                 <Link href={activeArticle.href} className="hover:text-[#D31220] transition-colors block">
                   {activeArticle.title}
                 </Link>
               </h1>
 
               {/* Excerpt - FULL UNTRUNCATED DESCRIPTION */}
-              <p className="text-gray-600 text-xs sm:text-[13px] leading-relaxed mb-4 font-sans whitespace-normal break-words">
+              <p className="text-gray-600 text-xs sm:text-[13px] leading-relaxed mb-4 font-sans whitespace-normal break-words line-clamp-3">
                 {activeArticle.excerpt}
               </p>
 
@@ -251,7 +241,7 @@ export default function HeroSection() {
             <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto w-full">
               {/* Carousel Dots */}
               <div className="flex items-center gap-1.5">
-                {carouselArticles.map((_, idx) => (
+                {allCarouselArticles.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentSlide(idx)}
@@ -288,8 +278,8 @@ export default function HeroSection() {
 
         </div>
 
-        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD MIN HEIGHT DESKTOP) */}
-        <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:min-h-[310px]">
+        {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD EXACT HEIGHT) */}
+        <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:h-[360px]">
           <div className="flex flex-col justify-between h-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-100">
@@ -299,55 +289,52 @@ export default function HeroSection() {
                   Trending Now
                 </h2>
               </div>
-              <Link href="/news" className="text-[11px] font-bold text-[#D31220] hover:underline">
-                View all
-              </Link>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                Live Feed
+              </span>
             </div>
 
-            {/* 4 Numbered List Items */}
-            <div className="space-y-1.5 flex-1 flex flex-col justify-around">
-              {trendingNowItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center justify-between gap-2 pb-1 ${
-                    idx < trendingNowItems.length - 1 ? "border-b border-gray-100" : ""
-                  }`}
+            {/* List */}
+            <div className="space-y-2.5 flex-1">
+              {trendingNowItems.map((item) => (
+                <div 
+                  key={item.number}
+                  className="flex items-center gap-3 p-1.5 rounded hover:bg-gray-50 transition-colors group cursor-pointer"
                 >
-                  <div className="flex items-start gap-2 flex-1 min-w-0">
-                    <span className="text-[#D31220] font-black text-xs w-4 flex-shrink-0 mt-0.5">
-                      {item.number}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[9px] font-black text-[#D31220] uppercase tracking-wider block leading-none mb-0.5">
-                        {item.category}
-                      </span>
-                      <h3 className="text-[11.5px] font-bold text-gray-900 leading-tight hover:text-[#D31220] transition-colors break-words line-clamp-2">
-                        <Link href={item.href} title={item.title}>
-                          {item.title}
-                        </Link>
-                      </h3>
-                      <span className="text-[10px] text-gray-400 block mt-0.5 font-medium leading-none">
-                        {item.time}
-                      </span>
-                    </div>
+                  {/* Item Image */}
+                  <div className="relative w-16 h-12 flex-shrink-0 bg-gray-100 overflow-hidden border border-gray-200">
+                    <img 
+                      src={item.image} 
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    />
                   </div>
 
-                  <Link href={item.href} className="w-[68px] h-[42px] rounded-none overflow-hidden bg-gray-900 flex-shrink-0 block group relative">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 rounded-none"
-                    />
-                    {item.hasVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-5 h-5 bg-black/60 rounded-full flex items-center justify-center border border-white/50 text-white shadow-md">
-                          <Play size={9} fill="white" className="ml-0.5" />
-                        </div>
-                      </div>
-                    )}
-                  </Link>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[9.5px] font-extrabold text-[#D31220] uppercase tracking-wider">
+                        {item.category}
+                      </span>
+                      <span className="text-[9px] text-gray-400">• {item.time}</span>
+                    </div>
+                    <Link href={item.href} className="text-xs font-bold text-gray-900 group-hover:text-[#D31220] transition-colors line-clamp-1 leading-snug block font-serif">
+                      {item.title}
+                    </Link>
+                  </div>
                 </div>
               ))}
+            </div>
+
+            {/* Bottom View All Link */}
+            <div className="pt-2 border-t border-gray-100 mt-1">
+              <Link 
+                href="/news" 
+                className="text-[11px] font-extrabold text-gray-900 hover:text-[#D31220] flex items-center justify-between uppercase tracking-wider group transition-colors"
+              >
+                <span>View All Trending News</span>
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </Link>
             </div>
 
           </div>
