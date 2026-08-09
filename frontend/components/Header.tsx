@@ -245,23 +245,9 @@ export default function Header() {
         }
 
         setCurrentUser(finalUser);
-        saveUserProfile(finalUser);
-      } else if (isSignedOut === "true") {
-        setCurrentUser(null);
       } else {
-        const defaultUser = {
-          name: "rushdhi",
-          email: "rushdhiriyaj2005@gmail.com",
-          role: "Writer",
-          avatar: "/author_bluesuit.jpg"
-        };
-        const savedProfile = getUserProfile(defaultUser.email);
-        const finalUser = {
-          ...defaultUser,
-          ...savedProfile
-        };
-        setCurrentUser(finalUser);
-        saveUserProfile(finalUser);
+        // No active user logged in -> Set currentUser to null so "Sign In" button displays
+        setCurrentUser(null);
       }
 
       const savedToast = localStorage.getItem("dj_toast");
@@ -300,6 +286,7 @@ export default function Header() {
     localStorage.removeItem("dj_user");
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_writer_user");
+    localStorage.removeItem("dj_user_profile");
     localStorage.setItem("dj_signed_out", "true");
     localStorage.setItem("dj_toast", "👋 You have successfully signed out.");
     setCurrentUser(null);
