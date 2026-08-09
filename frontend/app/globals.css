@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@layer base {
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
+    margin: 0;
+    line-height: inherit;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #ffffff;
+    color: #111827;
+  }
+}
+
+@layer utilities {
+  .mx-auto {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .font-standard-sans {
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+}
+
+/* ENFORCE SHARP 90-DEGREE EDGES ON ALL IMAGES ACROSS THE ENTIRE WEBSITE */
+img, 
+picture, 
+video, 
+.image-container,
+[class*="aspect-"],
+next-image-wrapper {
+  border-radius: 0px !important;
+}
+
+/* DROP CAP (PARAGRAPH FIRST LETTER) STYLING */
+.has-drop-cap::first-letter,
+.drop-cap::first-letter,
+p.has-drop-cap::first-letter {
+  float: left;
+  font-size: 3.25rem;
+  line-height: 0.82;
+  padding-top: 4px;
+  padding-right: 10px;
+  padding-bottom: 2px;
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.has-drop-cap-red::first-letter,
+.drop-cap-red::first-letter,
+p.has-drop-cap-red::first-letter {
+  float: left;
+  font-size: 3.35rem;
+  line-height: 0.82;
+  padding-top: 4px;
+  padding-right: 10px;
+  padding-bottom: 2px;
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 800;
+  color: #BF1E2D;
+}
+
+.has-drop-cap-box::first-letter,
+.drop-cap-box::first-letter,
+p.has-drop-cap-box::first-letter {
+  float: left;
+  font-size: 2.4rem;
+  line-height: 1;
+  padding: 4px 10px;
+  margin-right: 10px;
+  margin-top: 2px;
+  background-color: #0F172A;
+  color: #FFFFFF;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  border-radius: 4px;
+}
+
