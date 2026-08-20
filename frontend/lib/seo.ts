@@ -31,7 +31,7 @@ export interface SEOScoreResult {
   }[];
 }
 
-const BRAND_NAME = "Digital Journal";
+const BRAND_NAME = "London BigBen";
 const DOMAIN = "https://www.digitaljournal.com";
 
 /**
@@ -48,25 +48,27 @@ export function generateSlug(title: string): string {
 }
 
 /**
- * Intelligently extract the primary focus keyword as the first three key words of the title
+ * Intelligently extract the primary focus keyword from the title
  */
 export function extractFocusKeyword(title: string, category: string = ''): string {
   if (!title || !title.trim()) {
     return category ? category.toLowerCase() : 'business';
   }
 
-  // Only filter out minor grammatical connectors so title key words are preserved in order
+  // Filter out minor grammatical connectors, articles, prepositions & auxiliary verbs
   const minorConnectors = new Set([
     'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'by', 'of', 'for', 
     'with', 'to', 'from', 'as', 'into', 'is', 'are', 'was', 'were', 'be', 'been', 
-    'being', 'that', 'this', 'these', 'those', 'its', 'their', 'your', 'our'
+    'being', 'that', 'this', 'these', 'those', 'its', 'their', 'your', 'our',
+    'has', 'have', 'had', 'will', 'would', 'could', 'should', 'can', 'may', 'might',
+    'how', 'why', 'what', 'when', 'where', 'who', 'about', 'over', 'after'
   ]);
 
-  const rawWords = title
-    .trim()
+  const cleanTitle = title.trim().replace(/^Review:\s*/i, '');
+  const rawWords = cleanTitle
     .split(/\s+/)
-    .map(w => w.toLowerCase().replace(/[^\w]/g, ''))
-    .filter(w => w.length > 0 && !minorConnectors.has(w));
+    .map(w => w.replace(/[^\w]/g, ''))
+    .filter(w => w.length > 0 && !minorConnectors.has(w.toLowerCase()));
 
   if (rawWords.length >= 3) {
     return `${rawWords[0]} ${rawWords[1]} ${rawWords[2]}`;
@@ -140,17 +142,28 @@ export function generateMetaTitle(title: string): string {
 }
 
 /**
- * Generate optimized meta description (aiming for 150-160 characters)
+ * Extract concise card summary (SEO lead) strictly from article body content
  */
-export function generateMetaDescription(title: string, subheading: string = '', content: string = ''): string {
-  const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
-  if (!cleanContent) return '';
+export function extractCardSummary(content: string = ''): string {
+  const cleanContent = content
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
+  if (!cleanContent) return '';
   if (cleanContent.length <= 160) return cleanContent;
 
   const truncated = cleanContent.slice(0, 157);
   const lastSpace = truncated.lastIndexOf(' ');
   return (lastSpace > 100 ? truncated.slice(0, lastSpace) : truncated) + '...';
+}
+
+/**
+ * Generate optimized meta description strictly from article body content
+ */
+export function generateMetaDescription(title: string, subheading: string = '', content: string = ''): string {
+  return extractCardSummary(content);
 }
 
 /**
@@ -199,7 +212,7 @@ export function generateAutoSEO(data: ArticleSEOData) {
     "dateModified": updatedAtIso,
     "author": {
       "@type": "Person",
-      "name": data.authorName || "Digital Journal Staff",
+      "name": data.authorName || "London BigBen Staff",
       "jobTitle": data.authorRole || "Journalist"
     },
     "publisher": {

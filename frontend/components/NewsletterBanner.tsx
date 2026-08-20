@@ -57,7 +57,7 @@ export default function NewsletterBanner() {
       {/* Success alert message */}
       {subscribed && (
         <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-center text-[13px] font-bold">
-          ✓ Subscribed successfully! Thank you for subscribing to Digital Journal.
+          ✓ Subscribed successfully! Thank you for subscribing to London BigBen.
         </div>
       )}
 

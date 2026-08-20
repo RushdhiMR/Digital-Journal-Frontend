@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendSignInNotificationEmail } from '@/lib/email';
+import { setAuthCookie } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -26,15 +27,20 @@ export async function POST(request: Request) {
         console.warn('Admin notification email skipped:', e);
       }
 
+      const userPayload = {
+        id: 1,
+        name: adminName,
+        email: email,
+        role: 'admin' as const,
+        provider: 'local',
+      };
+
+      await setAuthCookie(userPayload);
+
       return NextResponse.json({
         success: true,
         message: 'Admin authentication successful',
-        user: {
-          id: 1,
-          name: adminName,
-          email: email,
-          role: 'admin',
-        },
+        user: userPayload,
       });
     }
 

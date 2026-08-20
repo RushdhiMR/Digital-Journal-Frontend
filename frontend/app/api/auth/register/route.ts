@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { normalizeEmail, hashPassword, setAuthCookie } from '@/lib/auth';
+import { DB } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/email';
-import { normalizeEmail, setAuthCookie } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -40,31 +41,54 @@ export async function POST(request: Request) {
     }
 
     const userName = name.trim();
-    const userRole = normalized.includes('admin') ? 'admin' : normalized.includes('writer') ? 'writer' : 'user';
+    // Public registration MUST default to 'reader' role strictly.
+    const userRole: 'reader' = 'reader';
 
-    const userPayload = {
-      id: Date.now(),
-      name: userName,
-      email: normalized,
-      role: userRole,
-      provider: 'local',
-    };
+    // Hash password with bcrypt
+    const passwordHash = await hashPassword(password);
 
-    // Set HTTP-Only session cookie
-    await setAuthCookie(userPayload);
-
-    // Send welcome email if configured
     try {
-      await sendWelcomeEmail(normalized, userName);
-    } catch (e) {
-      console.warn('Welcome email notification skipped:', e);
-    }
+      const newUser = await DB.createUser({
+        name: userName,
+        email: normalized,
+        password_hash: passwordHash,
+        role: userRole,
+        provider: 'local',
+        email_verified: false,
+      });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Account created successfully',
-      user: userPayload,
-    });
+      const userPayload = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        provider: newUser.provider,
+      };
+
+      // Set HTTP-Only session cookie
+      await setAuthCookie(userPayload);
+
+      // Send welcome email if configured
+      try {
+        await sendWelcomeEmail(normalized, userName);
+      } catch (e) {
+        console.warn('Welcome email notification skipped:', e);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Account created successfully',
+        user: userPayload,
+      });
+    } catch (dbError: any) {
+      if (dbError.code === 'ER_DUP_ENTRY' || dbError.message?.includes('already exists')) {
+        return NextResponse.json(
+          { error: 'An account with this email address already exists. Please log in instead.' },
+          { status: 409 }
+        );
+      }
+      throw dbError;
+    }
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
@@ -72,4 +96,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

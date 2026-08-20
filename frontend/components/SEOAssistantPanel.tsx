@@ -36,7 +36,7 @@ export default function SEOAssistantPanel({
   });
 
   const displayTitle = articleData.title?.trim()
-    ? `${articleData.title.trim()} | Digital Journal`
+    ? `${articleData.title.trim()} | London BigBen`
     : "Your Article Title |...";
 
   const displaySnippet = metaDescription.trim()
@@ -70,7 +70,7 @@ export default function SEOAssistantPanel({
         </label>
         <textarea
           rows={3}
-          placeholder="Concise 1-2 sentence preview details."
+          placeholder="Auto-extracts lead sentences as you write the article body section..."
           value={cardSummary}
           onChange={(e) => onUpdateCardSummary(e.target.value)}
           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#F97316] focus:ring-1 focus:ring-orange-100 transition-all resize-none min-h-[90px]"
@@ -84,7 +84,7 @@ export default function SEOAssistantPanel({
         </label>
         <input
           type="text"
-          placeholder="e.g. Vexillum Minerals"
+          placeholder={autoSEO.focusKeyword ? `Auto-detected: ${autoSEO.focusKeyword}` : "e.g. Vexillum Minerals"}
           value={focusKeyword}
           onChange={(e) => onUpdateFocusKeyword(e.target.value)}
           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#F97316] focus:ring-1 focus:ring-orange-100 transition-all"
@@ -137,14 +137,14 @@ export default function SEOAssistantPanel({
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1.5 text-left">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-6 h-6 rounded-full bg-[#0F172A] text-white text-[9px] font-extrabold flex items-center justify-center shrink-0 border border-slate-700">
-              DJ
+              LB
             </div>
             <div className="truncate min-w-0">
               <span className="text-xs font-bold text-slate-900 block leading-tight">
-                Digital Journal
+                London BigBen Network
               </span>
               <span className="text-[10px] text-slate-500 block truncate leading-none">
-                www.digitaljournal.com &gt; article...
+                www.londonbigben.com &gt; article...
               </span>
             </div>
           </div>

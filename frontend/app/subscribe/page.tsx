@@ -105,7 +105,7 @@ export default function SubscribePage() {
       {subscribed && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs font-bold py-3.5 px-8 rounded-full border border-zinc-700 shadow-2xl flex items-center gap-3 animate-bounce z-50">
           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>✓ Welcome to Digital Journal! Your subscription is active.</span>
+          <span>✓ Welcome to London BigBen! Your subscription is active.</span>
         </div>
       )}
 
@@ -114,7 +114,7 @@ export default function SubscribePage() {
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#BF1E2D]/20 border border-[#BF1E2D]/40 text-[#FF4D5E] text-[11px] font-bold uppercase tracking-wider mb-4 rounded-full">
             <Sparkles size={14} />
-            <span>Digital Journal Official Subscriptions</span>
+            <span>London BigBen Official Subscriptions</span>
           </div>
 
           <h1 className="font-serif text-[34px] sm:text-[44px] md:text-[50px] font-bold text-white tracking-tight leading-[1.12] mb-4">
@@ -122,7 +122,7 @@ export default function SubscribePage() {
           </h1>
 
           <p className="text-[14px] md:text-[16.5px] text-zinc-300 font-sans max-w-2xl mx-auto leading-relaxed font-normal">
-            Subscribe to Digital Journal to unlock daily news digests, executive intelligence, and customized topic feeds delivered directly to your inbox.
+            Subscribe to London BigBen to unlock daily news digests, executive intelligence, and customized topic feeds delivered directly to your inbox.
           </p>
         </div>
       </section>
@@ -154,7 +154,7 @@ export default function SubscribePage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-bold text-[18px] text-zinc-900 font-serif">
-                    Digital Journal Fast Start
+                    London BigBen Fast Start
                   </h3>
                   <span className="text-[11px] bg-zinc-200 text-zinc-800 font-bold px-2.5 py-0.5 rounded">
                     FREE
@@ -304,7 +304,7 @@ export default function SubscribePage() {
               Complete Your Subscription
             </h3>
             <p className="text-[13px] text-zinc-400 text-center mb-6 font-sans">
-              Enter your email address to receive your curated Digital Journal updates.
+              Enter your email address to receive your curated London BigBen updates.
             </p>
 
             <form onSubmit={handleSubscribeSubmit} className="space-y-4 font-sans">
@@ -346,7 +346,7 @@ export default function SubscribePage() {
               </button>
 
               <p className="text-[11px] text-zinc-400 text-center pt-2 font-sans">
-                🔒 Spam-free guarantee. Unsubscribe with 1 click anytime. Subject to Digital Journal&apos;s <Link href="#" className="underline text-zinc-300 hover:text-white">Terms of Service</Link> & <Link href="#" className="underline text-zinc-300 hover:text-white">Privacy Policy</Link>.
+                🔒 Spam-free guarantee. Unsubscribe with 1 click anytime. Subject to London BigBen&apos;s <Link href="#" className="underline text-zinc-300 hover:text-white">Terms of Service</Link> & <Link href="#" className="underline text-zinc-300 hover:text-white">Privacy Policy</Link>.
               </p>
             </form>
           </div>

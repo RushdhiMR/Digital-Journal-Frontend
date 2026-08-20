@@ -44,14 +44,82 @@ const parentConfig: Record<string, { name: string; color: string; desc: string }
     name: "Events",
     color: "bg-[#C6F7E9]",
     desc: "tracks developer summits and forum schedules."
+  },
+  "world": {
+    name: "World",
+    color: "bg-[#FFE552]",
+    desc: "covers international developments, geopolitics, and global trends."
+  },
+  "politics": {
+    name: "Politics",
+    color: "bg-[#FFE552]",
+    desc: "tracks policy reforms, government legislation, and civic governance."
+  },
+  "economy-markets": {
+    name: "Economy & Markets",
+    color: "bg-[#FFE9D6]",
+    desc: "covers macroeconomic trends, market indices, commodities, and trade."
+  },
+  "markets": {
+    name: "Markets",
+    color: "bg-[#FFE9D6]",
+    desc: "covers equities, commodities, forex, and cryptocurrency trends."
+  },
+  "economy": {
+    name: "Economy",
+    color: "bg-[#FFE9D6]",
+    desc: "tracks central bank policies, inflation indices, and global trade."
+  },
+  "lifestyle": {
+    name: "Lifestyle",
+    color: "bg-[#E2F0D9]",
+    desc: "explores modern living, culture, entertainment, and wellbeing."
+  },
+  "sports": {
+    name: "Sports",
+    color: "bg-[#C6F7E9]",
+    desc: "delivers comprehensive match coverage, statistics, and athlete profiles."
+  },
+  "entertainment": {
+    name: "Entertainment",
+    color: "bg-[#FFE9D6]",
+    desc: "covers cinema, music, arts, and digital media production."
+  },
+  "health": {
+    name: "Health",
+    color: "bg-[#E2F0D9]",
+    desc: "tracks medical discoveries, wellness research, and public healthcare."
+  },
+  "research": {
+    name: "Research",
+    color: "bg-[#BEEDF7]",
+    desc: "publishes open-access findings across science, technology, and engineering."
   }
 };
+
+function getParentCategoryInfo(cat: string) {
+  const norm = (cat || "").toLowerCase().trim();
+  if (parentConfig[norm]) return parentConfig[norm];
+  
+  const formattedName = (cat || "News")
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+    .replace(/\bAnd\b/g, "&");
+
+  return {
+    name: formattedName || "News",
+    color: "bg-[#FFE9D6]",
+    desc: `covers essential reporting and updates in ${formattedName}.`
+  };
+}
 
 function formatSubcategory(str: string) {
   return str
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(" ")
+    .replace(/\bAnd\b/g, "&");
 }
 
 function formatSentenceCase(str: string) {
@@ -124,7 +192,7 @@ const customNewsDatabase: Record<string, {
     title: "New exclusive decoration design fit out llc structural acrylic pioneers in the uae",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 22, 2026 6:08 PM EDT",
     image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&h=750&fit=crop",
     caption: "Structural acrylic interior decoration fit-out installation in the UAE. — Photo courtesy of Exclusive Decoration LLC",
@@ -149,7 +217,7 @@ const customNewsDatabase: Record<string, {
     title: "Venture capital firms shift focus to sustainable tech sector pipelines",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 22, 2026 4:30 PM EDT",
     image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&h=750&fit=crop",
     caption: "Venture capital partners evaluate sustainable infrastructure portfolios. (AFP/File)",
@@ -180,10 +248,10 @@ const customNewsDatabase: Record<string, {
     title: "How remote leadership models are evolving to meet product goals",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 21, 2026 2:15 PM EDT",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=750&fit=crop",
-    caption: "Distributed engineering teams synchronize async product roadmaps. (Photo courtesy of Digital Journal)",
+    caption: "Distributed engineering teams synchronize async product roadmaps. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -286,7 +354,7 @@ const customNewsDatabase: Record<string, {
     title: "International data privacy standards updated after cross-border audits",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 22, 2026 9:15 AM EDT",
     image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&h=750&fit=crop",
     caption: "Privacy regulators review compliance frameworks for international cloud transfers. (AFP/File)",
@@ -389,7 +457,7 @@ const customNewsDatabase: Record<string, {
     title: "Canada's Conexiom bets that the future of AI lies in automation, not experimentation",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 22, 2026 8:00 AM EDT",
     image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&h=750&fit=crop",
     caption: "Conexiom executive leadership outlines enterprise automation strategy. (AFP/File)",
@@ -551,7 +619,7 @@ const customNewsDatabase: Record<string, {
     title: "Cybersecurity protocols updated globally to counter multi-vector threats",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 18, 2026 8:15 AM EDT",
     image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=750&fit=crop",
     caption: "Security Operations Center (SOC) engineers monitor network intrusion alerts. (AFP/File)",
@@ -569,7 +637,7 @@ const customNewsDatabase: Record<string, {
     title: "US announces civilian nuclear deal with Saudi Arabia",
     authorName: "Frank Morgan",
     authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop",
-    authorBio: "Frank Morgan is Digital Journal's senior political correspondent covering transatlantic diplomacy.",
+    authorBio: "Frank Morgan is London BigBen's senior political correspondent covering transatlantic diplomacy.",
     date: "July 22, 2026 5:25 PM EDT",
     image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=750&fit=crop",
     caption: "U.S. and international diplomats announce bilateral civilian energy agreement terms. (AFP/File)",
@@ -597,7 +665,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Sarah Miller covers international data privacy regulations, cross-border compliance, and digital rights.",
     date: "July 22, 2026 5:17 PM EDT",
     image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=750&fit=crop",
-    caption: "Canadian homeowners consult digital AI financial advice apps. (Photo courtesy of Digital Journal)",
+    caption: "Canadian homeowners consult digital AI financial advice apps. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -647,7 +715,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Dr. Tim Sandle is a London-based science journalist covering biotechnology, AI in healthcare, and digital transformation.",
     date: "July 21, 2026",
     image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=750&fit=crop",
-    caption: "Canadian regulatory leads evaluate algorithmic decision auditing protocols. (Photo courtesy of Digital Journal)",
+    caption: "Canadian regulatory leads evaluate algorithmic decision auditing protocols. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -697,7 +765,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Dr. Tim Sandle is a science journalist covering health, clinical nutrition, and preventive medicine.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=1200&h=750&fit=crop",
-    caption: "Nutrient-dense plant-based foods, seeds, and leafy greens support optimal bone mineral density. (Photo courtesy of Digital Journal)",
+    caption: "Nutrient-dense plant-based foods, seeds, and leafy greens support optimal bone mineral density. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -722,7 +790,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "April Hicke reports on ocean conservation, marine biology, and coastal ecosystems.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=750&fit=crop",
-    caption: "A massive basking shark glides through shallow coastal waters. (Photo courtesy of Digital Journal)",
+    caption: "A massive basking shark glides through shallow coastal waters. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -747,7 +815,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Pramod Jain reports on international affairs, climate disaster response, and regional infrastructure.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1200&h=750&fit=crop",
-    caption: "Emergency rescue crews navigate flooded villages across Assam. (Photo courtesy of Digital Journal)",
+    caption: "Emergency rescue crews navigate flooded villages across Assam. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -822,7 +890,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "David Chen reports on global markets, semiconductor hardware, and tech equities.",
     date: "July 28, 2026",
     image: "/ai_chip.png",
-    caption: "Advanced microchip wafer processing and semiconductor market volatility. (Photo courtesy of Digital Journal)",
+    caption: "Advanced microchip wafer processing and semiconductor market volatility. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -872,7 +940,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Dr. Tim Sandle reports on clean technology, renewable energy grids, and global sustainability.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&h=750&fit=crop",
-    caption: "Offshore wind turbines and solar farms generate record clean megawatt-hours globally. (Photo courtesy of Digital Journal)",
+    caption: "Offshore wind turbines and solar farms generate record clean megawatt-hours globally. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -897,7 +965,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "April Hicke reports on material science, bio-engineering, and sustainable technology.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=750&fit=crop",
-    caption: "Researchers test biodegradable polymers and carbon-negative building materials in bio-engineering laboratories. (Photo courtesy of Digital Journal)",
+    caption: "Researchers test biodegradable polymers and carbon-negative building materials in bio-engineering laboratories. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -922,7 +990,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Pramod Jain reports on telecommunications, edge computing, and industrial IoT platforms.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=750&fit=crop",
-    caption: "Private 5G network towers power real-time industrial automation and telemetry. (Photo courtesy of Digital Journal)",
+    caption: "Private 5G network towers power real-time industrial automation and telemetry. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -947,7 +1015,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Jennifer Friesen reports on workplace culture, remote management, and organizational leadership.",
     date: "July 27, 2026",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=750&fit=crop",
-    caption: "Distributed teams collaborate using hybrid video conferencing and asynchronous documentation tools. (Photo courtesy of Digital Journal)",
+    caption: "Distributed teams collaborate using hybrid video conferencing and asynchronous documentation tools. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -972,7 +1040,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Chris Hogg is an executive editor specializing in small business growth, fintech, and digital tools.",
     date: "July 27, 2026",
     image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=750&fit=crop",
-    caption: "Small business owners adopt low-code AI customer service and inventory software. (Photo courtesy of Digital Journal)",
+    caption: "Small business owners adopt low-code AI customer service and inventory software. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -997,7 +1065,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "David Potter covers enterprise cybersecurity, cloud defense architectures, and incident response protocols.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1200&h=750&fit=crop",
-    caption: "Cybersecurity operations centers monitor real-time threat vectors and zero-trust access controls. (Photo courtesy of Digital Journal)",
+    caption: "Cybersecurity operations centers monitor real-time threat vectors and zero-trust access controls. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -1019,10 +1087,10 @@ const customNewsDatabase: Record<string, {
     title: "Can space AI data centres solve Earth's computing crisis?",
     authorName: "Jennifer Friesen",
     authorAvatar: "/author_woman.jpg",
-    authorBio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead.",
+    authorBio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead.",
     date: "July 28, 2026",
     image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=750&fit=crop",
-    caption: "Aerospace engineers and cloud providers design orbital solar-powered data hubs. (Photo courtesy of Digital Journal)",
+    caption: "Aerospace engineers and cloud providers design orbital solar-powered data hubs. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -1047,7 +1115,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "April Hicke reports on biotechnology, scientific research, open science initiatives, and artificial intelligence adoption.",
     date: "July 27, 2026",
     image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&h=750&fit=crop",
-    caption: "Pioneering research in topology and distributed algorithm optimization earns international recognition. (Photo courtesy of Digital Journal)",
+    caption: "Pioneering research in topology and distributed algorithm optimization earns international recognition. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -1065,7 +1133,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Dr. Tim Sandle is a London-based science journalist covering biotechnology, microbiology, AI in healthcare, and digital transformation.",
     date: "July 26, 2026",
     image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=750&fit=crop",
-    caption: "New benchmark evaluations demonstrate breakthrough efficiency in long-context reasoning. (Photo courtesy of Digital Journal)",
+    caption: "New benchmark evaluations demonstrate breakthrough efficiency in long-context reasoning. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -1083,7 +1151,7 @@ const customNewsDatabase: Record<string, {
     authorBio: "Pramod Jain reports on global supply chains, logistics telemetry, enterprise cloud migrations, and emerging technology markets.",
     date: "July 25, 2026",
     image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&h=750&fit=crop",
-    caption: "Venture firms accelerate funding into specialized AI agentic platforms. (Photo courtesy of Digital Journal)",
+    caption: "Venture firms accelerate funding into specialized AI agentic platforms. (Photo courtesy of London BigBen)",
     sections: [
       {
         heading: "",
@@ -1111,7 +1179,7 @@ const authorAvatarMap: Record<string, { avatar: string; bio: string }> = {
   },
   "Jennifer Friesen": {
     avatar: "/author_woman.jpg",
-    bio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead."
+    bio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead."
   },
   "Ronda B": {
     avatar: "/author_woman.jpg",
@@ -1232,10 +1300,12 @@ function getNewsContent(slug: string) {
         title: localArticle.title,
         authorName: localArticle.authorName || "Rushdhi MR",
         authorAvatar: localArticle.authorAvatar || "/author_bluesuit.jpg",
-        authorBio: localArticle.authorBio || "Journalist for Digital Journal.",
+        authorBio: localArticle.authorBio || "Journalist for London BigBen.",
         date: localArticle.date || "July 28, 2026",
         image: localArticle.imageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=750&fit=crop",
-        caption: `${localArticle.title}. (Photo courtesy of Digital Journal)`,
+        caption: localArticle.subheading || localArticle.summary || `${localArticle.title}. (Photo courtesy of London BigBen)`,
+        category: localArticle.category,
+        subcategories: Array.isArray(localArticle.subcategories) ? localArticle.subcategories : (Array.isArray(localArticle.subCategories) ? localArticle.subCategories : []),
         sections: [
           {
             heading: "",
@@ -1257,11 +1327,11 @@ function getNewsContent(slug: string) {
     authorName.toLowerCase().includes('hogg') ? "/author_beard.jpg" :
     "/author_woman.jpg"
   );
-  const authorBio = existing?.authorBio || mappedAuthor?.bio || `${authorName} is a dedicated journalist for Digital Journal covering breaking news, enterprise technology, and policy developments.`;
+  const authorBio = existing?.authorBio || mappedAuthor?.bio || `${authorName} is a dedicated journalist for London BigBen covering breaking news, enterprise technology, and policy developments.`;
 
   const date = existing ? existing.date : "July 22, 2026 6:08 PM EDT";
   const image = (existing && existing.image) ? existing.image : getTopicMatchingImage(slug, title);
-  const caption = existing ? existing.caption : `Comprehensive analysis and latest updates regarding ${title.toLowerCase()}. (Photo courtesy of Digital Journal)`;
+  const caption = existing ? existing.caption : `Comprehensive analysis and latest updates regarding ${title.toLowerCase()}. (Photo courtesy of London BigBen)`;
 
   // Generate big, multi-section in-depth long-form article for all news pages
   const baseSections = existing ? existing.sections : [];
@@ -1374,7 +1444,7 @@ export default async function SubcategoryPage({ params }: PageProps) {
   const { category, subcategory } = await params;
   
   const subName = formatSubcategory(subcategory);
-  const parent = parentConfig[category] || { name: "Business", color: "bg-[#BEEDF7]", desc: "tracks development paradigms." };
+  const parent = getParentCategoryInfo(category);
 
   const diveDeeperShortlist = [
     "world", "markets", "politics", "companies", "corporate-news", "entrepreneurship",

@@ -55,10 +55,21 @@ function ResetPasswordForm() {
     setIsSubmitting(true);
 
     try {
-      setSuccessMessage("Your password has been reset successfully! Redirecting to login...");
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Failed to reset password. Please try again.");
+      } else {
+        setSuccessMessage(data.message || "Your password has been reset successfully! Redirecting to login...");
+        setTimeout(() => {
+          router.push("/login");
+        }, 1500);
+      }
     } catch (err: any) {
       setErrorMessage("Failed to reset password. Please try again.");
     } finally {
@@ -74,11 +85,11 @@ function ResetPasswordForm() {
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity mb-2 group">
           <img
             src="/logo.png"
-            alt="Digital Journal Logo"
+            alt="London BigBen Logo"
             className="w-9 h-9 object-contain"
           />
           <span className="text-2xl font-serif font-black tracking-tight text-slate-900 group-hover:text-[#BF1E2D] transition-colors">
-            DIGITAL JOURNAL
+            LONDON BIGBEN
           </span>
         </Link>
 

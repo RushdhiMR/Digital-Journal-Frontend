@@ -196,7 +196,7 @@ export default function MoreNews() {
 
       <div className="space-y-8 max-w-[1000px]">
         {moreNews.map((item, index) => {
-          let authorName = "Digital Journal Staff";
+          let authorName = "London BigBen Staff";
           let dateStr = item.date;
           
           if (item.date.startsWith("By ")) {

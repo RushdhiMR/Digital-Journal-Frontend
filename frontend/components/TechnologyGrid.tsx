@@ -1,24 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import { useLiveArticles, ArticleItem, isTopPlacementArticle, articleMatchesCategory } from "@/lib/articlesSync";
+
+const FALLBACK_TECH_ARTICLES = [
+  {
+    id: "tech-1",
+    title: "Next-Generation Quantum Chips Achieve Room-Temperature Processing Stability",
+    description: "Research institutions confirm micro-architecture stability at ambient temperatures, unlocking massive parallel compute clusters for enterprise deployment.",
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=480&fit=crop",
+    href: "/technology/quantum-chips-room-temperature-breakthrough"
+  },
+  {
+    id: "tech-2",
+    title: "Autonomous AI Telematics Infrastructure Expands Regional Transportation Networks",
+    description: "Real-time edge processing and autonomous fleet management nodes achieve zero critical disruptions across over one million test highway miles.",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=480&fit=crop",
+    href: "/technology/autonomous-ai-telematics-fleet-networks"
+  }
+];
 
 export default function TechnologyGrid() {
-  const techArticles = [
-    {
-      id: 1,
-      title: "Here's what to eat to keep your bones strong (that's not just dairy)",
-      description: "Our bone density begins declining earlier than you might think. But ensuring our diet is rich in certain nutrients can help to keep our skeletons strong.",
-      image: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&h=480&fit=crop",
-      href: "/technology/what-to-eat-keep-bones-strong"
-    },
-    {
-      id: 2,
-      title: "Where giant sharks swim so close to shore you can nearly touch them",
-      description: "Basking sharks are one of the world's largest and most elusive fish species but these gentle giants cruise off the Irish coast each year.",
-      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=480&fit=crop",
-      href: "/technology/where-giant-sharks-swim-close-to-shore"
-    }
-  ];
+  const { articles: liveArticles = [] } = useLiveArticles();
+
+  const techLive = (Array.isArray(liveArticles) ? liveArticles : []).filter((art: ArticleItem) => {
+    if (!art || (art.status || "").toLowerCase() !== "published") return false;
+    if (isTopPlacementArticle(art)) return false;
+    return (
+      articleMatchesCategory(art, "technology") ||
+      articleMatchesCategory(art, "tech") ||
+      articleMatchesCategory(art, "ai") ||
+      articleMatchesCategory(art, "cyber") ||
+      articleMatchesCategory(art, "software")
+    );
+  });
+
+  const mappedLive = techLive.map((a: ArticleItem) => ({
+    id: a.id,
+    title: a.title,
+    description: a.description || a.summary || "",
+    image: a.imageUrl || a.image || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=480&fit=crop",
+    href: `/${(a.category || "technology").toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')}/${a.slug || String(a.id)}?id=${a.id}`
+  }));
+
+  const displayArticles = mappedLive.length >= 2
+    ? mappedLive.slice(0, 2)
+    : (mappedLive.length > 0 ? [...mappedLive, ...FALLBACK_TECH_ARTICLES].slice(0, 2) : FALLBACK_TECH_ARTICLES);
 
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 border-b border-gray-200 font-sans">
@@ -31,8 +58,8 @@ export default function TechnologyGrid() {
       </div>
 
       {/* 2 Equal 50/50 Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-        {techArticles.map((article) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {displayArticles.map((article) => (
           <article key={article.id} className="flex flex-col group cursor-pointer">
             <Link
               href={article.href}
@@ -56,11 +83,6 @@ export default function TechnologyGrid() {
             </p>
           </article>
         ))}
-      </div>
-
-      {/* FULL WIDTH CENTERED AD BANNER */}
-      <div className="w-full bg-black text-white py-14 flex items-center justify-center rounded-none">
-        <span className="text-sm font-mono tracking-widest text-gray-400">Ad</span>
       </div>
     </section>
   );

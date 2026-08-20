@@ -318,7 +318,7 @@ export default function GoogleAccountChooserModal({
                   Set Account Password
                 </h2>
                 <p className="text-[12.5px] text-zinc-400 font-sans leading-relaxed">
-                  Welcome <span className="text-white font-medium">{pendingAccount.name}</span> (<span className="text-white font-medium">{pendingAccount.email}</span>)! Set a password for your new Digital Journal account.
+                  Welcome <span className="text-white font-medium">{pendingAccount.name}</span> (<span className="text-white font-medium">{pendingAccount.email}</span>)! Set a password for your new London BigBen account.
                 </p>
               </div>
 

@@ -1,131 +1,198 @@
 "use client";
 
 import Link from "next/link";
+import { useLiveArticles, ArticleItem, isTopPlacementArticle, articleMatchesCategory } from "@/lib/articlesSync";
+
+const FALLBACK_BUSINESS_BOTTOM = [
+  {
+    id: "biz-b-1",
+    title: "Hong Kong activist allowed to stay in UK after deportation threat",
+    description: "Wu was detained for hours at London's Heathrow Airport last week and refused entry, he told the BBC.",
+    time: "35 mins ago | Asia",
+    image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&h=330&fit=crop",
+    href: "/business/hong-kong-activist-uk-stay"
+  },
+  {
+    id: "biz-b-2",
+    title: "Chip stocks slide in US and Asia as AI jitters rattle investors",
+    description: "Trading on South Korea's Kospi index was paused temporarily on Tuesday morning after slumping by 8%.",
+    time: "Just now",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&h=330&fit=crop",
+    href: "/business/chip-stocks-slide-us-asia"
+  },
+  {
+    id: "biz-b-3",
+    title: "'I just found all the classified stuff downstairs' - Biden to ghostwriter",
+    description: "Recordings between Biden and his ghostwriter reveal references to classified information and memory gaps.",
+    time: "2 hrs ago | US & Canada",
+    image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=500&h=330&fit=crop",
+    href: "/business/biden-ghostwriter-classified-documents"
+  }
+];
 
 export default function BusinessGrid() {
-  const bottomItems = [
-    {
-      id: 1,
-      title: "Hong Kong activist allowed to stay in UK after deportation threat",
-      description: "Wu was detained for hours at London's Heathrow Airport last week and refused entry, he told the BBC.",
-      time: "15 mins ago | Asia",
-      image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=400&h=260&fit=crop",
-      href: "/business/hong-kong-activist-uk-stay"
-    },
-    {
-      id: 2,
-      title: "Chip stocks slide in US and Asia as AI jitters rattle investors",
-      description: "Trading on South Korea's Kospi index was paused temporarily on Tuesday morning after slumping by 8%.",
-      time: "Just now",
-      image: "/ai_chip.png",
-      href: "/business/chip-stocks-slide-us-asia"
-    },
-    {
-      id: 3,
-      title: "'I just found all the classified stuff downstairs' - Biden to ghostwriter",
-      description: "Recordings between Biden and his ghostwriter reveal references to classified information and memory gaps.",
-      time: "2 hrs ago | US & Canada",
-      image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=400&h=260&fit=crop",
-      href: "/business/biden-ghostwriter-classified-documents"
-    }
-  ];
+  const { articles: liveArticles = [] } = useLiveArticles();
+
+  const businessLive = (Array.isArray(liveArticles) ? liveArticles : []).filter((art: ArticleItem) => {
+    if (!art || (art.status || "").toLowerCase() !== "published") return false;
+    if (isTopPlacementArticle(art)) return false;
+    const plc = (art.placement || "").toLowerCase();
+    return (
+      plc === "business section" ||
+      articleMatchesCategory(art, "business") ||
+      articleMatchesCategory(art, "finance") ||
+      articleMatchesCategory(art, "economy")
+    );
+  });
+
+  const featuredStory = businessLive.length > 0 ? {
+    title: businessLive[0].title,
+    description: businessLive[0].description || businessLive[0].summary || "",
+    image: businessLive[0].imageUrl || "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1000&h=650&fit=crop",
+    time: "7 hrs ago | Asia",
+    href: `/business/${businessLive[0].slug || String(businessLive[0].id)}`
+  } : {
+    title: "'It took everything from us': India's Assam faces worst floods in years",
+    description: "While flooding happens in Assam every year, a state minister described this year as the worst in six decades.",
+    image: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1000&h=650&fit=crop",
+    time: "7 hrs ago | Asia",
+    href: "/business/assam-worst-floods-in-years"
+  };
+
+  const secondaryStory = businessLive.length > 1 ? {
+    title: businessLive[1].title,
+    description: businessLive[1].description || businessLive[1].summary || "",
+    image: businessLive[1].imageUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=375&fit=crop",
+    time: "7 hrs ago | Asia",
+    href: `/business/${businessLive[1].slug || String(businessLive[1].id)}`
+  } : {
+    title: "China's new challenge as natural disasters strike - fake AI videos",
+    description: "Storms and flooding incidents over the last few months have seen fake videos inundating social media.",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=375&fit=crop",
+    time: "7 hrs ago | Asia",
+    href: "/business/china-fake-ai-videos-disasters"
+  };
+
+  const bottomItems = businessLive.length > 2 ? [
+    ...businessLive.slice(2, 5).map((a, idx) => ({
+      id: a.id || idx,
+      title: a.title,
+      description: a.description || a.summary || "",
+      time: "Just now | Business",
+      image: a.imageUrl || a.image || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&h=330&fit=crop",
+      href: `/business/${a.slug || String(a.id)}`
+    })),
+    ...FALLBACK_BUSINESS_BOTTOM
+  ].slice(0, 3) : FALLBACK_BUSINESS_BOTTOM;
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 border-b border-gray-200 font-sans">
-      {/* Red Bar Title */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-1.5 h-6 bg-[#D31220]" />
-        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+    <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 font-sans">
+      
+      {/* SECTION HEADER: Red Accent Bar + Title */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-[4px] h-5 bg-[#D31220]" />
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight font-sans">
           Business
         </h2>
       </div>
 
-      {/* TOP ROW: Text Story (Left) + Large Image (Center) + Video Story (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-10 pb-8 border-b border-gray-100">
+      {/* FULL-WIDTH DIVIDER LINE */}
+      <div className="border-b-2 border-gray-400/80 mb-8 w-full" />
+
+      {/* TOP ROW: 4-Column Grid (3 columns for Main Story + 1 column for Top-Right Ad Box) */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch mb-8">
         
-        {/* Left Column Text Story (~28%) */}
-        <div className="lg:col-span-3 flex flex-col justify-center">
-          <h3 className="text-2xl md:text-3xl font-bold leading-tight text-gray-900 hover:text-[#D31220] transition-colors mb-3 font-serif">
-            <Link href="/business/assam-worst-floods-in-years">
-              &apos;It took everything from us&apos;: India&apos;s Assam faces worst floods in years
+        {/* MAIN FEATURED STORY (Spans 3 Columns with text on left and large image on right) */}
+        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          
+          {/* Left Text Column */}
+          <div className="flex flex-col justify-start pr-0 md:pr-2">
+            <h3 className="text-2xl md:text-[28px] font-bold leading-[1.15] text-gray-900 hover:text-[#D31220] transition-colors mb-3 font-serif">
+              <Link href={featuredStory.href}>
+                {featuredStory.title}
+              </Link>
+            </h3>
+            <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
+              {featuredStory.description}
+            </p>
+            <span className="text-[11px] text-gray-400 font-medium">
+              {featuredStory.time}
+            </span>
+          </div>
+
+          {/* Right Big Image Column */}
+          <div className="w-full">
+            <Link href={featuredStory.href} className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 block group">
+              <img
+                src={featuredStory.image}
+                alt={featuredStory.title}
+                onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1000&h=650&fit=crop"; }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
             </Link>
-          </h3>
-          <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
-            While flooding happens in Assam every year, a state minister described this year as the worst in six decades.
-          </p>
-          <span className="text-[11px] text-gray-400 font-medium">
-            7 hrs ago | Asia
-          </span>
+          </div>
+
         </div>
 
-        {/* Center Column Large Flood Image (~64%) */}
-        <div className="lg:col-span-6 w-full">
-          <Link href="/business/assam-worst-floods-in-years" className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 rounded-none block group">
-            <img
-              src="https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1000&h=625&fit=crop"
-              alt="Assam floodwaters rescue"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          </Link>
-        </div>
-
-        {/* Right Column Secondary Video Story (~28%) */}
-        <div className="lg:col-span-3 flex flex-col">
-          <Link href="/business/china-fake-ai-videos-disasters" className="relative w-full aspect-[16/10] overflow-hidden bg-gray-900 rounded-none mb-3 block group">
-            <img
-              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=375&fit=crop"
-              alt="China broadcast video stage"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
-            />
-          </Link>
-          <h4 className="text-[14px] font-bold leading-snug text-gray-900 hover:text-[#D31220] transition-colors mb-2">
-            <Link href="/business/china-fake-ai-videos-disasters">
-              China&apos;s new challenge as natural disasters strike - fake AI videos
-            </Link>
-          </h4>
-          <p className="text-[12px] text-gray-600 leading-normal mb-2 line-clamp-3">
-            Storms and flooding incidents over the last few months have seen fake videos inundating social media.
-          </p>
-          <span className="text-[11px] text-gray-400 font-medium">
-            7 hrs ago | Asia
-          </span>
+        {/* TOP-RIGHT ADVERTISEMENT BOX (1 Column) */}
+        <div className="lg:col-span-1 flex flex-col h-full">
+          <div className="w-full h-full min-h-[220px] aspect-[16/10] lg:aspect-auto bg-black flex items-center justify-center cursor-pointer group hover:bg-neutral-900 transition-colors">
+            <span className="text-white font-bold text-sm tracking-wide">
+              Ad
+            </span>
+          </div>
         </div>
 
       </div>
 
-      {/* BOTTOM ROW: 3 Cards + Ad Box (4 Equal Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* BOTTOM ROW: 4 Columns (3 News Cards + 1 Secondary Article Card) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {bottomItems.map((item) => (
           <article key={item.id} className="flex flex-col group cursor-pointer">
-            <Link href={item.href} className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 rounded-none mb-3 block">
+            <Link href={item.href} className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 mb-2.5 block">
               <img
                 src={item.image}
                 alt={item.title}
-                onError={(e) => { e.currentTarget.src = "/ai_chip.png"; }}
+                onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&h=330&fit=crop"; }}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </Link>
-
-            <h4 className="text-[13.5px] font-bold leading-snug text-gray-900 group-hover:text-[#D31220] transition-colors mb-1.5 font-serif line-clamp-2">
+            <h4 className="text-[14px] font-bold leading-snug text-gray-900 group-hover:text-[#D31220] transition-colors mb-1.5 font-serif">
               <Link href={item.href}>
                 {item.title}
               </Link>
             </h4>
-
-            <p className="text-[12px] text-gray-600 leading-relaxed mb-2 line-clamp-3">
+            <p className="text-[12px] text-gray-600 leading-normal mb-2 line-clamp-3">
               {item.description}
             </p>
-
-            <span className="text-[10.5px] text-gray-400 font-medium mt-auto">
+            <span className="text-[11px] text-gray-400 font-medium mt-auto">
               {item.time}
             </span>
           </article>
         ))}
 
-        {/* Column 4: Black Ad Box */}
-        <div className="w-full h-[230px] bg-black text-white rounded-none flex items-center justify-center">
-          <span className="text-sm font-mono tracking-widest text-gray-400">Ad</span>
-        </div>
+        {/* 4TH COLUMN: ARTICLE CARD (SECONDARY STORY) */}
+        <article className="flex flex-col group cursor-pointer">
+          <Link href={secondaryStory.href} className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 mb-2.5 block">
+            <img
+              src={secondaryStory.image}
+              alt={secondaryStory.title}
+              onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=375&fit=crop"; }}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
+          <h4 className="text-[14px] font-bold leading-snug text-gray-900 group-hover:text-[#D31220] transition-colors mb-1.5 font-serif">
+            <Link href={secondaryStory.href}>
+              {secondaryStory.title}
+            </Link>
+          </h4>
+          <p className="text-[12px] text-gray-600 leading-normal mb-2 line-clamp-3">
+            {secondaryStory.description}
+          </p>
+          <span className="text-[11px] text-gray-400 font-medium mt-auto">
+            {secondaryStory.time}
+          </span>
+        </article>
       </div>
 
     </section>

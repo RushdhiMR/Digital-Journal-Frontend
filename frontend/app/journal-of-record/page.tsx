@@ -15,7 +15,7 @@ export default function JournalOfRecordPage() {
         <div className="absolute inset-0 z-0">
           <img
             src="/ai_studio_booth.png"
-            alt="Digital Journal Studio"
+            alt="London BigBen Studio"
             onError={(e) => {
               e.currentTarget.src = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=800&fit=crop";
             }}
@@ -47,7 +47,7 @@ export default function JournalOfRecordPage() {
           </h2>
 
           <p className="text-zinc-800 text-[14px] md:text-[15.5px] leading-relaxed max-w-4xl font-sans mb-16">
-            Digital Journal serves Canadian leaders responsible for what technology platforms mean for their organization. Find out what decisions touch every function and board conversation about where the organization is going. They work alongside CEOs navigating transformation, CFOs weighing investment, COOs driving execution, and boards setting expectations. Digital Journal connects that entire conversation.
+            London BigBen serves Canadian leaders responsible for what technology platforms mean for their organization. Find out what decisions touch every function and board conversation about where the organization is going. They work alongside CEOs navigating transformation, CFOs weighing investment, COOs driving execution, and boards setting expectations. London BigBen connects that entire conversation.
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -149,7 +149,7 @@ export default function JournalOfRecordPage() {
                 The challenge is that these conversations happen in isolation &mdash; without a national platform to bridge the gap between technical builders and executive decision-makers.
               </p>
               <p>
-                Digital Journal connects these conversations into a unified national discourse, giving leaders the context they need to make informed technology decisions.
+                London BigBen connects these conversations into a unified national discourse, giving leaders the context they need to make informed technology decisions.
               </p>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function JournalOfRecordPage() {
                 From AI to quantum, energy to health, Canadian innovators are building solutions that could transform industries. But without connected reporting, these breakthroughs remain isolated in regional hubs.
               </p>
               <p>
-                Digital Journal bridges this gap. We bring together the leaders, stories, and insights that matter, connecting Canada&apos;s technology ecosystem in one place.
+                London BigBen bridges this gap. We bring together the leaders, stories, and insights that matter, connecting Canada&apos;s technology ecosystem in one place.
               </p>
             </div>
 
@@ -195,14 +195,14 @@ export default function JournalOfRecordPage() {
           <div className="w-full h-[340px] md:h-[440px] overflow-hidden rounded-sm bg-gray-200">
             <img
               src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=600&fit=crop"
-              alt="Digital Journal team at event"
+              alt="London BigBen team at event"
               className="w-full h-full object-cover"
             />
           </div>
 
           <div className="flex flex-col items-start max-w-xl">
             <span className="text-[#BF1E2D] font-extrabold text-[11px] tracking-wider uppercase mb-3 font-sans">
-              WORK WITH DIGITAL JOURNAL
+              WORK WITH LONDON BIGBEN
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-black mb-5 leading-tight tracking-tight">
               The most consequential work in Canada deserves an audience that matches it

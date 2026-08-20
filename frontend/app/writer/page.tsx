@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { convertToWebP } from "@/lib/imageUtils";
 import {
   ArrowLeft,
   ChevronDown,
@@ -26,6 +27,8 @@ import {
   Bell
 } from "lucide-react";
 import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
+import { useLiveArticles, moveArticleToTrashOnServer, deletePermanentlyOnServer, setCachedArticles } from "@/lib/articlesSync";
+import { useAuth } from "@/lib/auth-context";
 
 interface ArticlePost {
   id: string;
@@ -39,6 +42,15 @@ interface ArticlePost {
   reads: number;
   authorEmail?: string;
   authorName?: string;
+  subcategories?: string[];
+  subCategories?: string[];
+  tags?: string[];
+  placement?: string;
+  readDuration?: string;
+  readTime?: string;
+  seo?: any;
+  category_name?: string;
+  [key: string]: any;
 }
 
 export default function WriterDashboardPage() {
@@ -52,6 +64,32 @@ export default function WriterDashboardPage() {
   // UI state
   const [activeTab, setActiveTab] = useState<"Published" | "Drafts" | "Pending review" | "Trash">("Published");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handleTabSync = () => {
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab")?.toLowerCase();
+      const savedTab = localStorage.getItem("dj_active_tab");
+      if (tabParam === "pending" || tabParam === "pending review" || tabParam === "review" || savedTab === "Pending review") {
+        setActiveTab("Pending review");
+        try { localStorage.removeItem("dj_active_tab"); } catch (e) {}
+      } else if (tabParam === "drafts" || tabParam === "draft" || savedTab === "Drafts") {
+        setActiveTab("Drafts");
+        try { localStorage.removeItem("dj_active_tab"); } catch (e) {}
+      } else if (tabParam === "published" || savedTab === "Published") {
+        setActiveTab("Published");
+        try { localStorage.removeItem("dj_active_tab"); } catch (e) {}
+      } else if (tabParam === "trash" || savedTab === "Trash") {
+        setActiveTab("Trash");
+        try { localStorage.removeItem("dj_active_tab"); } catch (e) {}
+      }
+    };
+
+    handleTabSync();
+    window.addEventListener("dj_articles_updated", handleTabSync);
+    return () => window.removeEventListener("dj_articles_updated", handleTabSync);
+  }, []);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<ArticlePost | null>(null);
@@ -90,16 +128,21 @@ export default function WriterDashboardPage() {
     }
   }, [currentUser, isProfileSettingsOpen]);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setProfileAvatar(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        const webpAvatar = await convertToWebP(file, 0.85);
+        setProfileAvatar(webpAvatar);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === "string") {
+            setProfileAvatar(reader.result);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -123,106 +166,63 @@ export default function WriterDashboardPage() {
 
   // Initial Posts state
   const [posts, setPosts] = useState<ArticlePost[]>([]);
+  const { articles: liveArticles } = useLiveArticles();
+
+  useEffect(() => {
+    try {
+      const localSubs = localStorage.getItem("dj_writer_submitted_articles");
+      const localArticles = localSubs ? JSON.parse(localSubs) : [];
+      if (Array.isArray(localArticles) && localArticles.length > 0) {
+        const merged = [...localArticles, ...(Array.isArray(liveArticles) ? liveArticles : [])];
+        const unique = merged.filter((item, idx, self) => idx === self.findIndex(t => String(t.id) === String(item.id) || (t.title && item.title && t.title.trim().toLowerCase() === item.title.trim().toLowerCase())));
+        setPosts(unique as any);
+        return;
+      }
+    } catch (e) {}
+
+    if (Array.isArray(liveArticles)) {
+      setPosts(liveArticles as any);
+    }
+  }, [liveArticles]);
+
+  const auth = useAuth();
 
   // Auth & Initial load
   useEffect(() => {
-    try {
-      const savedWriterStr = localStorage.getItem("dj_writer_user");
-      const savedUserStr = localStorage.getItem("dj_user");
-      
-      let activeUser: any = null;
-      if (savedWriterStr) {
-        try {
-          const parsed = JSON.parse(savedWriterStr);
-          const profile = getUserProfile(parsed?.email);
-          const role = profile?.role || parsed?.role;
-          if (role === "Writer" || role === "Admin" || role === "Co-Admin") {
-            activeUser = { ...parsed, role };
-          }
-        } catch (e) {
-          console.warn("Invalid saved writer data:", e);
-        }
-      }
+    async function initAuth() {
+      if (auth.loading) return;
 
-      if (!activeUser && savedUserStr) {
-        try {
-          const parsed = JSON.parse(savedUserStr);
-          const profile = getUserProfile(parsed?.email);
-          const role = profile?.role || parsed?.role;
-          if (role === "Writer" || role === "Admin" || role === "Co-Admin") {
-            activeUser = { ...parsed, role };
-          }
-        } catch (e) {
-          console.warn("Invalid saved user data:", e);
-        }
-      }
-
-      // Verify if activeUser is explicitly an approved Writer in dj_writers_list or system account
-      const userEmail = (activeUser?.email || "").toLowerCase().trim();
-      const isSystemWriterOrAdmin =
-        userEmail === "admin@digitaljournal.com" ||
-        userEmail === "coadmin@digitaljournal.com" ||
-        userEmail === "writer@digitaljournal.com" ||
-        userEmail.includes("admin");
-
-      let isApprovedWriter = isSystemWriterOrAdmin;
-      if (!isApprovedWriter && userEmail) {
-        const writersListStr = localStorage.getItem("dj_writers_list");
-        if (writersListStr) {
-          try {
-            const wList: any[] = JSON.parse(writersListStr);
-            const foundW = wList.find((w: any) => w.email && w.email.toLowerCase().trim() === userEmail && w.status === "Active");
-            if (foundW) {
-              isApprovedWriter = true;
-            }
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      }
-
-      // If user is NOT an approved Writer or Admin -> Block access & redirect to /reader
-      if (!activeUser || !isApprovedWriter) {
-        localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can access the Writer Studio.");
-        window.location.href = "/reader";
+      if (!auth.authenticated || !auth.user) {
+        router.push("/login");
         return;
       }
 
-      // Check local storage posts
-      const localPosts = localStorage.getItem("dj_writer_submitted_articles");
-      if (localPosts) {
-        try {
-          const parsedPosts = JSON.parse(localPosts);
-          if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
-            setPosts(parsedPosts);
-          }
-        } catch (e) {
-          console.warn("Error loading stored posts:", e);
-        }
+      const uRole = (auth.user.role || "").toLowerCase();
+      // Allow writers, editors, and admins to access Writer Studio
+      if (uRole !== "writer" && uRole !== "admin" && uRole !== "co-admin" && uRole !== "editor") {
+        router.push("/reader");
+        return;
       }
 
-      const emailToLookup = activeUser.email || "rushdhiriyaj2005@gmail.com";
+      const emailToLookup = auth.user.email;
       const savedProfile = getUserProfile(emailToLookup);
 
       const finalUser = {
-        name: savedProfile?.name || activeUser.name || "rushdhi",
+        name: savedProfile?.name || auth.user.name,
         email: emailToLookup,
-        role: savedProfile?.role || activeUser.role || "Writer",
-        avatar: savedProfile?.avatar || activeUser.avatar || "/author_bluesuit.jpg",
-        bio: savedProfile?.bio || activeUser.bio,
-        linkedin: savedProfile?.linkedin || activeUser.linkedin
+        role: "Writer",
+        avatar: savedProfile?.avatar || "/author_bluesuit.jpg",
+        bio: savedProfile?.bio,
+        linkedin: savedProfile?.linkedin
       };
 
       setCurrentUser(finalUser);
-      saveUserProfile(finalUser);
       setIsAuthenticated(true);
-    } catch (e) {
-      console.error(e);
-      setIsAuthenticated(true);
-    } finally {
       setIsLoading(false);
     }
-  }, []);
+
+    initAuth();
+  }, [auth.loading, auth.authenticated, auth.user, router]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -235,13 +235,18 @@ export default function WriterDashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Update local storage when posts change
-  const updatePostsState = (newPosts: ArticlePost[]) => {
+  // Update posts state and server store when posts change
+  const updatePostsState = async (newPosts: ArticlePost[]) => {
     setPosts(newPosts);
+    setCachedArticles(newPosts as any);
     try {
-      localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(newPosts));
+      await fetch("/api/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articles: newPosts })
+      });
     } catch (e) {
-      console.warn("Failed to save posts to localStorage:", e);
+      console.warn("Failed to sync posts with server API:", e);
     }
   };
 
@@ -316,19 +321,49 @@ export default function WriterDashboardPage() {
     }, 400);
   };
 
-  const handleMoveToTrash = (id: string) => {
-    const updated = posts.map(p => p.id === id ? { ...p, status: "Trash" as const } : p);
+  const handleMoveToTrash = async (id: string) => {
+    const target = posts.find(p => p.id === id);
+    const updated = posts.map(p => p.id === id ? { ...p, status: "Trash" as const, original_status: p.status } : p);
     updatePostsState(updated);
+
+    try {
+      await moveArticleToTrashOnServer(id, target?.title);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
+    } catch (e) {}
   };
 
-  const handleRestorePost = (id: string) => {
-    const updated = posts.map(p => p.id === id ? { ...p, status: "Published" as const } : p);
+  const handleRestorePost = async (id: string) => {
+    const target = posts.find(p => p.id === id);
+    const updated = posts.map(p => p.id === id ? { ...p, status: "Draft" as const } : p);
     updatePostsState(updated);
+
+    try {
+      const { saveArticleToServer } = await import("@/lib/articlesSync");
+      if (target) {
+        await saveArticleToServer({
+          ...target,
+          status: "Draft"
+        });
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
+    } catch (e) {}
   };
 
-  const handleDeletePermanently = (id: string) => {
+  const handleDeletePermanently = async (id: string) => {
+    const target = posts.find(p => p.id === id);
     const updated = posts.filter(p => p.id !== id);
     updatePostsState(updated);
+
+    try {
+      await deletePermanentlyOnServer(id, target?.title);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
+    } catch (e) {}
   };
 
   const handleUpdateWriterPassword = (e: React.FormEvent) => {
@@ -355,45 +390,42 @@ export default function WriterDashboardPage() {
     setConfirmPasswordInput("");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await auth.logout();
+    } catch (e) {
+      console.warn("Writer logout error:", e);
+    }
     localStorage.removeItem("dj_writer_user");
     localStorage.removeItem("dj_user");
     localStorage.removeItem("dj_admin_user");
+    document.cookie = "dj_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     localStorage.setItem("dj_signed_out", "true");
     localStorage.setItem("dj_toast", "You have successfully signed out.");
     window.location.href = "/";
   };
 
+  // Helper function to check if post belongs to or is visible in studio
+  const isPostVisibleInStudio = (post: ArticlePost) => {
+    // In Writer Studio, writers and editors can manage all platform articles or their created posts
+    return true;
+  };
+
   // Filter posts based on active tab, search query, and writer account ownership
   const filteredPosts = posts.filter(post => {
-    // Writer account isolation filter
-    const currentEmail = (currentUser?.email || "").toLowerCase().trim();
-    const currentName = (currentUser?.name || "").toLowerCase().trim();
-
-    if (currentEmail || currentName) {
-      const postEmail = (post.authorEmail || "").toLowerCase().trim();
-      const postName = (post.authorName || "").toLowerCase().trim();
-
-      // If the post has author information attached, verify it belongs to the logged-in writer account
-      if (postEmail || postName) {
-        const isEmailMatch = currentEmail && postEmail && currentEmail === postEmail;
-        const isNameMatch = currentName && postName && currentName === postName;
-        if (!isEmailMatch && !isNameMatch) {
-          return false;
-        }
-      }
-    }
+    if (!isPostVisibleInStudio(post)) return false;
 
     // Tab filter
     let matchesTab = false;
-    if (activeTab === "Published") matchesTab = post.status === "Published";
-    else if (activeTab === "Drafts") matchesTab = post.status === "Draft";
-    else if (activeTab === "Pending review") matchesTab = post.status === "Pending review";
-    else if (activeTab === "Trash") matchesTab = post.status === "Trash";
+    const st = (post.status || "").toLowerCase().trim();
+    if (activeTab === "Published") matchesTab = st === "published" || st === "approved";
+    else if (activeTab === "Drafts") matchesTab = st === "draft" || st === "drafts";
+    else if (activeTab === "Pending review") matchesTab = st.includes("pending") || st.includes("review") || st.includes("submitted");
+    else if (activeTab === "Trash") matchesTab = st === "trash" || st === "trashed";
 
     // Search filter
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q || post.title.toLowerCase().includes(q) || post.category.toLowerCase().includes(q) || post.summary.toLowerCase().includes(q);
+    const matchesSearch = !q || (post.title || "").toLowerCase().includes(q) || (post.category || "").toLowerCase().includes(q) || (post.summary || "").toLowerCase().includes(q);
 
     return matchesTab && matchesSearch;
   });
@@ -463,7 +495,7 @@ export default function WriterDashboardPage() {
               <Link href="/" className="flex items-center gap-1.5">
                 <img
                   src="/logo.png"
-                  alt="Washington Global"
+                  alt="London BigBen"
                   className="h-4 md:h-5 object-contain"
                   onError={(e) => {
                     // Fallback logo text if logo image doesn't render
@@ -471,7 +503,7 @@ export default function WriterDashboardPage() {
                   }}
                 />
                 <span className="font-serif font-black text-xs md:text-sm tracking-tight text-gray-900">
-                  WASHINGTON GLOBAL
+                  LONDON BIGBEN
                 </span>
               </Link>
 
@@ -571,10 +603,12 @@ export default function WriterDashboardPage() {
             {(["Published", "Drafts", "Pending review", "Trash"] as const).map((tab) => {
               const isActive = activeTab === tab;
               const count = posts.filter((p) => {
-                if (tab === "Drafts") return p.status === "Draft";
-                if (tab === "Pending review") return p.status === "Pending review";
-                if (tab === "Trash") return p.status === "Trash";
-                return p.status === "Published";
+                if (!isPostVisibleInStudio(p)) return false;
+                const st = (p.status || "").toLowerCase().trim();
+                if (tab === "Drafts") return st === "draft" || st === "drafts";
+                if (tab === "Pending review") return st.includes("pending") || st.includes("review") || st.includes("submitted");
+                if (tab === "Trash") return st === "trash" || st === "trashed";
+                return st === "published" || st === "approved";
               }).length;
 
               return (
@@ -836,7 +870,7 @@ export default function WriterDashboardPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Create New Article Post</h2>
-                <p className="text-xs text-gray-500">Compose and publish news stories for Digital Journal</p>
+                <p className="text-xs text-gray-500">Compose and publish news stories for London BigBen</p>
               </div>
             </div>
 
@@ -865,12 +899,17 @@ export default function WriterDashboardPage() {
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 bg-white focus:outline-none focus:border-blue-500"
                   >
-                    <option value="NEWS">NEWS</option>
-                    <option value="POLITICS">POLITICS</option>
-                    <option value="BUSINESS">BUSINESS</option>
-                    <option value="TECHNOLOGY">TECHNOLOGY</option>
-                    <option value="INNOVATION">INNOVATION</option>
-                    <option value="WORLD">WORLD</option>
+                    <option value="World">World</option>
+                    <option value="Politics">Politics</option>
+                    <option value="Business">Business</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Economy">Economy</option>
+                    <option value="Markets">Markets</option>
+                    <option value="Lifestyle">Lifestyle</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Health">Health</option>
+                    <option value="Research">Research</option>
                   </select>
                 </div>
 

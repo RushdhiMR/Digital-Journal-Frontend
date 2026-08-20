@@ -11,12 +11,16 @@ export default function Footer() {
         
         {/* LOGO SECTION */}
         <div className="mb-12">
-          <img
-            src="/media__1784141210181.png"
-            alt="Digital Journal Logo"
-            onError={(e) => { e.currentTarget.src = "/logo.png"; }}
-            className="h-8 w-auto object-contain"
-          />
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <img
+              src="/logo.png"
+              alt="London BigBen Network Logo"
+              className="h-9 w-9 object-contain rounded-md shadow-md group-hover:scale-105 transition-transform"
+            />
+            <span className="font-serif font-black tracking-tight text-2xl text-white uppercase group-hover:text-[#BF1E2D] transition-colors">
+              LONDON BIGBEN
+            </span>
+          </Link>
         </div>
 
         {/* THREE COLUMNS GRID */}
@@ -82,7 +86,7 @@ export default function Footer() {
 
         {/* BOTTOM ROW: COPYRIGHT */}
         <div className="border-t border-zinc-800 pt-8 text-[12px] text-zinc-500 tracking-wider">
-          <p>COPYRIGHT &copy; 1998 &ndash; 2026 DIGITAL JOURNAL INC.</p>
+          <p>COPYRIGHT &copy; 1998 &ndash; 2026 LONDON BIGBEN NETWORK INC. ALL RIGHTS RESERVED.</p>
         </div>
 
       </div>

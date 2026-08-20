@@ -1,24 +1,46 @@
 "use client";
 
 import Link from "next/link";
+import { useLiveArticles, ArticleItem, isTopPlacementArticle, articleMatchesCategory } from "@/lib/articlesSync";
+
+const FALLBACK_POLITICS_ARTICLES = [
+  {
+    id: "pol-1",
+    title: "Global Leaders Summit Reaches Milestone Consensus on Climate and Energy Accord",
+    description: "Multilateral delegates conclude intensive negotiations in Geneva, establishing binding milestones for clean energy investment and carbon reduction.",
+    image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=480&fit=crop",
+    href: "/politics/global-leaders-summit-climate-accord"
+  },
+  {
+    id: "pol-2",
+    title: "Parliamentary Committee Unveils Comprehensive Legislative Package for Digital Privacy",
+    description: "The bipartisan privacy bill introduces strict algorithmic transparency requirements and enhanced consumer rights across all digital platforms.",
+    image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=480&fit=crop",
+    href: "/politics/parliamentary-committee-digital-privacy-bill"
+  }
+];
 
 export default function PoliticsSection() {
-  const politicsArticles = [
-    {
-      id: 1,
-      title: "Here's what to eat to keep your bones strong (that's not just dairy)",
-      description: "Our bone density begins declining earlier than you might think. But ensuring our diet is rich in certain nutrients can help to keep our skeletons strong.",
-      image: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=800&h=480&fit=crop",
-      href: "/politics/what-to-eat-keep-bones-strong"
-    },
-    {
-      id: 2,
-      title: "Where giant sharks swim so close to shore you can nearly touch them",
-      description: "Basking sharks are one of the world's largest and most elusive fish species but these gentle giants cruise off the Irish coast each year.",
-      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=480&fit=crop",
-      href: "/politics/where-giant-sharks-swim-close-to-shore"
-    }
-  ];
+  const { articles: liveArticles = [] } = useLiveArticles();
+
+  // Filter politics articles (Exclude top placement articles to prevent duplicate news)
+  const politicsLive = (Array.isArray(liveArticles) ? liveArticles : []).filter((art: ArticleItem) => {
+    if (!art || (art.status || "").toLowerCase() !== "published") return false;
+    if (isTopPlacementArticle(art)) return false;
+    return articleMatchesCategory(art, "politics") || articleMatchesCategory(art, "government") || articleMatchesCategory(art, "elections");
+  });
+
+  const mappedLive = politicsLive.map((a: ArticleItem) => ({
+    id: a.id,
+    title: a.title,
+    description: a.description || a.summary || "",
+    image: a.imageUrl || a.image || "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=480&fit=crop",
+    href: `/${(a.category || "news").toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')}/${a.slug || String(a.id)}?id=${a.id}`
+  }));
+
+  const displayArticles = mappedLive.length >= 2
+    ? mappedLive.slice(0, 2)
+    : (mappedLive.length > 0 ? [...mappedLive, ...FALLBACK_POLITICS_ARTICLES].slice(0, 2) : FALLBACK_POLITICS_ARTICLES);
 
   return (
     <section className="max-w-[1400px] mx-auto px-4 md:px-6 py-10 border-b border-gray-200 font-sans">
@@ -32,7 +54,7 @@ export default function PoliticsSection() {
 
       {/* 2 Equal 50/50 Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {politicsArticles.map((article) => (
+        {displayArticles.map((article) => (
           <article key={article.id} className="flex flex-col group cursor-pointer">
             <Link
               href={article.href}

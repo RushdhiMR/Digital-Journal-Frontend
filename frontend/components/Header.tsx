@@ -2,9 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, ChevronDown, User, Mail, Menu, X, PenTool, LogOut, Settings, BookOpen, ShieldCheck, Bell } from "lucide-react";
 import { saveUserProfile, getUserProfile } from "@/lib/userProfiles";
+import { useLiveArticles } from "@/lib/articlesSync";
+import { useAuth } from "@/lib/auth-context";
 
 const megaMenuData: Record<string, {
   diveDeeper: string[];
@@ -62,6 +65,12 @@ const megaMenuData: Record<string, {
 };
 
 export default function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const loginHref = pathname && pathname !== "/login" && pathname !== "/register"
+    ? `/login?redirect=${encodeURIComponent(pathname)}`
+    : "/login";
+
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,34 +92,13 @@ export default function Header() {
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [articleNotifications, setArticleNotifications] = useState<{ id: string; title: string; status: string; date: string }[]>([]);
-
-  // Sync article notifications from localStorage
-  const syncArticleNotifications = useCallback(() => {
-    try {
-      const stored = localStorage.getItem("dj_writer_submitted_articles");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setArticleNotifications(parsed);
-          return;
-        }
-      }
-      setArticleNotifications([]);
-    } catch (e) {
-      console.error(e);
-      setArticleNotifications([]);
-    }
-  }, []);
+  const { articles: liveArticles } = useLiveArticles();
 
   useEffect(() => {
-    syncArticleNotifications();
-    window.addEventListener("storage", syncArticleNotifications);
-    window.addEventListener("dj_auth_change", syncArticleNotifications);
-    return () => {
-      window.removeEventListener("storage", syncArticleNotifications);
-      window.removeEventListener("dj_auth_change", syncArticleNotifications);
-    };
-  }, [syncArticleNotifications]);
+    if (Array.isArray(liveArticles)) {
+      setArticleNotifications(liveArticles as any);
+    }
+  }, [liveArticles]);
 
   // Close notifications dropdown on click outside
   useEffect(() => {
@@ -180,119 +168,49 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const syncCurrentUser = useCallback(() => {
-    try {
-      const isSignedOut = localStorage.getItem("dj_signed_out");
-      const savedUser = localStorage.getItem("dj_user");
-      const savedAdmin = localStorage.getItem("dj_admin_user");
-      const savedWriter = localStorage.getItem("dj_writer_user");
-
-      let activeUser = null;
-      if (savedUser) {
-        activeUser = JSON.parse(savedUser);
-      } else if (savedAdmin) {
-        activeUser = JSON.parse(savedAdmin);
-      } else if (savedWriter) {
-        activeUser = JSON.parse(savedWriter);
-      }
-
-      if (activeUser) {
-        localStorage.removeItem("dj_signed_out");
-        const targetEmail = activeUser.email || "rushdhiriyaj2005@gmail.com";
-        const savedProfile = getUserProfile(targetEmail);
-
-        const finalUser = {
-          name: savedProfile?.name || activeUser.name || "rushdhi",
-          email: targetEmail,
-          role: savedProfile?.role || activeUser.role || "Writer",
-          avatar: savedProfile?.avatar || activeUser.avatar || "/author_bluesuit.jpg",
-          bio: savedProfile?.bio || activeUser.bio,
-          linkedin: savedProfile?.linkedin || activeUser.linkedin
-        };
-
-        // Check if Writer account is deactivated
-        if (finalUser.role === "Writer" || finalUser.email?.toLowerCase().includes("writer")) {
-          const writerListStr = localStorage.getItem("dj_writers_list");
-          if (writerListStr) {
-            const writerList: any[] = JSON.parse(writerListStr);
-            const matched = writerList.find(
-              (w) => (w.email && w.email.toLowerCase() === finalUser.email?.toLowerCase()) || finalUser.email?.toLowerCase().includes("writer")
-            );
-            if (matched && matched.status === "Deactivated") {
-              localStorage.removeItem("dj_user");
-              localStorage.removeItem("dj_writer_user");
-              setCurrentUser(null);
-              return;
-            }
-          }
-        }
-
-        // Check if Co-Admin account is deactivated
-        if (finalUser.role === "Co-Admin" || finalUser.email?.toLowerCase().includes("coadmin")) {
-          const coListStr = localStorage.getItem("dj_co_admins_list");
-          if (coListStr) {
-            const coList: any[] = JSON.parse(coListStr);
-            const matched = coList.find(
-              (c) => (c.email && c.email.toLowerCase() === finalUser.email?.toLowerCase()) || finalUser.email?.toLowerCase().includes("coadmin")
-            );
-            if (matched && matched.status === "Deactivated") {
-              localStorage.removeItem("dj_user");
-              localStorage.removeItem("dj_admin_user");
-              setCurrentUser(null);
-              return;
-            }
-          }
-        }
-
-        setCurrentUser(finalUser);
-      } else {
-        // No active user logged in -> Set currentUser to null so "Sign In" button displays
-        setCurrentUser(null);
-      }
-
-      const savedToast = localStorage.getItem("dj_toast");
-      if (savedToast) {
-        setToastMessage(savedToast);
-        localStorage.removeItem("dj_toast");
-        setTimeout(() => {
-          setToastMessage(null);
-        }, 5000);
-      }
-    } catch (e) {
-      console.error(e);
-      setCurrentUser(null);
-    }
-  }, []);
+  const auth = useAuth();
 
   useEffect(() => {
-    syncCurrentUser();
+    if (auth.user) {
+      const savedProfile = getUserProfile(auth.user.email);
+      const normalizedRole = (auth.user.role || "").toLowerCase();
+      const displayRole = normalizedRole === 'admin' ? 'Admin' : normalizedRole === 'writer' ? 'Writer' : 'Reader';
+      setCurrentUser({
+        name: savedProfile?.name || auth.user.name,
+        email: auth.user.email,
+        role: displayRole,
+        avatar: savedProfile?.avatar || (displayRole === 'Admin' ? '/author_beard.jpg' : displayRole === 'Writer' ? '/author_woman.jpg' : '/author_bluesuit.jpg'),
+        bio: savedProfile?.bio,
+        linkedin: savedProfile?.linkedin
+      });
+    } else {
+      setCurrentUser(null);
+    }
 
-    const handleAuthChange = () => syncCurrentUser();
-    window.addEventListener("storage", handleAuthChange);
-    window.addEventListener("dj_auth_change", handleAuthChange);
-
-    return () => {
-      window.removeEventListener("storage", handleAuthChange);
-      window.removeEventListener("dj_auth_change", handleAuthChange);
-    };
-  }, [syncCurrentUser]);
+    const savedToast = localStorage.getItem("dj_toast");
+    if (savedToast) {
+      setToastMessage(savedToast);
+      localStorage.removeItem("dj_toast");
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 5000);
+    }
+  }, [auth.user]);
 
   const handleSignOut = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await auth.logout();
     } catch (e) {
-      console.warn('Logout API error:', e);
+      console.warn('Logout error:', e);
     }
     localStorage.removeItem("dj_user");
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_writer_user");
     localStorage.removeItem("dj_user_profile");
-    localStorage.setItem("dj_signed_out", "true");
     localStorage.setItem("dj_toast", "👋 You have successfully signed out.");
     setCurrentUser(null);
     setIsUserDropdownOpen(false);
     if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("dj_auth_change"));
       window.location.href = "/";
     }
   };
@@ -300,7 +218,7 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const query = searchQuery.trim();
-    window.location.href = query ? `/search?q=${encodeURIComponent(query)}` : "/search";
+    router.push(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
   };
 
   const navCategories = [
@@ -308,7 +226,7 @@ export default function Header() {
     { name: "Politics", href: "/news/politics", hasSub: true },
     { name: "Business", href: "/business", hasSub: true },
     { name: "Technology", href: "/technology", hasSub: true },
-    { name: "Economy", href: "/news/markets", hasSub: false },
+    { name: "Economy", href: "/news/economy", hasSub: false },
     { name: "Markets", href: "/news/markets", hasSub: false },
     { name: "Lifestyle", href: "/news/lifestyle", hasSub: false },
     { name: "Sports", href: "/news/sports", hasSub: false },
@@ -326,15 +244,14 @@ export default function Header() {
     { name: "Inflation Rate", href: "/search?q=Inflation+Rate" }
   ];
 
-  const topCountriesList = [
-    { flag: "🇺🇸", name: "United States", region: "North America", href: "/news/world" },
-    { flag: "🇬🇧", name: "United Kingdom", region: "Europe", href: "/news/world" },
-    { flag: "🇦🇪", name: "United Arab Emirates", region: "Middle East", href: "/news/world" },
-    { flag: "🇨🇳", name: "China", region: "East Asia", href: "/news/world" },
-    { flag: "🇮🇳", name: "India", region: "South Asia", href: "/news/world" },
-    { flag: "🇨🇦", name: "Canada", region: "Americas", href: "/news/world" },
-    { flag: "🇦🇺", name: "Australia", region: "Oceania", href: "/news/world" },
-    { flag: "🌍", name: "International", region: "Global Summary", href: "/news/world" },
+  const worldRegionsList = [
+    { name: "China", href: "/china" },
+    { name: "United States", href: "/united-states" },
+    { name: "Europe", href: "/europe" },
+    { name: "Britain", href: "/britain" },
+    { name: "Middle East", href: "/middle-east" },
+    { name: "Africa", href: "/africa" },
+    { name: "Asia", href: "/asia" },
   ];
 
   return (
@@ -353,27 +270,16 @@ export default function Header() {
       {/* ================= ROW 1: BRAND LOGO, SEARCH, & ACTION BUTTONS ================= */}
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-6 relative z-50 w-full">
         
-        {/* LOGO & SUBTITLE */}
-        <Link href="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
-          {/* Red Layered Digital Journal Logo Icon */}
-          <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
-            <Image
-              src="/logo.png"
-              alt="Digital Journal Logo"
-              width={40}
-              height={40}
-              className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-              priority
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[17px] sm:text-2xl md:text-[27px] font-black tracking-tight leading-none text-gray-900 group-hover:text-[#BF1E2D] transition-colors font-serif">
-              DIGITAL JOURNAL
-            </span>
-            <span className="hidden sm:inline-block text-[10px] sm:text-[10.5px] text-gray-500 font-bold tracking-widest uppercase mt-1">
-              Smart News. Real Impact.
-            </span>
-          </div>
+        {/* LOGO & BRAND */}
+        <Link href="/" className="flex items-center group shrink-0 py-0.5" aria-label="London BigBen">
+          <Image
+            src="/header_logo.png"
+            alt="London BigBen Network"
+            width={240}
+            height={42}
+            className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-[1.02]"
+            priority
+          />
         </Link>
 
         {/* SEARCH INPUT BAR */}
@@ -386,16 +292,6 @@ export default function Header() {
             placeholder="Search for news, topics, companies..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              if (typeof window !== "undefined" && window.location.pathname !== "/search") {
-                window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
-              }
-            }}
-            onClick={() => {
-              if (typeof window !== "undefined" && window.location.pathname !== "/search") {
-                window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
-              }
-            }}
             className="w-full pl-4 pr-10 py-2 text-[13px] border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] focus:ring-1 focus:ring-[#BF1E2D] bg-gray-50/70 hover:bg-white focus:bg-white text-gray-800 placeholder-gray-400 transition-all cursor-pointer shadow-2xs"
           />
           <button
@@ -448,115 +344,81 @@ export default function Header() {
 
               {/* USER ACCOUNT DROPDOWN POPOVER */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl text-left z-[1000] overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-2xl rounded-xl text-left z-[1000] overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150">
                   
                   {/* Section 1: User Profile Header */}
-                  <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-150 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
-                      <img
-                        src={currentUser.avatar || "/author_bluesuit.jpg"}
-                        alt={currentUser.name || "User Profile"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-extrabold text-gray-900 leading-snug tracking-tight truncate">
-                        {currentUser.name || "rushdhi"}
-                      </p>
-                      <p className="text-[10.5px] text-gray-500 font-mono tracking-tight font-normal truncate">
-                        {currentUser.email || "rushdhiriyaj2005@gmail.com"}
-                      </p>
-                      <span className="inline-block mt-0.5 px-2 py-0.2 bg-red-100 text-[#BF1E2D] font-extrabold text-[9px] uppercase tracking-wider rounded">
-                        {currentUser.role || "READER"}
-                      </span>
-                    </div>
+                  <div className="px-5 py-4 border-b border-slate-100">
+                    <p className="text-sm font-extrabold text-slate-900 leading-snug tracking-tight">
+                      {currentUser.name || "rushdi admin"}
+                    </p>
+                    <p className="text-xs text-slate-400 font-mono tracking-tight mt-0.5 font-normal truncate">
+                      {currentUser.email || "rushdhi5002@gmail.com"}
+                    </p>
                   </div>
 
-                  {/* Admin Dashboard Option (Admin & Co-Admin) */}
-                  {(currentUser.role === "Admin" || currentUser.role === "Co-Admin" || (currentUser.email || "").toLowerCase().includes("admin")) && (
+                  {/* Admin Option: Admin Control Panel */}
+                  {((currentUser.role || "").toLowerCase() === "admin" || (currentUser.role || "").toLowerCase() === "co-admin" || (currentUser.email || "").toLowerCase().includes("admin")) && (
                     <Link
                       href="/admin"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-emerald-50/60 transition-colors cursor-pointer group"
+                      className="px-5 py-3 flex items-center gap-3 border-b border-slate-100 hover:bg-red-50/50 transition-colors cursor-pointer group"
                     >
-                      <ShieldCheck size={16} className="text-emerald-600 flex-shrink-0" />
-                      <span className="text-emerald-700 font-bold text-[12px] tracking-tight">
-                        Admin Dashboard
+                      <ShieldCheck size={18} className="text-[#D31220] flex-shrink-0" />
+                      <span className="text-[#D31220] font-extrabold text-sm tracking-tight">
+                        Admin Control Panel
                       </span>
                     </Link>
                   )}
 
-                  {/* Author Workspace Option - ONLY shown if user is explicitly an Admin-approved Author */}
-                  {(() => {
-                    const email = (currentUser.email || "").toLowerCase().trim();
-                    const isSystemWriterOrAdmin =
-                      email === "writer@digitaljournal.com" ||
-                      email === "admin@digitaljournal.com" ||
-                      email === "coadmin@digitaljournal.com" ||
-                      email.includes("admin");
+                  {/* Author Workspace Option */}
+                  {((currentUser.role || "").toLowerCase() === "writer" || (currentUser.role || "").toLowerCase() === "editor" || (currentUser.email || "").toLowerCase().includes("writer")) && (
+                    <Link
+                      href="/writer"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="px-5 py-3 flex items-center gap-3 border-b border-slate-100 hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                    >
+                      <PenTool size={18} className="text-[#1B50E8] flex-shrink-0" />
+                      <span className="text-[#1B50E8] font-bold text-sm tracking-tight">
+                        Author Workspace
+                      </span>
+                    </Link>
+                  )}
 
-                    let isApproved = isSystemWriterOrAdmin;
-                    if (!isApproved && email && typeof window !== "undefined") {
-                      const writersListStr = localStorage.getItem("dj_writers_list");
-                      if (writersListStr) {
-                        try {
-                          const wList: any[] = JSON.parse(writersListStr);
-                          isApproved = wList.some((w: any) => w.email && w.email.toLowerCase().trim() === email && w.status === "Active");
-                        } catch (e) {
-                          console.warn(e);
-                        }
-                      }
-                    }
+                  {/* Reader Dashboard Option */}
+                  {((currentUser.role || "").toLowerCase() === "reader" || (currentUser.role || "").toLowerCase() === "user" || (!(currentUser.role || "").toLowerCase().includes("writer") && !(currentUser.role || "").toLowerCase().includes("admin") && !(currentUser.role || "").toLowerCase().includes("editor") && !(currentUser.email || "").toLowerCase().includes("writer") && !(currentUser.email || "").toLowerCase().includes("admin"))) && (
+                    <Link
+                      href="/reader"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="px-5 py-3 flex items-center gap-3 border-b border-slate-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
+                    >
+                      <BookOpen size={18} className="text-[#BF1E2D] flex-shrink-0" />
+                      <span className="text-[#BF1E2D] font-bold text-sm tracking-tight">
+                        Reader Dashboard
+                      </span>
+                    </Link>
+                  )}
 
-                    if (isApproved) {
-                      return (
-                        <Link
-                          href="/writer"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer group"
-                        >
-                          <PenTool size={16} className="text-[#1B50E8] flex-shrink-0" />
-                          <span className="text-[#1B50E8] font-bold text-[12px] tracking-tight">
-                            Author Workspace
-                          </span>
-                        </Link>
-                      );
-                    }
-                    return (
-                      <Link
-                        href="/reader"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-red-50/40 transition-colors cursor-pointer group"
-                      >
-                        <BookOpen size={16} className="text-[#BF1E2D] flex-shrink-0" />
-                        <span className="text-[#BF1E2D] font-bold text-[12px] tracking-tight">
-                          Reader Dashboard
-                        </span>
-                      </Link>
-                    );
-                  })()}
-
-                  {/* Section 3: Profile Settings */}
+                  {/* Profile Settings Option */}
                   <button
                     onClick={() => {
                       setIsUserDropdownOpen(false);
                       setIsProfileSettingsOpen(true);
                     }}
-                    className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="w-full text-left px-5 py-3 flex items-center gap-3 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group"
                   >
-                    <User size={16} className="text-slate-500 group-hover:text-slate-800 flex-shrink-0" />
-                    <span className="text-slate-800 font-bold text-[12px] tracking-tight">
+                    <User size={18} className="text-slate-400 group-hover:text-slate-700 flex-shrink-0" />
+                    <span className="text-slate-800 font-bold text-sm tracking-tight">
                       Profile Settings
                     </span>
                   </button>
 
-                  {/* Section 4: Sign Out Terminal */}
+                  {/* Sign Out Terminal Option */}
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2.5 flex items-center gap-2.5 hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="w-full text-left px-5 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors cursor-pointer group"
                   >
-                    <LogOut size={16} className="text-red-500 group-hover:text-red-700 flex-shrink-0" />
-                    <span className="text-red-600 font-bold text-[12px] tracking-tight">
+                    <LogOut size={18} className="text-slate-400 group-hover:text-slate-700 flex-shrink-0" />
+                    <span className="text-slate-800 font-bold text-sm tracking-tight">
                       Sign Out Terminal
                     </span>
                   </button>
@@ -566,7 +428,7 @@ export default function Header() {
             </div>
           ) : (
             <Link 
-              href="/login" 
+              href={loginHref} 
               className="flex items-center gap-1.5 text-gray-800 hover:text-[#BF1E2D] font-bold text-xs sm:text-sm px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
             >
               <User size={17} strokeWidth={2.2} className="text-[#BF1E2D]" />
@@ -596,90 +458,95 @@ export default function Header() {
       </div>
 
       {/* ================= ROW 2: CATEGORY NAVIGATION BAR ================= */}
-      <div className="w-full border-t border-b border-gray-200 bg-white relative z-40">
-        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 flex items-center justify-between gap-4 w-full">
+      <div className="w-full border-t border-b border-gray-200 bg-white relative z-40 overflow-visible">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 flex items-center justify-between gap-4 w-full overflow-visible">
           
           {/* Main Horizontal Category Nav Items */}
-          <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7 py-2.5 sm:py-3 text-[12px] sm:text-[13.5px] font-bold overflow-x-auto scrollbar-none flex-1">
-            {navCategories.map((cat) => (
-              <div
-                key={cat.name}
-                className="relative flex items-center"
-                onMouseEnter={() => {
-                  if (cat.name === "World") {
-                    setActiveMenu("WORLD");
-                  } else {
-                    setActiveMenu(null);
-                  }
-                }}
-                onMouseLeave={() => setActiveMenu(null)}
-              >
-                {cat.name === "World" ? (
-                  <div className="flex items-center gap-1 border-b-2 border-[#BF1E2D] pb-0.5 px-1.5">
+          <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7 py-2.5 sm:py-3 text-[12px] sm:text-[13.5px] font-bold overflow-x-auto md:overflow-visible scrollbar-none flex-1">
+            {navCategories.map((cat) => {
+              const isWorld = cat.name === "World";
+              const isWorldActive = isWorld && activeMenu === "WORLD";
+
+              return (
+                <div
+                  key={cat.name}
+                  className={`relative flex items-center group ${isWorld ? "cursor-pointer" : ""}`}
+                  onMouseEnter={() => {
+                    if (isWorld) {
+                      setActiveMenu("WORLD");
+                    } else {
+                      setActiveMenu(null);
+                    }
+                  }}
+                  onMouseLeave={() => setActiveMenu(null)}
+                >
+                  {isWorld ? (
+                    <div className="flex items-center gap-1 border-b-2 border-[#BF1E2D] pb-0.5 px-1.5 cursor-pointer">
+                      <Link
+                        href="/news/world"
+                        className="transition-colors text-gray-900 font-bold hover:text-[#BF1E2D] flex items-center gap-1"
+                      >
+                        <span>World</span>
+                        <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 group-hover:text-[#BF1E2D] transition-transform duration-200 group-hover:rotate-180" />
+                      </Link>
+                    </div>
+                  ) : (
                     <Link
-                      href="/news/world"
-                      className="transition-colors text-gray-900 font-bold hover:text-[#BF1E2D]"
+                      href={cat.href}
+                      className="flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded transition-colors text-gray-800 hover:text-[#BF1E2D] hover:bg-gray-50"
                     >
-                      <span>World</span>
+                      <span>{cat.name}</span>
                     </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveMenu(activeMenu === "WORLD" ? null : "WORLD");
-                      }}
-                      className="cursor-pointer bg-transparent border-none outline-none p-0.5"
-                      aria-label="Toggle World Menu"
+                  )}
+
+                  {/* Dropdown Menu on Hover for World (Countries & Regions List) */}
+                  {isWorld && (
+                    <div 
+                      onMouseEnter={() => setActiveMenu("WORLD")}
+                      onMouseLeave={() => setActiveMenu(null)}
+                      className={`absolute top-full left-0 pt-2 w-[230px] sm:w-[250px] z-[100] transition-all duration-200 before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-5 ${
+                        isWorldActive
+                          ? "opacity-100 visible pointer-events-auto translate-y-0"
+                          : "opacity-0 invisible pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0"
+                      }`}
                     >
-                      <ChevronDown size={12} strokeWidth={2.5} className="text-gray-500 hover:text-[#BF1E2D]" />
-                    </button>
-                  </div>
-                ) : (
-                  <Link
-                    href={cat.href}
-                    className="flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded transition-colors text-gray-800 hover:text-[#BF1E2D] hover:bg-gray-50"
-                  >
-                    <span>{cat.name}</span>
-                  </Link>
-                )}
+                      <div className="bg-white border border-gray-200/90 shadow-2xl rounded-2xl p-3.5 text-left font-sans ring-1 ring-black/5">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-150">
+                          <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
+                            World Categories
+                          </h4>
+                          <span className="text-[9.5px] text-gray-400 font-bold uppercase tracking-wider">Regions</span>
+                        </div>
 
-                {/* Dropdown Menu on Hover for World (Top Countries List) */}
-                {cat.name === "World" && activeMenu === "WORLD" && (
-                  <div 
-                    onMouseEnter={() => setActiveMenu("WORLD")}
-                    className="absolute top-full left-0 pt-1 w-80 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
-                  >
-                    <div className="bg-white border border-gray-200 shadow-2xl rounded-xl p-4 text-left font-sans">
-                      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-150">
-                        <h4 className="text-[11px] font-extrabold uppercase text-[#BF1E2D] tracking-wider">
-                          Top Countries & Regions
-                        </h4>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase">Select Country</span>
-                      </div>
+                        <div className="space-y-0.5">
+                          {worldRegionsList.map((region, i) => (
+                            <Link
+                              key={i}
+                              href={region.href}
+                              onClick={() => setActiveMenu(null)}
+                              className="flex items-center justify-between py-2 px-3 rounded-xl text-[12.5px] font-bold text-gray-800 hover:bg-red-50/80 hover:text-[#BF1E2D] group/item cursor-pointer transition-colors"
+                            >
+                              <span className="group-hover/item:text-[#BF1E2D]">{region.name}</span>
+                              <span className="text-gray-300 group-hover/item:text-[#BF1E2D] text-[11px] font-bold transition-colors">›</span>
+                            </Link>
+                          ))}
+                        </div>
 
-                      <div className="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto scrollbar-thin">
-                        {topCountriesList.map((country, i) => (
+                        <div className="pt-2 mt-2 border-t border-gray-150 flex items-center justify-between">
                           <Link
-                            key={i}
-                            href={country.href}
+                            href="/news/world"
                             onClick={() => setActiveMenu(null)}
-                            className="flex items-center justify-between py-2 px-3 rounded-lg text-gray-800 hover:bg-red-50 hover:text-[#BF1E2D] cursor-pointer transition-colors"
+                            className="text-[11px] font-extrabold text-[#BF1E2D] hover:underline flex items-center gap-1"
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="text-base leading-none">{country.flag}</span>
-                              <span className="text-xs font-bold">{country.name}</span>
-                            </div>
-                            <span className="text-[10px] text-gray-400 font-medium">
-                              {country.region}
-                            </span>
+                            <span>View all World coverage →</span>
                           </Link>
-                        ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
           {/* Far Right Edition Selector */}
@@ -761,18 +628,6 @@ export default function Header() {
               placeholder="Search news, topics, companies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (typeof window !== "undefined" && window.location.pathname !== "/search") {
-                  setIsMobileMenuOpen(false);
-                  window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
-                }
-              }}
-              onClick={() => {
-                if (typeof window !== "undefined" && window.location.pathname !== "/search") {
-                  setIsMobileMenuOpen(false);
-                  window.location.href = searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search";
-                }
-              }}
               className="w-full pl-4 pr-10 py-2.5 text-xs border border-gray-300 rounded-full focus:outline-none focus:border-[#BF1E2D] bg-gray-50 text-gray-900 cursor-pointer"
             />
             <button type="submit" className="absolute right-3 top-2.5 text-gray-400">
@@ -838,21 +693,33 @@ export default function Header() {
 
                 {(() => {
                   const email = (currentUser.email || "").toLowerCase().trim();
+                  const userRole = (currentUser.role || "").toLowerCase().trim();
                   const isSystemWriterOrAdmin =
+                    userRole === "writer" ||
+                    userRole === "editor" ||
+                    userRole === "admin" ||
+                    userRole === "co-admin" ||
                     email === "writer@digitaljournal.com" ||
                     email === "admin@digitaljournal.com" ||
                     email === "coadmin@digitaljournal.com" ||
-                    email.includes("admin");
+                    email.includes("admin") ||
+                    email.includes("writer");
 
                   let isApproved = isSystemWriterOrAdmin;
                   if (!isApproved && email && typeof window !== "undefined") {
-                    const writersListStr = localStorage.getItem("dj_writers_list");
-                    if (writersListStr) {
-                      try {
-                        const wList: any[] = JSON.parse(writersListStr);
-                        isApproved = wList.some((w: any) => w.email && w.email.toLowerCase().trim() === email && w.status === "Active");
-                      } catch (e) {
-                        console.warn(e);
+                    const savedProfile = getUserProfile(email);
+                    const profileRole = (savedProfile?.role || "").toLowerCase().trim();
+                    if (profileRole === "writer" || profileRole === "editor" || profileRole === "admin" || profileRole === "co-admin") {
+                      isApproved = true;
+                    } else {
+                      const writersListStr = localStorage.getItem("dj_writers_list");
+                      if (writersListStr) {
+                        try {
+                          const wList: any[] = JSON.parse(writersListStr);
+                          isApproved = wList.some((w: any) => w.email && w.email.toLowerCase().trim() === email && (w.status === "Active" || !w.status));
+                        } catch (e) {
+                          console.warn(e);
+                        }
                       }
                     }
                   }
@@ -908,7 +775,7 @@ export default function Header() {
           ) : (
             <div className="flex items-center gap-2 pt-1 pb-2 border-b border-gray-100">
               <Link
-                href="/login"
+                href={loginHref}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center font-bold text-xs py-2.5 rounded-md border border-gray-300 flex items-center justify-center gap-1.5 transition-colors"
               >
@@ -990,8 +857,14 @@ export default function Header() {
                 <p className="text-xs text-slate-500 font-sans tracking-tight mt-0.5">
                   {currentUser?.email || "nestosuper2024@gmail.com"}
                 </p>
-                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-wider rounded uppercase inline-block mt-1.5 font-sans">
-                  {currentUser?.role || "READER"}
+                <span className={`px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider rounded uppercase inline-block mt-1.5 font-sans ${
+                  (currentUser?.role || "").toUpperCase() === "ADMIN"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                    : (currentUser?.role || "").toUpperCase() === "WRITER"
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                }`}>
+                  {(currentUser?.role || "READER").toUpperCase()}
                 </span>
               </div>
             </div>
@@ -1022,7 +895,7 @@ export default function Header() {
                   rows={3}
                   value={profileBio}
                   onChange={(e) => setProfileBio(e.target.value)}
-                  placeholder="New Washington Global Times subscriber via Google."
+                  placeholder="New London BigBen subscriber via Google."
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all leading-relaxed"
                 />
               </div>

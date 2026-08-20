@@ -25,7 +25,7 @@ export default function PeopleBehindStories() {
               </h2>
               <div className="space-y-4 text-[14px] text-zinc-800 leading-relaxed font-standard-sans">
                 <p>
-                  Our publishing model brings journalists and subject matter experts together, combining reported stories with first-hand expertise in a way that gives Digital Journal a vantage point most publications don’t have.
+                  Our publishing model brings journalists and subject matter experts together, combining reported stories with first-hand expertise in a way that gives London BigBen a vantage point most publications don’t have.
                 </p>
                 <p>
                   When the work of innovators and leaders is translated, shared, and connected across those gaps, organizations make better decisions, boards ask better questions, and Canada’s innovation economy builds with more purpose.

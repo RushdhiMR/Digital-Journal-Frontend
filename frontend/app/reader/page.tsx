@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import {
   BookOpen,
   ArrowLeft,
@@ -61,24 +63,37 @@ export default function ReaderDashboardPage() {
     return `dj_bookmarks_${sanitizedEmail}`;
   };
 
+  const auth = useAuth();
+  const router = useRouter();
+
   useEffect(() => {
+    if (auth.loading) return;
+
+    if (!auth.authenticated || !auth.user) {
+      router.push("/login");
+      return;
+    }
+
+    const uRole = (auth.user.role || "").toLowerCase();
+    if (uRole === "writer") {
+      router.push("/writer");
+      return;
+    }
+    if (uRole === "admin" || uRole === "co-admin") {
+      router.push("/admin");
+      return;
+    }
+
     try {
-      const savedUserStr = localStorage.getItem("dj_user");
-      let activeUser = null;
-
-      if (savedUserStr) {
-        activeUser = JSON.parse(savedUserStr);
-      }
-
-      const activeEmail = activeUser?.email || "reader@digitaljournal.com";
+      const activeEmail = auth.user.email;
       const savedProfile = getUserProfile(activeEmail);
 
       const finalUser = {
-        name: savedProfile?.name || activeUser?.name || "Nesto Super",
+        name: savedProfile?.name || auth.user.name,
         email: activeEmail,
-        avatar: savedProfile?.avatar || activeUser?.avatar || "/author_bluesuit.jpg",
-        role: savedProfile?.role || activeUser?.role || "Reader",
-        bio: savedProfile?.bio || activeUser?.bio || "Avid reader of global economics and technology innovation."
+        avatar: savedProfile?.avatar || "/author_bluesuit.jpg",
+        role: auth.user.role === "admin" ? "Admin" : auth.user.role === "writer" ? "Writer" : "Reader",
+        bio: savedProfile?.bio || "Avid reader of global economics and technology innovation."
       };
 
       setCurrentUser(finalUser);
@@ -97,7 +112,7 @@ export default function ReaderDashboardPage() {
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [auth.loading, auth.authenticated, auth.user, router]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -118,10 +133,16 @@ export default function ReaderDashboardPage() {
     showToast("Article removed from your Saved Articles.");
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await auth.logout();
+    } catch (e) {
+      console.warn("Reader logout error:", e);
+    }
     localStorage.removeItem("dj_user");
     localStorage.removeItem("dj_admin_user");
     localStorage.removeItem("dj_writer_user");
+    document.cookie = "dj_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     localStorage.setItem("dj_signed_out", "true");
     localStorage.setItem("dj_toast", "You have successfully signed out.");
     window.location.href = "/";
@@ -427,8 +448,14 @@ export default function ReaderDashboardPage() {
                 <p className="text-xs text-slate-500 font-sans tracking-tight mt-0.5">
                   {currentUser?.email || "nestosuper2024@gmail.com"}
                 </p>
-                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-wider rounded uppercase inline-block mt-1.5 font-sans">
-                  {currentUser?.role || "READER"}
+                <span className={`px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider rounded uppercase inline-block mt-1.5 font-sans ${
+                  (currentUser?.role || "").toUpperCase() === "ADMIN"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                    : (currentUser?.role || "").toUpperCase() === "WRITER"
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                }`}>
+                  {(currentUser?.role || "READER").toUpperCase()}
                 </span>
               </div>
             </div>
@@ -459,7 +486,7 @@ export default function ReaderDashboardPage() {
                   rows={3}
                   value={profileBio}
                   onChange={(e) => setProfileBio(e.target.value)}
-                  placeholder="New Washington Global Times subscriber via Google."
+                  placeholder="New London BigBen subscriber via Google."
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-[#005691] focus:ring-1 focus:ring-blue-100 transition-all leading-relaxed"
                 />
               </div>

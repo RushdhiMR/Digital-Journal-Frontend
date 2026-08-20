@@ -4,8 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SEOAssistantPanel from "@/components/SEOAssistantPanel";
-import { generateAutoSEO, extractFocusKeyword } from "@/lib/seo";
+import { useAuth } from "@/lib/auth-context";
+import { generateAutoSEO, extractFocusKeyword, extractCardSummary } from "@/lib/seo";
 import { getUserProfile } from "@/lib/userProfiles";
+import { saveArticleToServer, fetchArticlesFromServer } from "@/lib/articlesSync";
+import { convertToWebP, convertHtmlImagesToWebP } from "@/lib/imageUtils";
 import {
   ArrowLeft,
   Eye,
@@ -31,6 +34,7 @@ import {
   AlignRight,
   ChevronUp,
   ChevronDown,
+  ChevronRight,
   Trash2,
   Search,
   Bookmark,
@@ -40,7 +44,8 @@ import {
   Edit3,
   Type,
   Plus,
-  Minus
+  Minus,
+  GripVertical
 } from "lucide-react";
 
 function processContentLinks(html: string): string {
@@ -61,11 +66,60 @@ function processContentLinks(html: string): string {
   });
 }
 
+// Master Categories and Subcategories matching Navbar
+const ALL_MAIN_CATEGORIES = [
+  "World",
+  "Politics",
+  "Business",
+  "Technology",
+  "Economy",
+  "Markets",
+  "Lifestyle",
+  "Sports",
+  "Entertainment",
+  "Health",
+  "Research"
+];
+
+const ALL_SUB_CATEGORIES = [
+  "World",
+  "Politics",
+  "Business",
+  "Technology",
+  "Economy",
+  "Markets",
+  "Lifestyle",
+  "Sports",
+  "Entertainment",
+  "Health",
+  "Research"
+];
+
+const WORLD_SUBCATEGORIES = [
+  "China",
+  "United States",
+  "Europe",
+  "Britain",
+  "Middle East",
+  "Africa",
+  "Asia"
+];
+
+function isSameOrMatchingCategory(catA: string, catB: string): boolean {
+  if (!catA || !catB) return false;
+  const a = catA.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const b = catB.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (a === b) return true;
+  if ((a === "economyandmarkets" || a === "economymarkets") && (b === "economy" || b === "markets")) return true;
+  if ((b === "economyandmarkets" || b === "economymarkets") && (a === "economy" || a === "markets")) return true;
+  return false;
+}
+
 export default function CreatePostPage() {
   const router = useRouter();
 
   // Current User State
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string; avatar: string } | null>({
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role?: string; avatar?: string } | null>({
     name: "rushdhi",
     email: "rushdhiriyaj2005@gmail.com",
     role: "Writer",
@@ -73,6 +127,7 @@ export default function CreatePostPage() {
   });
 
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [isReviewMode, setIsReviewMode] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -83,7 +138,7 @@ export default function CreatePostPage() {
   // Image Modal Form State
   const [imageCaption, setImageCaption] = useState("");
   const [imageCredit, setImageCredit] = useState("");
-  const [imageSize, setImageSize] = useState("Medium (Width: 450px)");
+  const [imageSize, setImageSize] = useState("Full Width (100%)");
   const [imageAlignment, setImageAlignment] = useState("Center (No Wrap)");
   const [imageFileName, setImageFileName] = useState("No file chosen");
 
@@ -102,6 +157,7 @@ export default function CreatePostPage() {
   const [sidebarTab, setSidebarTab] = useState<"DETAILS" | "SEO">("DETAILS");
   const [category, setCategory] = useState("Business");
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [placement, setPlacement] = useState("Standard Post");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [readDuration, setReadDuration] = useState("5 min read");
@@ -119,6 +175,20 @@ export default function CreatePostPage() {
   const [isFocusKwCustom, setIsFocusKwCustom] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
+  const catDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
+        setIsCatDropdownOpen(false);
+        setHoveredCat(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const isContentInitialSynced = useRef(false);
@@ -131,122 +201,169 @@ export default function CreatePostPage() {
     }
   }, [content]);
 
+  const auth = useAuth();
+  const [originalAuthor, setOriginalAuthor] = useState<{ name?: string; email?: string; avatar?: string; bio?: string } | null>(null);
+
+  const userRole = (auth.user?.role || currentUser?.role || "").toLowerCase();
+  const isAdmin = userRole === "admin" || userRole === "co-admin" || userRole === "editor" || (auth.user?.email || currentUser?.email || "").toLowerCase().includes("admin");
+
   useEffect(() => {
-    try {
-      const savedUserStr = localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_user") || localStorage.getItem("dj_admin_user");
-      let activeUser: any = null;
-      if (savedUserStr) {
-        try {
-          activeUser = JSON.parse(savedUserStr);
-        } catch (e) {
-          console.warn(e);
-        }
-      }
+    if (auth.loading) return;
 
-      const userEmail = (activeUser?.email || "").toLowerCase().trim();
-      const isSystemWriterOrAdmin =
-        userEmail === "admin@digitaljournal.com" ||
-        userEmail === "coadmin@digitaljournal.com" ||
-        userEmail === "writer@digitaljournal.com" ||
-        userEmail.includes("admin");
+    if (!auth.authenticated || !auth.user) {
+      router.push("/login");
+      return;
+    }
 
-      let isApprovedWriter = isSystemWriterOrAdmin;
-      if (!isApprovedWriter && userEmail) {
-        const writersListStr = localStorage.getItem("dj_writers_list");
-        if (writersListStr) {
+    const uRole = (auth.user.role || "").toLowerCase();
+    if (uRole !== "writer" && uRole !== "admin") {
+      router.push("/reader");
+      return;
+    }
+
+    setCurrentUser(auth.user);
+
+    const initPostData = async () => {
+      try {
+        // Check if editing existing post
+        let postToEdit: any = null;
+
+        // 1. Try reading from dj_editing_post
+        const storedEditingPost = localStorage.getItem("dj_editing_post");
+        if (storedEditingPost) {
           try {
-            const wList: any[] = JSON.parse(writersListStr);
-            const foundW = wList.find((w: any) => w.email && w.email.toLowerCase().trim() === userEmail && w.status === "Active");
-            if (foundW) {
-              isApprovedWriter = true;
-            }
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      }
-
-      if (!activeUser || !isApprovedWriter) {
-        localStorage.setItem("dj_toast", "Access Denied: Only authors approved by Admin can write stories.");
-        window.location.href = "/reader";
-        return;
-      }
-      setCurrentUser(activeUser);
-
-      // Check if editing existing post
-      let postToEdit: any = null;
-
-      // 1. Try reading from dj_editing_post
-      const storedEditingPost = localStorage.getItem("dj_editing_post");
-      if (storedEditingPost) {
-        try {
-          postToEdit = JSON.parse(storedEditingPost);
-        } catch (e) {}
-      }
-
-      // 2. Try URL search parameter ?edit=ID
-      const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-      const editId = searchParams?.get("edit");
-
-      if ((!postToEdit || (editId && String(postToEdit.id) !== String(editId))) && editId) {
-        const submittedStr = localStorage.getItem("dj_writer_submitted_articles");
-        if (submittedStr) {
-          try {
-            const list: any[] = JSON.parse(submittedStr);
-            const found = list.find((p: any) => String(p.id) === String(editId));
-            if (found) {
-              postToEdit = found;
-            }
+            postToEdit = JSON.parse(storedEditingPost);
           } catch (e) {}
         }
-      }
 
-      if (postToEdit && postToEdit.id) {
-        setEditingPostId(String(postToEdit.id));
-        setTitle(postToEdit.title || "");
-        setSubheading(postToEdit.summary || postToEdit.subheading || "");
+        // 2. Try URL search parameter ?edit=ID
+        const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const editId = searchParams?.get("edit");
+        const modeParam = searchParams?.get("mode");
 
-        const mainContent = postToEdit.content || postToEdit.summary || "";
-        setContent(mainContent);
-        if (editorRef.current) {
-          editorRef.current.innerHTML = mainContent;
+        if (modeParam === "review" || (uRole === "admin" && (postToEdit?.status === "Pending review" || postToEdit?.status === "Submitted"))) {
+          setIsReviewMode(true);
         }
 
-        if (postToEdit.category) {
-          const catStr = postToEdit.category.toString();
-          setCategory(catStr.charAt(0).toUpperCase() + catStr.slice(1).toLowerCase());
-        }
+        if (editId) {
+          try {
+            const submittedStr = localStorage.getItem("dj_writer_submitted_articles");
+            if (submittedStr) {
+              const list: any[] = JSON.parse(submittedStr);
+              const found = list.find((p: any) => String(p.id) === String(editId) || (p.title && postToEdit?.title && p.title.trim().toLowerCase() === postToEdit.title.trim().toLowerCase()));
+              if (found) {
+                postToEdit = { ...found, ...(postToEdit || {}) };
+              }
+            }
+          } catch (e) {}
 
-        setImageUrl(postToEdit.imageUrl || postToEdit.image || "");
-
-        if (Array.isArray(postToEdit.tags)) {
-          setTags(postToEdit.tags);
-        }
-
-        if (postToEdit.readDuration) {
-          setReadDuration(postToEdit.readDuration);
-        }
-
-        if (postToEdit.seo) {
-          setCardSummary(postToEdit.seo.cardSummary || postToEdit.summary || "");
-          setFocusKeyword(postToEdit.seo.focusKeyword || "");
-          setMetaDescription(postToEdit.seo.metaDescription || "");
-          setMetaTitle(postToEdit.seo.metaTitle || "");
-          setCanonicalUrl(postToEdit.seo.canonicalUrl || "");
-          if (Array.isArray(postToEdit.seo.keywords)) {
-            setKeywords(postToEdit.seo.keywords.join(", "));
+          if (!postToEdit || !postToEdit.category) {
+            try {
+              const serverArticles = await fetchArticlesFromServer();
+              const found = serverArticles.find((p: any) => String(p.id) === String(editId) || (p.title && postToEdit?.title && p.title.trim().toLowerCase() === postToEdit.title.trim().toLowerCase()));
+              if (found) {
+                postToEdit = { ...found, ...(postToEdit || {}) };
+              }
+            } catch (e) {}
           }
         }
+
+        if (postToEdit && postToEdit.id) {
+          if (postToEdit.authorName || postToEdit.author_name || postToEdit.authorEmail || postToEdit.authorAvatar) {
+            setOriginalAuthor({
+              name: postToEdit.authorName || postToEdit.author_name || postToEdit.author,
+              email: postToEdit.authorEmail || postToEdit.author_email,
+              avatar: postToEdit.authorAvatar || postToEdit.author_avatar,
+              bio: postToEdit.authorBio || postToEdit.author_bio
+            });
+          }
+          setEditingPostId(String(postToEdit.id));
+          setTitle(postToEdit.title || "");
+          setSubheading(postToEdit.summary || postToEdit.subheading || "");
+
+          let mainContent = postToEdit.content || postToEdit.summary || "";
+          const postImg = postToEdit.imageUrl || postToEdit.image || postToEdit.image_url || "";
+          if (postImg && !mainContent.includes("<img")) {
+            const imgTag = `<figure contenteditable="false" style="margin: 1.25rem auto; display: block; max-width: 100%; width: 100%; text-align: left; user-select: none;"><img src="${postImg}" alt="${postToEdit.title || "Article Image"}" draggable="false" style="width: 100%; border-radius: 0; object-fit: cover; display: block; user-select: none;" /></figure><p><br/></p>`;
+            mainContent = imgTag + mainContent;
+          }
+          setContent(mainContent);
+          if (editorRef.current) {
+            editorRef.current.innerHTML = mainContent;
+          }
+
+          if (postToEdit.category || postToEdit.category_name) {
+            const rawCat = (postToEdit.category || postToEdit.category_name).toString().trim();
+            const matched = ALL_MAIN_CATEGORIES.find(c => isSameOrMatchingCategory(c, rawCat) || c.toLowerCase() === rawCat.toLowerCase()) ||
+                            WORLD_SUBCATEGORIES.find(c => isSameOrMatchingCategory(c, rawCat) || c.toLowerCase() === rawCat.toLowerCase());
+            setCategory(matched || rawCat);
+          }
+
+          let loadedSubs: string[] = [];
+          if (Array.isArray(postToEdit.subcategories)) {
+            loadedSubs = postToEdit.subcategories;
+          } else if (Array.isArray(postToEdit.subCategories)) {
+            loadedSubs = postToEdit.subCategories;
+          } else if (typeof postToEdit.subcategories === "string") {
+            try {
+              const parsed = JSON.parse(postToEdit.subcategories);
+              if (Array.isArray(parsed)) loadedSubs = parsed;
+              else loadedSubs = postToEdit.subcategories.split(",").map((s: string) => s.trim()).filter(Boolean);
+            } catch (e) {
+              loadedSubs = postToEdit.subcategories.split(",").map((s: string) => s.trim()).filter(Boolean);
+            }
+          } else if (typeof postToEdit.subcategory_name === "string" && postToEdit.subcategory_name) {
+            loadedSubs = [postToEdit.subcategory_name];
+          }
+          setSelectedSubcategories(loadedSubs);
+
+          setImageUrl(postToEdit.imageUrl || postToEdit.image || postToEdit.image_url || "");
+
+          let loadedTags: string[] = [];
+          if (Array.isArray(postToEdit.tags)) {
+            loadedTags = postToEdit.tags;
+          } else if (typeof postToEdit.tags === "string") {
+            try {
+              const parsed = JSON.parse(postToEdit.tags);
+              if (Array.isArray(parsed)) loadedTags = parsed;
+              else loadedTags = postToEdit.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+            } catch (e) {
+              loadedTags = postToEdit.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+            }
+          }
+          setTags(loadedTags);
+
+          if (postToEdit.readDuration || postToEdit.readTime) {
+            setReadDuration(postToEdit.readDuration || postToEdit.readTime);
+          }
+
+          if (postToEdit.placement) {
+            setPlacement(postToEdit.placement);
+          }
+
+          if (postToEdit.seo) {
+            setCardSummary(postToEdit.seo.cardSummary || postToEdit.summary || "");
+            setFocusKeyword(postToEdit.seo.focusKeyword || "");
+            setMetaDescription(postToEdit.seo.metaDescription || "");
+            setMetaTitle(postToEdit.seo.metaTitle || "");
+            setCanonicalUrl(postToEdit.seo.canonicalUrl || "");
+            if (Array.isArray(postToEdit.seo.keywords)) {
+              setKeywords(postToEdit.seo.keywords.join(", "));
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load user state or post to edit:", e);
       }
-    } catch (e) {
-      console.warn("Failed to load user state or post to edit:", e);
-    }
-  }, []);
+    };
+
+    initPostData();
+  }, [auth.loading, auth.authenticated, auth.user, router]);
 
   const updateImgBoundingRect = () => {
     if (selectedImg && editorRef.current) {
       const imgRect = selectedImg.getBoundingClientRect();
-      const parentRect = editorRef.current.getBoundingClientRect();
+      const parentRect = editorRef.current.parentElement?.getBoundingClientRect() || editorRef.current.getBoundingClientRect();
       setImgBoundingRect({
         top: imgRect.top - parentRect.top,
         left: imgRect.left - parentRect.left,
@@ -262,14 +379,22 @@ export default function CreatePostPage() {
   useEffect(() => {
     const handleEditorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target && target.tagName === "IMG") {
-        const img = target as HTMLImageElement;
+      if (!target) return;
+
+      const img = target.tagName === "IMG"
+        ? (target as HTMLImageElement)
+        : (target.closest("figure")?.querySelector("img") as HTMLImageElement | null);
+
+      if (img) {
         img.ondragstart = (dragEv) => dragEv.preventDefault();
+        const parentFig = (img.closest("figure") as HTMLElement) || img;
+        parentFig.setAttribute("contenteditable", "false");
+        parentFig.ondragstart = (dragEv) => dragEv.preventDefault();
+
         setSelectedImg(img);
         const currentWidth = img.offsetWidth || parseInt(img.style.width) || 450;
         setSelectedImgWidth(currentWidth);
 
-        const parentFig = (img.closest("figure") as HTMLElement) || img;
         if (parentFig.style.float === "left" || img.style.float === "left") {
           setSelectedImgAlign("left");
         } else if (parentFig.style.float === "right" || img.style.float === "right") {
@@ -277,12 +402,14 @@ export default function CreatePostPage() {
         } else {
           setSelectedImgAlign("center");
         }
+        setTimeout(updateImgBoundingRect, 20);
       } else {
         // Don't deselect if clicking inside the image resize control bar or handles
         const resizeBar = document.getElementById("img-resize-toolbar");
         const isHandle = target.getAttribute("data-resize-handle") === "true";
         if ((resizeBar && resizeBar.contains(target)) || isHandle) return;
         setSelectedImg(null);
+        setImgBoundingRect(null);
       }
     };
 
@@ -293,10 +420,81 @@ export default function CreatePostPage() {
     }
   }, []);
 
+  // Dedicated Pointer Drag Logic for Repositioning Images Anywhere Without Duplication
+  const handleStartMoveDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedImg || !editorRef.current) return;
+
+    const figureToMove = (selectedImg.closest("figure") as HTMLElement) || selectedImg;
+    figureToMove.style.opacity = "0.35";
+    document.body.style.cursor = "grabbing";
+
+    let targetBlock: HTMLElement | null = null;
+    let isInsertAfter = false;
+
+    const clearIndicators = () => {
+      document.querySelectorAll(".drop-indicator-active").forEach(el => {
+        (el as HTMLElement).classList.remove("drop-indicator-active");
+        (el as HTMLElement).style.borderTop = "";
+        (el as HTMLElement).style.borderBottom = "";
+      });
+    };
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      clearIndicators();
+      const elemUnderPoint = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY) as HTMLElement | null;
+      if (elemUnderPoint && editorRef.current && editorRef.current.contains(elemUnderPoint)) {
+        const block = elemUnderPoint.closest("p, h1, h2, h3, h4, blockquote, figure, ul, ol, div") as HTMLElement | null;
+        if (block && block !== figureToMove && editorRef.current.contains(block)) {
+          targetBlock = block;
+          const rect = block.getBoundingClientRect();
+          isInsertAfter = (moveEvent.clientY - rect.top) > (rect.height / 2);
+          if (isInsertAfter) {
+            block.style.borderBottom = "3px solid #2563EB";
+          } else {
+            block.style.borderTop = "3px solid #2563EB";
+          }
+          block.classList.add("drop-indicator-active");
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.body.style.cursor = "default";
+      figureToMove.style.opacity = "1";
+      clearIndicators();
+
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+
+      if (targetBlock && targetBlock !== figureToMove && editorRef.current && editorRef.current.contains(targetBlock)) {
+        // Move the node in the DOM directly with zero duplication
+        figureToMove.remove();
+        if (isInsertAfter) {
+          targetBlock.parentNode?.insertBefore(figureToMove, targetBlock.nextSibling);
+        } else {
+          targetBlock.parentNode?.insertBefore(figureToMove, targetBlock);
+        }
+        if (editorRef.current) {
+          setContent(editorRef.current.innerHTML);
+        }
+        setTimeout(updateImgBoundingRect, 50);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   useEffect(() => {
     updateImgBoundingRect();
     window.addEventListener("resize", updateImgBoundingRect);
-    return () => window.removeEventListener("resize", updateImgBoundingRect);
+    window.addEventListener("scroll", updateImgBoundingRect, true);
+    return () => {
+      window.removeEventListener("resize", updateImgBoundingRect);
+      window.removeEventListener("scroll", updateImgBoundingRect, true);
+    };
   }, [selectedImg, selectedImgWidth, selectedImgAlign]);
 
   // Smooth Drag Handle Resize Logic (Corners & Side Edges)
@@ -471,7 +669,7 @@ export default function CreatePostPage() {
       // UPDATE EXISTING SELECTED IMAGE
       selectedImg.src = imageUrl.trim();
       selectedImg.alt = rawCap || "Article Image";
-      selectedImg.style.cssText = "width: 100%; display: block; border-radius: 0.75rem; object-fit: cover;";
+      selectedImg.style.cssText = "width: 100%; display: block; border-radius: 0; object-fit: cover;";
 
       let maxWidthVal = "450px";
       if (imageSize.includes("Small")) maxWidthVal = "300px";
@@ -521,9 +719,10 @@ export default function CreatePostPage() {
     }
 
     // INSERT NEW IMAGE
-    let maxWidthVal = "450px";
+    let maxWidthVal = "100%";
     if (imageSize.includes("Small")) maxWidthVal = "300px";
-    if (imageSize.includes("Full")) maxWidthVal = "100%";
+    else if (imageSize.includes("Medium")) maxWidthVal = "650px";
+    else if (imageSize.includes("Full")) maxWidthVal = "100%";
 
     let alignStyle = "margin: 1.25rem auto; display: block;";
     if (imageAlignment.includes("Left")) alignStyle = "float: left; margin: 0.5rem 1.5rem 0.75rem 0; display: inline-block;";
@@ -535,9 +734,9 @@ export default function CreatePostPage() {
         </figcaption>`
       : "";
 
-    const imgTag = `<figure style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left;"><img src="${imageUrl.trim()}" alt="${
+    const imgTag = `<figure contenteditable="false" style="${alignStyle} max-width: ${maxWidthVal}; width: 100%; text-align: left; user-select: none;"><img src="${imageUrl.trim()}" alt="${
       rawCap || "Article Image"
-    }" style="width: 100%; border-radius: 0.75rem; object-fit: cover; display: block;" />${captionHtml}</figure><p style="clear: both;"><br/></p>`;
+    }" draggable="false" style="width: 100%; border-radius: 0; object-fit: cover; display: block; user-select: none;" />${captionHtml}</figure><p style="clear: both;"><br/></p>`;
 
     if (editorRef.current) {
       editorRef.current.focus();
@@ -696,25 +895,23 @@ export default function CreatePostPage() {
       imageUrl: imageUrl.trim()
     });
 
-    if (title.trim()) {
-      setFocusKeyword(extractFocusKeyword(title.trim(), category));
-    } else {
-      setFocusKeyword(category.toLowerCase());
+    if (!isFocusKwCustom) {
+      if (title.trim()) {
+        setFocusKeyword(extractFocusKeyword(title.trim(), category));
+      } else {
+        setFocusKeyword(category.toLowerCase());
+      }
     }
 
     if (!isMetaDescCustom) {
       setMetaDescription(auto.metaDescription);
     }
     if (!isCardSummaryCustom) {
-      setCardSummary(
-        cleanContent
-          ? cleanContent.slice(0, 140) + (cleanContent.length > 140 ? "..." : "")
-          : ""
-      );
+      setCardSummary(extractCardSummary(cleanContent));
     }
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));
-  }, [title, subheading, content, category, imageUrl, currentUser]);
+  }, [title, subheading, content, category, imageUrl, currentUser, isFocusKwCustom, isMetaDescCustom, isCardSummaryCustom]);
 
   const handleAutoGenerateSEO = () => {
     setIsMetaDescCustom(false);
@@ -738,11 +935,7 @@ export default function CreatePostPage() {
 
     setFocusKeyword(auto.focusKeyword);
     setMetaDescription(auto.metaDescription);
-    setCardSummary(
-      cleanContent
-        ? cleanContent.slice(0, 140) + (cleanContent.length > 140 ? "..." : "")
-        : ""
-    );
+    setCardSummary(extractCardSummary(cleanContent));
     setMetaTitle(auto.metaTitle);
     setKeywords(auto.keywords.join(", "));
   };
@@ -751,23 +944,39 @@ export default function CreatePostPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  // Available Subcategories List
-  const subcategoryList = [
-    "US",
-    "World",
-    "Politics",
-    "Economy & Markets",
-    "Crypto",
-    "Technology",
-    "Travel",
-    "Opinion",
-    "CEO Spotlight",
-    "Sports"
-  ];
+
+function isWorldOrWorldSub(cat: string): boolean {
+  if (!cat) return false;
+  const clean = cat.toLowerCase().trim();
+  if (clean === "world") return true;
+  return WORLD_SUBCATEGORIES.some((w) => w.toLowerCase().trim() === clean);
+}
+
+  // Filtered subcategory options: excludes the currently selected main category and excludes World if a World subcategory is selected
+  const displayedSubcategories = ALL_SUB_CATEGORIES.filter((sub) => {
+    if (isSameOrMatchingCategory(sub, category)) return false;
+    if (isWorldOrWorldSub(category) && sub.toLowerCase() === "world") return false;
+    return true;
+  });
+
+  const handleCategoryChange = (newCat: string) => {
+    setCategory(newCat);
+    setIsCatDropdownOpen(false);
+    setHoveredCat(null);
+    // If the newly selected main category was selected in subcategories (or World when a World sub is selected), deselect it automatically
+    setSelectedSubcategories((prev) =>
+      prev.filter((sub) => {
+        if (isSameOrMatchingCategory(sub, newCat)) return false;
+        if (isWorldOrWorldSub(newCat) && sub.toLowerCase() === "world") return false;
+        return true;
+      })
+    );
+  };
 
   const handleSubcategoryToggle = (sub: string) => {
-    if (selectedSubcategories.includes(sub)) {
-      setSelectedSubcategories(selectedSubcategories.filter((item) => item !== sub));
+    const isChecked = selectedSubcategories.some((item) => isSameOrMatchingCategory(item, sub));
+    if (isChecked) {
+      setSelectedSubcategories(selectedSubcategories.filter((item) => !isSameOrMatchingCategory(item, sub)));
     } else {
       if (selectedSubcategories.length < 5) {
         setSelectedSubcategories([...selectedSubcategories, sub]);
@@ -798,25 +1007,88 @@ export default function CreatePostPage() {
   const [submittingAction, setSubmittingAction] = useState<"draft" | "publish" | null>(null);
 
   const handleSaveDraft = () => {
+    let currentContent = content;
+    if (editorRef.current) {
+      currentContent = editorRef.current.innerHTML || editorRef.current.innerText || "";
+      setContent(currentContent);
+    }
     if (!title.trim()) {
-      alert("Please enter a title before saving draft.");
+      alert("Please enter an article title before saving draft.");
       return;
     }
     setSubmittingAction("draft");
-    savePost("Draft");
+    savePost("Draft", currentContent);
   };
 
   const handleSubmitReview = () => {
-    if (!title.trim() || !content.trim()) {
-      alert("Please enter both a title and article body content before submitting.");
+    let currentContent = content;
+    if (editorRef.current) {
+      currentContent = editorRef.current.innerHTML || editorRef.current.innerText || "";
+      setContent(currentContent);
+    }
+    const cleanText = currentContent.replace(/<[^>]*>/g, "").trim();
+    if (!title.trim()) {
+      alert("Please enter an article title before submitting.");
+      return;
+    }
+    if (!cleanText) {
+      alert("Please write body content for your article before submitting.");
+      return;
+    }
+    const hasImage = !!(imageUrl && imageUrl.trim()) || currentContent.includes("<img");
+    if (!hasImage) {
+      alert("⚠️ Image Required: Please add a cover image or insert an image into your article before submitting for review.");
       return;
     }
     setSubmittingAction("publish");
-    savePost("Pending review");
+    savePost("Pending review", currentContent);
   };
 
-  const savePost = (status: "Published" | "Draft" | "Pending review") => {
+  const handleSaveArticle = (status: "Published" | "Draft" | "Pending review") => {
+    let currentContent = content;
+    if (editorRef.current) {
+      currentContent = editorRef.current.innerHTML || editorRef.current.innerText || "";
+      setContent(currentContent);
+    }
+    const cleanText = currentContent.replace(/<[^>]*>/g, "").trim();
+    if (!title.trim()) {
+      alert("Please enter an article title.");
+      return;
+    }
+    if (status !== "Draft" && !cleanText) {
+      alert("Please write body content for your article before publishing.");
+      return;
+    }
+    if (status !== "Draft") {
+      const hasImage = !!(imageUrl && imageUrl.trim()) || currentContent.includes("<img");
+      if (!hasImage) {
+        alert("⚠️ Image Required: Please add a cover image or insert an image into your article before publishing.");
+        return;
+      }
+    }
+    setSubmittingAction(status === "Draft" ? "draft" : "publish");
+    savePost(status, currentContent);
+  };
+
+  const savePost = async (status: "Published" | "Draft" | "Pending review", overrideContent?: string) => {
     setIsSubmitting(true);
+    let bodyContent = overrideContent !== undefined ? overrideContent : content;
+
+    // Convert any images in article content to .webp format
+    try {
+      bodyContent = await convertHtmlImagesToWebP(bodyContent, 0.85);
+    } catch (e) {
+      console.warn("WebP body conversion notice:", e);
+    }
+
+    let processedImageUrl = imageUrl.trim();
+    if (processedImageUrl && !processedImageUrl.startsWith("data:image/webp") && !processedImageUrl.endsWith(".webp") && processedImageUrl.startsWith("data:image/")) {
+      try {
+        processedImageUrl = await convertToWebP(processedImageUrl, 0.85);
+      } catch (e) {
+        console.warn("WebP cover conversion notice:", e);
+      }
+    }
 
     let activeEmail = "";
     let activeName = "";
@@ -835,45 +1107,71 @@ export default function CreatePostPage() {
       console.warn("Could not read current user for article:", e);
     }
 
-    const savedProf = getUserProfile(activeEmail || currentUser?.email || "");
-    let finalAuthorName = savedProf?.name || activeName || currentUser?.name || "Rushdhi MR";
-    if (!finalAuthorName || finalAuthorName.toLowerCase().includes("admin")) {
-      finalAuthorName = "Rushdhi MR";
+    const userRole = (currentUser?.role || auth.user?.role || "").toLowerCase();
+    const isAdmin = userRole === "admin" || userRole === "co-admin";
+
+    let finalAuthorName = "";
+    let finalAuthorEmail = "";
+    let finalAuthorAvatar = "";
+    let finalAuthorBio = "";
+
+    if (originalAuthor?.name && (isAdmin || !originalAuthor.name.toLowerCase().includes("admin"))) {
+      finalAuthorName = originalAuthor.name;
+      finalAuthorEmail = originalAuthor.email || "rushdhiriyaj2005@gmail.com";
+      finalAuthorAvatar = originalAuthor.avatar || "/author_bluesuit.jpg";
+      finalAuthorBio = originalAuthor.bio || `${finalAuthorName} is a journalist for Digital Journal.`;
+    } else {
+      const savedProf = getUserProfile(activeEmail || currentUser?.email || auth.user?.email || "");
+      finalAuthorName = auth.user?.name || currentUser?.name || savedProf?.name || activeName || "Rushdhi MR";
+      finalAuthorEmail = auth.user?.email || currentUser?.email || activeEmail || "rushdhiriyaj2005@gmail.com";
+      finalAuthorAvatar = savedProf?.avatar || auth.user?.avatar || currentUser?.avatar || activeAvatar || "/author_bluesuit.jpg";
+      finalAuthorBio = savedProf?.bio || (auth.user as any)?.bio || (currentUser as any)?.bio || activeBio || `${finalAuthorName} is a journalist for Digital Journal.`;
     }
-    let finalAuthorAvatar = savedProf?.avatar || activeAvatar || currentUser?.avatar || "/author_bluesuit.jpg";
-    if (!finalAuthorAvatar || finalAuthorAvatar.includes("cart")) {
-      finalAuthorAvatar = "/author_bluesuit.jpg";
+
+    if (finalAuthorName.toLowerCase() === "administrator" || finalAuthorName.toLowerCase() === "admin") {
+      const writerProf = getUserProfile("rushdhiriyaj2005@gmail.com");
+      finalAuthorName = writerProf?.name || "Rushdhi MR";
+      finalAuthorEmail = "rushdhiriyaj2005@gmail.com";
+      finalAuthorAvatar = writerProf?.avatar || "/author_bluesuit.jpg";
     }
-    const finalAuthorBio = savedProf?.bio || activeBio || "Journalist for Digital Journal.";
 
     const autoSeo = generateAutoSEO({
       title: title.trim(),
       subheading: subheading.trim(),
-      content: content.trim(),
+      content: bodyContent.trim(),
       category: category.toLowerCase(),
       authorName: finalAuthorName,
-      imageUrl: imageUrl.trim() || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
+      imageUrl: processedImageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
       metaTitle: metaTitle.trim() || undefined,
       metaDescription: metaDescription.trim() || undefined,
       focusKeyword: focusKeyword.trim() || undefined,
       keywords: keywords ? keywords.split(",").map((k) => k.trim()).filter(Boolean) : undefined,
       canonicalUrl: canonicalUrl.trim() || undefined,
-      ogImage: imageUrl.trim() || undefined
+      ogImage: processedImageUrl || undefined
     });
+
+    const isPostFeatured = placement === "Home Page A+ Section" || placement === "A+ Section" || placement === "Featured Story";
+    const isPostEditorsPick = placement === "Editors's Picks" || placement === "Editor's Pick" || placement === "Editors Picks" || placement === "Editor's Picks Section";
 
     const postToSave = {
       id: editingPostId || `post-${Date.now()}`,
       title: title.trim(),
-      category: category.toUpperCase(),
+      slug: title.trim().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
+      category: category,
+      subheading: subheading.trim() || title.trim(),
       summary: subheading.trim() || title.trim(),
-      content: content.trim(),
-      imageUrl: imageUrl.trim() || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
+      content: bodyContent.trim(),
+      imageUrl: processedImageUrl || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=350&fit=crop",
       status: status,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       reads: 0,
+      placement: placement || "Standard Post",
+      is_featured: isPostFeatured,
+      is_editors_pick: isPostEditorsPick,
       tags: tags,
+      subcategories: selectedSubcategories,
       readDuration: readDuration,
-      authorEmail: activeEmail ? activeEmail.toLowerCase().trim() : "rushdhiriyaj2005@gmail.com",
+      authorEmail: finalAuthorEmail,
       authorName: finalAuthorName,
       authorAvatar: finalAuthorAvatar,
       authorBio: finalAuthorBio,
@@ -881,67 +1179,267 @@ export default function CreatePostPage() {
     };
 
     try {
-      const existingStr = localStorage.getItem("dj_writer_submitted_articles");
-      let existingPosts: any[] = [];
-      if (existingStr) {
-        existingPosts = JSON.parse(existingStr);
-      }
-
-      let updated;
       if (editingPostId) {
-        updated = existingPosts.map((p) => (p.id === editingPostId ? postToSave : p));
-        localStorage.removeItem("dj_editing_post");
-      } else {
-        updated = [postToSave, ...existingPosts];
+        try {
+          localStorage.removeItem("dj_editing_post");
+        } catch (e) {}
       }
 
-      localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
-      localStorage.setItem(
-        "dj_toast",
-        status === "Pending review"
-          ? `✓ Story "${title.trim()}" submitted for review! Admin approval is pending before publication.`
-          : "✓ Draft saved successfully."
-      );
+      // Explicitly update local storage queue immediately
+      try {
+        const subsStr = localStorage.getItem("dj_writer_submitted_articles");
+        const existingList: any[] = subsStr ? JSON.parse(subsStr) : [];
+        const idx = existingList.findIndex(p => String(p.id) === String(postToSave.id) || (p.title && postToSave.title && p.title.trim().toLowerCase() === postToSave.title.trim().toLowerCase()));
+        let updatedList: any[];
+        if (idx >= 0) {
+          updatedList = [...existingList];
+          updatedList[idx] = { ...updatedList[idx], ...postToSave };
+        } else {
+          updatedList = [postToSave, ...existingList];
+        }
+        localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updatedList));
+      } catch (e) {}
+
+      await saveArticleToServer(postToSave);
+
+      try {
+        localStorage.setItem(
+          "dj_toast",
+          status === "Published"
+            ? `✓ Article "${title.trim().slice(0, 35)}..." published live to homepage!`
+            : status === "Pending review"
+            ? `✓ Story "${title.trim()}" submitted for review! Admin approval is pending before publication.`
+            : `✓ Draft "${title.trim()}" saved successfully.`
+        );
+        localStorage.setItem("dj_active_tab", status === "Published" ? "Published" : status === "Pending review" ? "Pending review" : "Drafts");
+      } catch (e) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
     } catch (err) {
-      console.warn("Error saving post to localStorage:", err);
+      console.warn("Error saving post to server store:", err);
     }
+
+    try {
+      localStorage.setItem("dj_active_tab", status === "Published" ? "Published" : status === "Pending review" ? "Pending review" : "Drafts");
+    } catch (e) {}
 
     setTimeout(() => {
       setIsSubmitting(false);
       setSubmittingAction(null);
-      router.push("/writer");
-    }, 1200);
+      const userRole = (currentUser?.role || auth.user?.role || "").toLowerCase();
+      if (status === "Pending review") {
+        router.push("/writer?tab=pending");
+      } else if (status === "Published") {
+        if (userRole === "admin" || userRole === "co-admin") {
+          router.push("/");
+        } else {
+          router.push("/writer?tab=published");
+        }
+      } else {
+        router.push("/writer?tab=drafts");
+      }
+    }, 600);
   };
+
+  const handleApprovePublish = async () => {
+    setIsSubmitting(true);
+    setSubmittingAction("publish");
+    try {
+      const liveTitle = title.trim() || "Untitled Article";
+      let liveContent = editorRef.current ? editorRef.current.innerHTML : content;
+
+      // Convert body images to WebP
+      try {
+        liveContent = await convertHtmlImagesToWebP(liveContent, 0.85);
+      } catch (e) {
+        console.warn("WebP body conversion notice during approval:", e);
+      }
+
+      let liveImageUrl = imageUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=800&fit=crop";
+      if (liveImageUrl && !liveImageUrl.startsWith("data:image/webp") && !liveImageUrl.endsWith(".webp") && liveImageUrl.startsWith("data:image/")) {
+        try {
+          liveImageUrl = await convertToWebP(liveImageUrl, 0.85);
+        } catch (e) {
+          console.warn("WebP cover conversion notice during approval:", e);
+        }
+      }
+
+      const liveSummary = subheading.trim() || extractCardSummary(liveContent);
+      const liveSlug = liveTitle.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+
+      let finalAuthorName = originalAuthor?.name || "";
+      let finalAuthorAvatar = originalAuthor?.avatar || "";
+      let finalAuthorBio = originalAuthor?.bio || "";
+      let finalAuthorEmail = originalAuthor?.email || "";
+
+      // If missing or set to admin placeholder, retrieve the original writer from submitted articles
+      if (!finalAuthorName || finalAuthorName.toLowerCase() === "system administrator" || finalAuthorName.toLowerCase() === "administrator" || finalAuthorName.toLowerCase() === "admin") {
+        try {
+          const subsStr = localStorage.getItem("dj_writer_submitted_articles");
+          if (subsStr) {
+            const list = JSON.parse(subsStr);
+            const found = list.find((p: any) => String(p.id) === String(editingPostId) || (p.title && liveTitle && p.title.trim().toLowerCase() === liveTitle.trim().toLowerCase()));
+            if (found && found.authorName && !found.authorName.toLowerCase().includes("admin")) {
+              finalAuthorName = found.authorName;
+              finalAuthorAvatar = found.authorAvatar || finalAuthorAvatar;
+              finalAuthorEmail = found.authorEmail || finalAuthorEmail;
+              finalAuthorBio = found.authorBio || finalAuthorBio;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!finalAuthorName || finalAuthorName.toLowerCase() === "system administrator" || finalAuthorName.toLowerCase() === "administrator" || finalAuthorName.toLowerCase() === "admin") {
+        finalAuthorName = "Rushdhi MR";
+        finalAuthorEmail = "writer@digitaljournal.com";
+      }
+
+      const approvedArticle = {
+        id: editingPostId ? (isNaN(Number(editingPostId)) ? editingPostId : Number(editingPostId)) : Date.now(),
+        title: liveTitle,
+        slug: liveSlug,
+        subheading: liveSummary,
+        summary: liveSummary,
+        content: liveContent,
+        category: category,
+        subcategories: selectedSubcategories,
+        tags: tags,
+        placement: placement,
+        readDuration: readDuration,
+        imageUrl: liveImageUrl,
+        status: "Published",
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        authorName: finalAuthorName,
+        authorAvatar: finalAuthorAvatar,
+        authorEmail: finalAuthorEmail,
+        authorBio: finalAuthorBio
+      };
+
+      // 1. Update writer submitted articles store in localStorage
+      const subsStr = localStorage.getItem("dj_writer_submitted_articles");
+      if (subsStr) {
+        const parsed = JSON.parse(subsStr);
+        const updated = parsed.map((p: any) => 
+          (String(p.id) === String(editingPostId) || p.title.trim().toLowerCase() === liveTitle.toLowerCase())
+            ? { ...p, ...approvedArticle, status: "Published" }
+            : p
+        );
+        localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
+      }
+
+      // 2. Save / publish to server API
+      await saveArticleToServer(approvedArticle as any);
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
+
+      localStorage.setItem("dj_toast", `✓ Article "${liveTitle.slice(0, 35)}..." approved and published!`);
+      localStorage.removeItem("dj_editing_post");
+
+      router.push("/admin");
+    } catch (e) {
+      console.warn("Approval publish error:", e);
+      router.push("/admin");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRejectToTrash = async () => {
+    if (!confirm(`Are you sure you want to reject this article and move it to Trash?`)) return;
+    setIsSubmitting(true);
+    try {
+      const liveTitle = title.trim() || "Untitled Article";
+      const trashItem = {
+        id: editingPostId || Date.now(),
+        title: liveTitle,
+        category_name: category,
+        description: subheading || "",
+        imageUrl: imageUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150&h=150&fit=crop",
+        published_at: "Today",
+        readTime: readDuration,
+        author_name: currentUser?.name || "Writer",
+        status: "Trash",
+        original_status: "Pending review"
+      };
+
+      // Update trashed cache
+      const trashedStr = localStorage.getItem("dj_trashed_articles");
+      const trashedList = trashedStr ? JSON.parse(trashedStr) : [];
+      localStorage.setItem("dj_trashed_articles", JSON.stringify([trashItem, ...trashedList]));
+
+      // Update submissions
+      const subsStr = localStorage.getItem("dj_writer_submitted_articles");
+      if (subsStr) {
+        const parsed = JSON.parse(subsStr);
+        const updated = parsed.map((p: any) =>
+          (String(p.id) === String(editingPostId) || p.title.trim().toLowerCase() === liveTitle.toLowerCase())
+            ? { ...p, status: "Trash" }
+            : p
+        );
+        localStorage.setItem("dj_writer_submitted_articles", JSON.stringify(updated));
+      }
+
+      const { deleteArticleOnServer } = await import("@/lib/articlesSync");
+      await deleteArticleOnServer(editingPostId || "", liveTitle);
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_articles_updated"));
+      }
+
+      localStorage.setItem("dj_toast", `Article moved to Trash.`);
+      localStorage.removeItem("dj_editing_post");
+
+      router.push("/admin");
+    } catch (e) {
+      console.warn("Reject to trash error:", e);
+      router.push("/admin");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isUserAdmin = (currentUser?.role || auth.user?.role || "").toLowerCase() === "admin" || (currentUser?.role || auth.user?.role || "").toLowerCase() === "co-admin";
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans antialiased text-slate-900 selection:bg-orange-100 selection:text-orange-900">
       
-      {/* FIXED TOP NAVBAR HEADER WITH EMERALD ACCENT */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E293B]/95 border-t-2 border-emerald-500 border-b border-slate-700/80 text-white px-6 py-3 flex items-center justify-between shadow-lg w-full backdrop-blur-md">
+      {/* FIXED TOP NAVBAR HEADER */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0B0F19] border-b border-slate-800 text-white px-6 py-3 flex items-center justify-between shadow-lg w-full">
         {/* Left Side: Cancel Link & Context Breadcrumb */}
         <div className="flex items-center gap-4">
           <Link
-            href="/writer"
+            href={isUserAdmin ? "/admin" : "/writer"}
             onClick={() => {
               try {
                 localStorage.removeItem("dj_editing_post");
               } catch (e) {}
             }}
-            className="flex items-center gap-2 text-slate-300 hover:text-emerald-400 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer hover:translate-x-0.5"
+            className="flex items-center gap-2 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer hover:translate-x-0.5 font-mono"
           >
             <ArrowLeft size={15} className="stroke-[2.5]" />
             CANCEL
           </Link>
 
-          <span className="text-slate-600 font-light">|</span>
-
-          <span className="text-[10px] font-bold text-emerald-300 tracking-wider uppercase bg-slate-800/80 px-3 py-1 rounded-xl border border-emerald-500/30 shadow-2xs">
-            {editingPostId ? "EDIT" : "NEW"} {category.toUpperCase()} HEADLINE
-          </span>
+          {isReviewMode ? (
+            <span className="text-[11px] font-mono font-medium text-slate-400 tracking-wider uppercase truncate max-w-md hidden sm:inline-block">
+              REVIEWING: {(title || "NEW ARTICLE SUBMISSION").slice(0, 55).toUpperCase()}...
+            </span>
+          ) : (
+            <>
+              <span className="text-slate-600 font-light">|</span>
+              <span className="text-[10px] font-bold text-emerald-300 tracking-wider uppercase bg-slate-800/80 px-3 py-1 rounded-xl border border-emerald-500/30 shadow-2xs font-mono">
+                {editingPostId ? "EDIT" : "NEW"} {category.toUpperCase()} HEADLINE
+              </span>
+            </>
+          )}
         </div>
 
         {/* Right Side Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
           <button
             type="button"
             onClick={() => {
@@ -951,61 +1449,113 @@ export default function CreatePostPage() {
               setShowPreviewModal(true);
             }}
             disabled={isSubmitting}
-            className="border border-slate-700 bg-slate-800/60 hover:bg-slate-800 hover:border-emerald-500/50 text-slate-200 font-bold text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer uppercase tracking-wider shadow-xs disabled:opacity-50"
+            className="border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-[11px] sm:text-xs px-3.5 sm:px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer uppercase tracking-wider shadow-xs disabled:opacity-50 font-mono"
           >
-            <Eye size={14} className="text-slate-400 group-hover:text-emerald-400" />
+            <Eye size={14} className="text-slate-300" />
             <span>PREVIEW</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSubmitting}
-            className="border border-slate-700 bg-slate-800/60 hover:bg-slate-800 hover:border-emerald-500/50 text-slate-200 font-bold text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer uppercase tracking-wider shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting && submittingAction === "draft" ? (
-              <>
-                <Loader2 size={14} className="animate-spin text-emerald-400" />
-                <span>SAVING DRAFT...</span>
-              </>
-            ) : (
-              <>
-                <Save size={14} className="text-slate-400 group-hover:text-emerald-400" />
-                <span>SAVE DRAFT</span>
-              </>
-            )}
-          </button>
+          {isReviewMode ? (
+            <>
+              <button
+                type="button"
+                onClick={handleRejectToTrash}
+                disabled={isSubmitting}
+                className="bg-[#D31220] hover:bg-[#B91C1C] active:scale-[0.98] text-white font-bold text-[11px] sm:text-xs px-3.5 sm:px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm shadow-red-900/30 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed font-mono"
+              >
+                <X size={14} strokeWidth={2.5} />
+                <span>REJECT TO TRASH</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleSubmitReview}
-            disabled={isSubmitting}
-            className="bg-[#F97316] hover:bg-[#EA580C] active:scale-[0.98] text-white font-bold text-[10px] sm:text-xs px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-sm shadow-orange-500/20 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting && submittingAction === "publish" ? (
-              <>
-                <Loader2 size={14} className="animate-spin text-white" />
-                <span>SUBMITTING...</span>
-              </>
-            ) : (
-              <>
-                <Send size={14} />
-                <span>SUBMIT FOR REVIEW</span>
-              </>
-            )}
-          </button>
+              <button
+                type="button"
+                onClick={handleApprovePublish}
+                disabled={isSubmitting}
+                className="bg-[#059669] hover:bg-[#047857] active:scale-[0.98] text-white font-bold text-[11px] sm:text-xs px-4 sm:px-5 py-2 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-sm shadow-emerald-900/30 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed font-mono"
+              >
+                {isSubmitting && submittingAction === "publish" ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin text-white" />
+                    <span>PUBLISHING...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} strokeWidth={3} />
+                    <span>APPROVE & PUBLISH</span>
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={isSubmitting}
+                className="border border-slate-700 bg-slate-800/60 hover:bg-slate-800 hover:border-emerald-500/50 text-slate-200 font-bold text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer uppercase tracking-wider shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isSubmitting && submittingAction === "draft" ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin text-emerald-400" />
+                    <span>SAVING DRAFT...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} className="text-slate-400 group-hover:text-emerald-400" />
+                    <span>SAVE DRAFT</span>
+                  </>
+                )}
+              </button>
+
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => handleSaveArticle("Published")}
+                  disabled={isSubmitting}
+                  className="bg-[#059669] hover:bg-[#047857] active:scale-[0.98] text-white font-bold text-[10px] sm:text-xs px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed font-mono"
+                >
+                  {isSubmitting && submittingAction === "publish" ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin text-white" />
+                      <span>PUBLISHING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} strokeWidth={3} />
+                      <span>PUBLISH LIVE</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmitReview}
+                  disabled={isSubmitting}
+                  className="bg-[#F97316] hover:bg-[#EA580C] active:scale-[0.98] text-white font-bold text-[10px] sm:text-xs px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-sm shadow-orange-500/20 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed font-mono"
+                >
+                  {isSubmitting && submittingAction === "publish" ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin text-white" />
+                      <span>SUBMITTING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      <span>SUBMIT FOR REVIEW</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </>
+          )}
         </div>
       </header>
 
-      {/* MAIN CONTENT WORKSPACE GRID */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-20 pb-12 flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* LEFT COLUMN: MAIN RICH TEXT ARTICLE CANVAS */}
-          <div className="lg:col-span-8 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-all min-h-[750px] flex flex-col overflow-visible">
-            
-            {/* WYSIWYG TOOLBAR BOX - FIXED/STICKY ON SCROLL */}
-            <div className="sticky top-[64px] z-30 bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-xl p-2.5 mb-8 flex items-center flex-wrap gap-2 text-slate-700 select-none shadow-lg transition-all ring-1 ring-slate-900/5">
+      {/* FIXED SECONDARY FORMATTING TOOLBAR - PERMANENTLY FIXED ON SCROLL */}
+      <div className="fixed top-[53px] sm:top-[57px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs py-2 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 flex items-center flex-wrap gap-2 sm:gap-2.5 text-slate-700 select-none pl-3 sm:pl-6">
               <button
                 type="button"
                 onClick={() => applyTextFormat("undo")}
@@ -1145,6 +1695,16 @@ export default function CreatePostPage() {
                 INSERT IMAGE
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT WORKSPACE GRID */}
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-[124px] pb-12 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT COLUMN: MAIN RICH TEXT ARTICLE CANVAS */}
+          <div className="lg:col-span-8 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-all min-h-[750px] flex flex-col">
 
             {/* TITLE INPUT - MULTI-LINE AUTO-EXPANDING TEXTAREA */}
             <textarea
@@ -1214,12 +1774,24 @@ export default function CreatePostPage() {
                 <div
                   id="img-resize-toolbar"
                   style={{
-                    top: `${Math.max(-44, imgBoundingRect.top - 46)}px`,
+                    top: `${Math.max(-48, imgBoundingRect.top - 50)}px`,
                     left: `${imgBoundingRect.left + imgBoundingRect.width / 2}px`,
                     transform: "translateX(-50%)",
                   }}
-                  className="absolute z-30 bg-[#0B132B] text-white rounded-xl shadow-2xl px-3.5 py-1.5 flex items-center gap-2.5 text-xs font-semibold border border-slate-700/80 animate-in fade-in zoom-in-95 duration-150 whitespace-nowrap select-none"
+                  className="absolute z-40 bg-[#0B132B] text-white rounded-xl shadow-2xl px-3.5 py-1.5 flex items-center gap-2.5 text-xs font-semibold border border-slate-700/80 animate-in fade-in zoom-in-95 duration-150 whitespace-nowrap select-none"
                 >
+                  {/* DRAG TO REPOSITION BUTTON */}
+                  <div
+                    onMouseDown={handleStartMoveDrag}
+                    className="flex items-center gap-1 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 border border-slate-600/60 shadow-xs select-none"
+                    title="Click and drag to reposition image anywhere in article"
+                  >
+                    <GripVertical size={13} className="text-blue-400" />
+                    <span className="text-[10px] uppercase font-bold tracking-wider">DRAG</span>
+                  </div>
+
+                  <span className="text-slate-600 font-normal">|</span>
+
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     SIZE
                   </span>
@@ -1443,35 +2015,111 @@ export default function CreatePostPage() {
             {sidebarTab === "DETAILS" && (
               <div className="space-y-5">
                 
-                {/* 1. SELECT CATEGORY (MAIN) */}
-                <div>
+                {/* 1. SELECT CATEGORY (MAIN) WITH FLYOUT SUBCATEGORIES SIDEBAR */}
+                <div className="relative" ref={catDropdownRef}>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                     SELECT CATEGORY (MAIN)
                   </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"
+
+                  {/* Trigger Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCatDropdownOpen((prev) => !prev)}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center justify-between focus:outline-none focus:border-orange-500 cursor-pointer shadow-2xs hover:border-slate-300 transition-colors"
                   >
-                    <option value="Business">Business</option>
-                    <option value="News">News</option>
-                    <option value="Technology">Technology</option>
-                    <option value="Politics">Politics</option>
-                    <option value="Innovation">Innovation</option>
-                    <option value="World">World</option>
-                  </select>
+                    <span>{category}</span>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isCatDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {/* Custom Dropdown Menu with Cascading Sidebar for World */}
+                  {isCatDropdownOpen && (
+                    <div 
+                      onMouseLeave={() => setHoveredCat(null)}
+                      className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-xl shadow-2xl z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150"
+                    >
+                      <div className="space-y-0.5">
+                        {ALL_MAIN_CATEGORIES.map((cat) => {
+                          const isSelected = category.toLowerCase() === cat.toLowerCase();
+                          const isWorld = cat.toLowerCase() === "world";
+
+                          return (
+                            <div
+                              key={cat}
+                              className="relative"
+                              onMouseEnter={() => setHoveredCat(cat)}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleCategoryChange(cat)}
+                                className={`w-full text-left px-3.5 py-2 text-xs font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? "bg-orange-50 text-orange-700 font-bold"
+                                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                }`}
+                              >
+                                <span>{cat}</span>
+                                {isWorld && (
+                                  <ChevronRight size={13} className="text-slate-400 group-hover:text-orange-600 transition-transform" />
+                                )}
+                              </button>
+
+                              {/* Flyout Subcategories Sidebar on Hover for World */}
+                              {isWorld && hoveredCat === "World" && (
+                                <div 
+                                  onMouseEnter={() => setHoveredCat("World")}
+                                  className="absolute right-full top-0 mr-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] p-2 text-left animate-in fade-in slide-in-from-right-1 duration-150 before:content-[''] before:absolute before:-right-3 before:top-0 before:bottom-0 before:w-4"
+                                >
+                                  <div className="px-2 py-1 mb-1 border-b border-slate-100 flex items-center justify-between">
+                                    <span className="text-[10px] font-extrabold uppercase text-orange-600 tracking-wider">
+                                      World Subcategories
+                                    </span>
+                                    <span className="text-[9px] text-slate-400 font-mono">7 Regions</span>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    {WORLD_SUBCATEGORIES.map((sub) => {
+                                      const isSubSelected = category.toLowerCase() === sub.toLowerCase();
+                                      return (
+                                        <button
+                                          key={sub}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCategoryChange(sub);
+                                          }}
+                                          className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center justify-between transition-colors cursor-pointer ${
+                                            isSubSelected
+                                              ? "bg-orange-50 text-orange-700 font-bold"
+                                              : "text-slate-700 hover:bg-slate-100"
+                                          }`}
+                                        >
+                                          <span>{sub}</span>
+                                          {isSubSelected && <Check size={11} strokeWidth={3} className="text-orange-600" />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. SELECT SUB-CATEGORIES (OPTIONAL, MAX 5) */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    SELECT SUB-CATEGORIES (OPTIONAL, MAX 5)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      SELECT SUB-CATEGORIES (OPTIONAL, MAX 5)
+                    </label>
+                  </div>
                   
                   <div className="border border-slate-200/90 rounded-xl p-3 bg-slate-50/50 max-h-48 overflow-y-auto mb-2 scrollbar-thin">
                     <div className="grid grid-cols-2 gap-2">
-                      {subcategoryList.map((sub) => {
-                        const isChecked = selectedSubcategories.includes(sub);
+                      {displayedSubcategories.map((sub) => {
+                        const isChecked = selectedSubcategories.some((item) => isSameOrMatchingCategory(item, sub));
                         return (
                           <label
                             key={sub}
@@ -1479,7 +2127,7 @@ export default function CreatePostPage() {
                             className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none py-1 px-1.5 rounded hover:bg-slate-100/80 transition-colors"
                           >
                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              isChecked ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 bg-white"
+                              isChecked ? "bg-[#F97316] border-[#F97316] text-white" : "border-slate-300 bg-white"
                             }`}>
                               {isChecked && <Check size={12} strokeWidth={3} />}
                             </div>
@@ -1555,6 +2203,56 @@ export default function CreatePostPage() {
                   />
                 </div>
 
+                {/* 5. HOMEPAGE PLACEMENT SECTION (Admin Only) */}
+                {isAdmin && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-extrabold text-[#D31220] uppercase tracking-wider">
+                        HOMEPAGE PLACEMENT
+                      </label>
+                      <span className="text-[9.5px] font-mono text-slate-400">Admin Section Control</span>
+                    </div>
+
+                    <div className="space-y-1.5 bg-slate-50/80 border border-slate-200/90 rounded-2xl p-2.5">
+                      {[
+                        { id: "Home Page A+ Section", label: "Home Page A+ Section", desc: "Top Hero Carousel main story" },
+                        { id: "Trending Now", label: "Trending Now Section", desc: "Trending sidebar list beside Hero" },
+                        { id: "Editors's Picks", label: "Editor's Picks Section", desc: "4-Card featured row below Hero" },
+                        { id: "Latest News", label: "Latest News Section", desc: "Latest news feed and featured lead" },
+                        { id: "Home Page A+ Section 2", label: "Home Page A+ Section 2", desc: "Middle dark spotlight banner" },
+                        { id: "Standard Post", label: "Category Section Only", desc: "Default category news feed" },
+                      ].map((item) => {
+                        const isSelected = placement === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => setPlacement(item.id)}
+                            className={`flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-all ${
+                              isSelected
+                                ? "bg-white border-2 border-[#D31220] shadow-sm"
+                                : "border border-transparent hover:bg-white/70"
+                            }`}
+                          >
+                            <div className={`w-4 h-4 mt-0.5 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSelected ? "border-[#D31220] bg-[#D31220] text-white" : "border-slate-300 bg-white"
+                            }`}>
+                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-xs font-bold leading-tight ${isSelected ? "text-[#D31220]" : "text-slate-800"}`}>
+                                {item.label}
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-normal leading-snug mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
 
@@ -1576,15 +2274,32 @@ export default function CreatePostPage() {
                   metaDescription={metaDescription}
                   onUpdateCardSummary={(val) => {
                     setCardSummary(val);
-                    setIsCardSummaryCustom(true);
+                    if (!val.trim()) {
+                      setIsCardSummaryCustom(false);
+                      setCardSummary(extractCardSummary(content));
+                    } else {
+                      setIsCardSummaryCustom(true);
+                    }
                   }}
                   onUpdateFocusKeyword={(val) => {
                     setFocusKeyword(val);
-                    setIsFocusKwCustom(true);
+                    if (!val.trim()) {
+                      setIsFocusKwCustom(false);
+                      if (title.trim()) {
+                        setFocusKeyword(extractFocusKeyword(title.trim(), category));
+                      }
+                    } else {
+                      setIsFocusKwCustom(true);
+                    }
                   }}
                   onUpdateMetaDescription={(val) => {
                     setMetaDescription(val);
-                    setIsMetaDescCustom(true);
+                    if (!val.trim()) {
+                      setIsMetaDescCustom(false);
+                      setMetaDescription(extractCardSummary(content));
+                    } else {
+                      setIsMetaDescCustom(true);
+                    }
                   }}
                   onAutoGenerateSEO={handleAutoGenerateSEO}
                 />
@@ -1648,17 +2363,23 @@ export default function CreatePostPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        setImageFileName(file.name);
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          if (typeof reader.result === "string") {
-                            setImageUrl(reader.result);
-                          }
-                        };
-                        reader.readAsDataURL(file);
+                        const baseName = file.name.replace(/\.[^/.]+$/, "");
+                        setImageFileName(baseName + ".webp");
+                        try {
+                          const webpUrl = await convertToWebP(file, 0.85);
+                          setImageUrl(webpUrl);
+                        } catch (err) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            if (typeof reader.result === "string") {
+                              setImageUrl(reader.result);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }
                     }}
                     className="hidden"
@@ -1831,32 +2552,50 @@ export default function CreatePostPage() {
                 )}
 
                 {/* AUTHOR META ROW */}
-                <div className="flex items-center gap-3.5 border-b border-slate-100 pb-6 mb-8 mt-6 sm:mt-8">
-                  <img
-                    src={currentUser?.avatar || "/author_bluesuit.jpg"}
-                    alt={currentUser?.name || "rushdhi"}
-                    className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
-                  />
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                      <span>By {currentUser?.name || "rushdhi"}</span>
-                      <a
-                        href={`https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(currentUser?.name || "Rushdhi MR")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-[#0A66C2] hover:text-[#004182] transition-colors p-0.5"
-                        title={`Connect with ${currentUser?.name || "Rushdhi MR"} on LinkedIn`}
-                      >
-                        <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-                          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                        </svg>
-                      </a>
+                {(() => {
+                  const activeProf = getUserProfile(currentUser?.email || "");
+                  const previewAuthorName = activeProf?.name || currentUser?.name || "Rushdhi MR";
+                  const previewAuthorAvatar = activeProf?.avatar || currentUser?.avatar || "/author_bluesuit.jpg";
+                  return (
+                    <div className="flex items-center gap-3.5 border-b border-slate-100 pb-6 mb-8 mt-6 sm:mt-8">
+                      <img
+                        src={previewAuthorAvatar}
+                        alt={previewAuthorName}
+                        className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                          <span>By {previewAuthorName}</span>
+                          <a
+                            href={`https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(previewAuthorName)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-[#0A66C2] hover:text-[#004182] transition-colors p-0.5"
+                            title={`Connect with ${previewAuthorName} on LinkedIn`}
+                          >
+                            <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                          </a>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-sans tracking-wide uppercase mt-0.5">
+                          PUBLISHED {new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} AT 4:12 PM EDT
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-sans tracking-wide uppercase mt-0.5">
-                      PUBLISHED {new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} AT 4:12 PM EDT
-                    </p>
+                  );
+                })()}
+
+                {/* FEATURED COVER IMAGE IN PREVIEW */}
+                {imageUrl && !content.includes(imageUrl) && !content.includes("<img") && (
+                  <div className="w-full aspect-[16/9] sm:aspect-[21/9] max-h-[420px] rounded-2xl overflow-hidden mb-8 bg-slate-900 border border-slate-200 shadow-sm">
+                    <img
+                      src={imageUrl}
+                      alt={title || "Article Image"}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
+                )}
 
                 {/* ARTICLE BODY & INLINE IMAGES CANVAS WITH MID-ARTICLE NEWSLETTER WIDGET */}
                 <div className="prose prose-slate max-w-none text-slate-800 leading-relaxed font-serif text-base sm:text-lg space-y-4 flow-root [&_a]:text-[#F97316] [&_a]:font-semibold [&_a]:underline hover:[&_a]:text-[#EA580C] [&_figure]:my-6 [&_figure]:max-w-full [&_figcaption]:text-center [&_figcaption]:text-xs [&_figcaption]:text-slate-500 [&_figcaption]:italic [&_img]:rounded-xl [&_b]:font-bold [&_strong]:font-bold [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6">
@@ -1864,7 +2603,7 @@ export default function CreatePostPage() {
                     const newsletterWidget = (
                       <div className="clear-both w-full my-8 bg-amber-50/40 border-t-2 border-b-2 border-[#B45309]/30 p-6 md:p-8 text-left not-prose font-sans" style={{ clear: 'both' }}>
                         <h3 className="font-serif text-lg sm:text-xl font-bold text-[#B45309] mb-1">
-                          Digital Journal Fast Start — Let the best of news come to you
+                          London BigBen Fast Start — Let the best of news come to you
                         </h3>
                         <p className="text-xs text-slate-600 mb-4 font-sans">
                           Sign up and stay up to date with our daily newsletter.

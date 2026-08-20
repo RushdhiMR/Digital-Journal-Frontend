@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "Digital Journal",
-  description: "Digital Journal Website",
+  title: "London BigBen Network",
+  description: "London BigBen Network - Smart News. Real Impact.",
   icons: {
-    icon: "/logo.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
@@ -23,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden w-full max-w-full">
       <body className="font-sans antialiased bg-white text-gray-900 overflow-x-hidden w-full max-w-full">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

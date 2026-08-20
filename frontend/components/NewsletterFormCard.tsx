@@ -117,7 +117,7 @@ export default function NewsletterFormCard() {
       {/* Success state */}
       {subscribed && (
         <div className="mt-6 max-w-[620px] mx-auto p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-center text-[13px] font-bold rounded-md">
-          ✓ Subscribed successfully! Thank you for subscribing to Digital Journal.
+          ✓ Subscribed successfully! Thank you for subscribing to London BigBen.
         </div>
       )}
 

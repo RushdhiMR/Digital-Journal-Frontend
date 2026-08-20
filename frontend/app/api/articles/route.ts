@@ -1,54 +1,37 @@
 import { NextResponse } from 'next/server';
+import { requireRole } from '@/lib/rbac';
+import {
+  readArticlesStore,
+  upsertArticleStore,
+  deleteArticleStore,
+  ArticleRecord
+} from '@/lib/serverArticlesStore';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const status = searchParams.get('status');
 
-    const fallbackArticles = [
-      {
-        id: 1,
-        title: "Review: Has AI been chasing the wrong dream since Alan Turing?",
-        slug: "review-has-ai-been-chasing-the-wrong-dream",
-        description: "The essential question, then, is not whether machines can imitate people. Turing asked a brilliant question for the early age of computing.",
-        author: "Dr. Tim Sandle",
-        image_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop",
-        category_name: "Technology",
-        category_slug: "technology",
-        is_featured: true
-      },
-      {
-        id: 2,
-        title: "Silicon chips learn to write DNA: Research points to cleaner route for synthetic biology",
-        slug: "silicon-chips-learn-to-write-dna",
-        description: "The Harvard chip is an early-stage demonstration rather than an industrial replacement for current DNA synthesis platforms.",
-        author: "Dr. Tim Sandle",
-        image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=300&fit=crop",
-        category_name: "Technology",
-        category_slug: "technology",
-        is_editors_pick: true
-      },
-      {
-        id: 3,
-        title: "Canada's soft robotics research is moving from laboratory novelty to business tool",
-        slug: "canadas-soft-robotics-research",
-        description: "Canada's advantage lies in combining engineering research, AI strength, materials science, medical technology and strong university-industry pathways.",
-        author: "Dr. Tim Sandle",
-        image_url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=300&fit=crop",
-        category_name: "Business",
-        category_slug: "business",
-        is_editors_pick: true
-      }
-    ];
+    let articles = await readArticlesStore();
 
-    const filtered = category
-      ? fallbackArticles.filter((a) => a.category_slug === category.toLowerCase())
-      : fallbackArticles;
+    if (category) {
+      const normCat = category.toLowerCase().trim();
+      articles = articles.filter(
+        (a) => (a.category || '').toLowerCase().includes(normCat) || (a.category_slug || '').toLowerCase() === normCat
+      );
+    }
+
+    if (status) {
+      articles = articles.filter((a) => (a.status || '').toLowerCase() === status.toLowerCase());
+    } else {
+      articles = articles.filter((a) => (a.status || '').toLowerCase() !== 'trash');
+    }
 
     return NextResponse.json({
       success: true,
-      count: filtered.length,
-      articles: filtered,
+      count: articles.length,
+      articles,
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -59,17 +42,35 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Enforce Writer or Admin role requirement for creating/syncing articles
+  const rbac = await requireRole('writer', 'admin');
+  if (!rbac.authorized) {
+    return rbac.response;
+  }
+
   try {
     const body = await request.json();
+
+    // If body contains full array sync
+    if (Array.isArray(body.articles)) {
+      const { writeArticlesStore } = await import('@/lib/serverArticlesStore');
+      await writeArticlesStore(body.articles);
+      return NextResponse.json({
+        success: true,
+        message: 'Bulk articles updated successfully',
+        articles: body.articles
+      });
+    }
+
     const { generateAutoSEO } = await import('@/lib/seo');
 
     const autoSEO = generateAutoSEO({
       title: body.title || '',
-      subheading: body.subheading || body.description || '',
+      subheading: body.subheading || body.description || body.summary || '',
       content: body.content || '',
       category: body.category || 'news',
       subcategory: body.subcategory || 'world',
-      authorName: body.authorName || 'Digital Journal Writer',
+      authorName: body.authorName || body.author || rbac.user?.name || 'London BigBen Writer',
       imageUrl: body.imageUrl || body.image,
       metaTitle: body.metaTitle,
       metaDescription: body.metaDescription,
@@ -79,18 +80,24 @@ export async function POST(request: Request) {
       ogImage: body.ogImage
     });
 
-    const slug = body.title ? body.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') : `article-${Date.now()}`;
-    const articleRecord: any = {
-      id: Date.now(),
+    const slug = body.slug || (body.title ? body.title.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') : `article-${Date.now()}`);
+    const articleId = body.id || `art_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+
+    const articleRecord: ArticleRecord = {
       ...body,
+      id: articleId,
       slug,
-      seo: autoSEO
+      status: body.status || 'Pending review',
+      seo: body.seo || autoSEO
     };
+
+    const updatedList = await upsertArticleStore(articleRecord);
 
     return NextResponse.json({
       success: true,
-      message: 'Article created successfully with automatic SEO metadata',
-      article: articleRecord
+      message: 'Article saved successfully to server store',
+      article: articleRecord,
+      articles: updatedList
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -100,4 +107,78 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  // Enforce Writer or Admin role requirement for updating articles
+  const rbac = await requireRole('writer', 'admin');
+  if (!rbac.authorized) {
+    return rbac.response;
+  }
 
+  try {
+    const body = await request.json();
+    const { id, status, ...updates } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Article ID is required' }, { status: 400 });
+    }
+
+    const currentArticles = await readArticlesStore();
+    const existing = currentArticles.find((a) => String(a.id) === String(id));
+
+    if (!existing && !updates.title) {
+      return NextResponse.json({ error: 'Article not found' }, { status: 404 });
+    }
+
+    const updatedRecord: ArticleRecord = {
+      ...(existing || {}),
+      ...updates,
+      id,
+      status: status !== undefined ? status : existing?.status || 'Published'
+    };
+
+    const updatedList = await upsertArticleStore(updatedRecord);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Article updated successfully',
+      article: updatedRecord,
+      articles: updatedList
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Failed to update article' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const permanent = searchParams.get('permanent') === 'true';
+
+    if (!id) {
+      return NextResponse.json({ error: 'Article ID is required' }, { status: 400 });
+    }
+
+    let updatedList;
+    if (permanent) {
+      updatedList = await deleteArticleStore(id);
+    } else {
+      const { updateArticleStatusStore } = await import('@/lib/serverArticlesStore');
+      updatedList = await updateArticleStatusStore(id, 'Trash');
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: permanent ? 'Article permanently deleted' : 'Article moved to Trash',
+      articles: updatedList
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete article' },
+      { status: 500 }
+    );
+  }
+}

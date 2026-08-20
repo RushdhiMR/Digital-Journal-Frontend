@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { normalizeEmail, setAuthCookie } from '@/lib/auth';
+import { DB } from '@/lib/db';
 import { OAuth2Client } from 'google-auth-library';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
@@ -7,13 +8,12 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.NEXT
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { credential, googleId: clientGoogleId, email: clientEmail, name: clientName, avatar } = body;
+    const { credential, googleId: clientGoogleId, email: clientEmail, name: clientName } = body;
 
     let verifiedEmail = clientEmail;
     let verifiedName = clientName;
     let googleId = clientGoogleId;
 
-    // If Google JWT Credential string is passed, verify with Google
     if (credential) {
       try {
         const ticket = await client.verifyIdToken({
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
           googleId = payload.sub;
         }
       } catch (verifyError) {
-        console.warn('Google token verification via OAuth2Client failed, attempting tokeninfo fallback:', verifyError);
+        console.warn('Google token verification fallback:', verifyError);
         try {
           const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
           if (res.ok) {
@@ -53,16 +53,45 @@ export async function POST(request: Request) {
 
     const normalized = normalizeEmail(verifiedEmail);
     const userName = verifiedName || normalized.split('@')[0];
-    const role = normalized.includes('admin') ? 'admin' : normalized.includes('writer') ? 'writer' : 'user';
 
-    const userPayload = {
-      id: Date.now(),
-      name: userName,
-      email: normalized,
-      role: role,
-      provider: 'google',
-      avatar: avatar || null,
-    };
+    // Query existing user in DB
+    const existingUser = await DB.getUserByEmail(normalized);
+    let userPayload;
+
+    if (existingUser) {
+      // Preserve existing DB role!
+      const updatedProvider = existingUser.provider === 'local' ? 'google+local' : existingUser.provider;
+      await DB.updateUser(existingUser.id, {
+        google_id: googleId || existingUser.google_id,
+        provider: updatedProvider,
+      });
+
+      userPayload = {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.role, // Kept from DB
+        provider: updatedProvider,
+      };
+    } else {
+      // New Google user defaults to 'reader' role strictly
+      const newUser = await DB.createUser({
+        name: userName,
+        email: normalized,
+        provider: 'google',
+        google_id: googleId || null,
+        role: 'reader',
+        email_verified: true,
+      });
+
+      userPayload = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        provider: newUser.provider,
+      };
+    }
 
     await setAuthCookie(userPayload);
 
@@ -78,4 +107,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

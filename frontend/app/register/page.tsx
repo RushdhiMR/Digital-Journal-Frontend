@@ -53,21 +53,26 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
 
-    const lowerEmail = email.toLowerCase().trim();
-
     try {
-      const userObj = {
-        id: Date.now(),
-        name: fullName.trim(),
-        email: lowerEmail,
-        role: "user",
-        provider: "local",
-      };
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          password,
+        }),
+      });
 
-      saveUserProfile(userObj);
-      localStorage.removeItem("dj_signed_out");
-      localStorage.setItem("dj_user", JSON.stringify(userObj));
-      localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${userObj.name}! Your account has been created.`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || "Registration failed. Please try again.");
+        return;
+      }
+
+      const userObj = data.user;
+      localStorage.setItem("dj_toast", `Welcome to London BigBen, ${userObj.name}! Your account has been created.`);
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("dj_auth_change"));
@@ -75,7 +80,7 @@ export default function RegisterPage() {
 
       setSuccessMessage("✓ Registration successful! Setting up your Reader Hub...");
       setTimeout(() => {
-        router.push("/reader");
+        window.location.href = "/reader";
       }, 1000);
     } catch (err: any) {
       setErrorMessage("Registration process failed. Please try again.");
@@ -106,19 +111,26 @@ export default function RegisterPage() {
     setSuccessMessage("");
 
     try {
-      const userObj = {
-        id: Date.now(),
-        name: acc.name,
-        email: acc.email.toLowerCase().trim(),
-        avatar: acc.avatar || "/author_woman.jpg",
-        role: "user",
-        provider: "google",
-      };
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: acc.email,
+          name: acc.name,
+          googleId: acc.googleId,
+          avatar: acc.avatar,
+        }),
+      });
 
-      saveUserProfile(userObj);
-      localStorage.removeItem("dj_signed_out");
-      localStorage.setItem("dj_user", JSON.stringify(userObj));
-      localStorage.setItem("dj_toast", `Welcome to Digital Journal, ${userObj.name}! Your account has been created.`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || "Google registration failed.");
+        return;
+      }
+
+      const userObj = data.user;
+      localStorage.setItem("dj_toast", `Welcome to London BigBen, ${userObj.name}! Your account has been created.`);
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("dj_auth_change"));
@@ -126,7 +138,7 @@ export default function RegisterPage() {
 
       setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Setting up Reader Hub...`);
       setTimeout(() => {
-        router.push("/reader");
+        window.location.href = "/reader";
       }, 1000);
     } catch (err: any) {
       setErrorMessage("Google registration failed.");
@@ -148,17 +160,17 @@ export default function RegisterPage() {
             <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity mb-2 group">
               <img
                 src="/logo.png"
-                alt="Digital Journal Logo"
+                alt="London BigBen Logo"
                 className="w-9 h-9 object-contain"
               />
               <span className="text-2xl font-serif font-black tracking-tight text-slate-900 group-hover:text-[#BF1E2D] transition-colors">
-                DIGITAL JOURNAL
+                LONDON BIGBEN
               </span>
             </Link>
 
             <h1 className="text-xl font-bold text-slate-900">Create your account</h1>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              Join Digital Journal to access personalized feeds, bookmarks, and author tools.
+              Join London BigBen to access personalized feeds, bookmarks, and author tools.
             </p>
           </div>
 

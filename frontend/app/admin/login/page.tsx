@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
         role: "admin",
       };
 
-      // Set admin session state
+      // Set admin local storage state
       localStorage.setItem("dj_admin_user", JSON.stringify(adminUser));
       localStorage.setItem("dj_user", JSON.stringify(adminUser));
       localStorage.setItem(
@@ -67,11 +67,15 @@ export default function AdminLoginPage() {
         `Welcome to Admin Control Center, ${adminUser.name}!`
       );
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("dj_auth_change"));
+      }
+
       setSuccessMessage(`Authenticated as ${adminUser.name}. Redirecting to Admin Dashboard...`);
       
       setTimeout(() => {
-        router.push("/admin");
-      }, 1000);
+        window.location.href = "/admin";
+      }, 500);
     } catch (err) {
       console.warn("Admin login API error, applying test admin fallback:", err);
       const fallbackAdmin = {
@@ -115,11 +119,11 @@ export default function AdminLoginPage() {
             <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
               <img
                 src="/logo.png"
-                alt="Digital Journal Logo"
+                alt="London BigBen Logo"
                 className="w-8 h-8 object-contain"
               />
               <span className="text-[22px] font-bold tracking-[0.5px] text-black uppercase font-standard-sans">
-                DIGITAL JOURNAL
+                LONDON BIGBEN
               </span>
             </Link>
             <p className="text-[11px] text-zinc-400 font-bold tracking-[1px] mt-1.5 uppercase font-standard-sans">

@@ -36,8 +36,14 @@ CREATE TABLE `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(150) NOT NULL UNIQUE,
-  `password` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NULL,
+  `password_hash` VARCHAR(255) NULL,
+  `provider` VARCHAR(50) NOT NULL DEFAULT 'local',
+  `google_id` VARCHAR(255) NULL,
   `role` ENUM('user', 'editor', 'admin') DEFAULT 'user',
+  `email_verified` BOOLEAN DEFAULT FALSE,
+  `reset_token` VARCHAR(255) NULL,
+  `reset_token_expires` DATETIME NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -3,34 +3,38 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Share2, Bookmark } from "lucide-react";
+import { useLiveArticles } from "@/lib/articlesSync";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LatestNewsSection() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [publishedNews, setPublishedNews] = useState<any[]>([]);
+  const { articles: liveArticles } = useLiveArticles();
+  const auth = useAuth();
 
   useEffect(() => {
     try {
-      const savedStr = localStorage.getItem("dj_writer_submitted_articles");
-      if (savedStr) {
-        const posts: any[] = JSON.parse(savedStr);
-        const approved = posts.filter((p) => p.status === "Published");
-        const formatted = approved.map((post, idx) => ({
-          id: post.id || `pub-latest-${idx}`,
-          category: (post.category || "WORLD").toUpperCase(),
-          title: post.title,
-          time: post.date || "Just published",
-          image: post.imageUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=300&h=200&fit=crop",
-          href: `/${(post.category || "news").toLowerCase()}/${(post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-          summary: post.summary || post.content?.replace(/<[^>]+>/g, "").slice(0, 140) + "..."
-        }));
-        setPublishedNews(formatted);
-      }
+      const approved = (Array.isArray(liveArticles) ? liveArticles : []).filter((p) => {
+        if (!p || (p.status || "").toLowerCase() !== "published") return false;
+        const pl = (p.placement || "").toLowerCase();
+        return pl.includes("latest") || pl === "latest news" || pl === "latest news section";
+      });
+      const formatted = approved.map((post, idx) => ({
+        id: post.id || `pub-latest-${idx}`,
+        category: (post.category || "WORLD").toUpperCase(),
+        title: post.title,
+        time: post.date || "Just published",
+        image: post.imageUrl || post.image || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=300&h=200&fit=crop",
+        href: `/${(post.category || "news").toLowerCase()}/${(post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}?id=${post.id}`,
+        summary: post.summary || post.content?.replace(/<[^>]+>/g, "").slice(0, 140) + "..."
+      }));
+      setPublishedNews(formatted);
     } catch (e) {
       console.warn("Could not read published articles for LatestNews:", e);
     }
-  }, []);
+  }, [liveArticles]);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,12 +149,10 @@ export default function LatestNewsSection() {
                 <button 
                   onClick={() => {
                     try {
-                      const userStr = localStorage.getItem("dj_user") || localStorage.getItem("dj_writer_user") || localStorage.getItem("dj_admin_user");
-                      if (userStr) {
-                        const user = JSON.parse(userStr);
-                        const role = (user.role || "").toLowerCase();
-                        const email = (user.email || "").toLowerCase();
-                        if (role === "writer" || role === "admin" || role === "co-admin" || email.includes("writer") || email.includes("admin") || email.includes("coadmin")) {
+                      if (auth.user) {
+                        const role = (auth.user.role || "").toLowerCase();
+                        const email = (auth.user.email || "").toLowerCase();
+                        if (role === "writer" || role === "admin" || email.includes("writer") || email.includes("admin")) {
                           alert("🚫 Bookmarking is available for Reader accounts only. Writer & Admin accounts cannot save articles.");
                           return;
                         }

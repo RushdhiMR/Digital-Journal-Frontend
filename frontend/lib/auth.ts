@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { DB, UserRow } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dj_super_secret_jwt_key_2026_production';
 export const AUTH_COOKIE_NAME = 'dj_session';
@@ -9,12 +10,12 @@ export interface JWTPayload {
   id: number;
   email: string;
   name: string;
-  role: string;
+  role: 'reader' | 'writer' | 'admin';
   provider: string;
 }
 
 /**
- * Normalizes email: trims whitespace and converts to lowercase
+ * Normalizes email address: trims leading/trailing whitespace and converts to lowercase
  */
 export function normalizeEmail(email: string): string {
   if (!email) return '';
@@ -22,7 +23,7 @@ export function normalizeEmail(email: string): string {
 }
 
 /**
- * Hashes password using bcrypt with salt round 10
+ * Hashes plaintext password using bcrypt with salt rounds = 10
  */
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
@@ -30,7 +31,7 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
- * Compares plaintext password with stored bcrypt hash
+ * Compares plaintext password against stored bcrypt hash
  */
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
   if (!password || !hash) return false;
@@ -38,14 +39,14 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 /**
- * Generates JWT session token
+ * Signs JWT authentication token containing user payload
  */
 export function signAuthToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
 /**
- * Verifies JWT session token
+ * Verifies JWT authentication token and returns decoded payload
  */
 export function verifyAuthToken(token: string): JWTPayload | null {
   try {
@@ -58,10 +59,10 @@ export function verifyAuthToken(token: string): JWTPayload | null {
 /**
  * Sets secure HTTP-Only session cookie in Next.js response headers
  */
-export async function setAuthCookie(payload: JWTPayload) {
+export async function setAuthCookie(payload: JWTPayload): Promise<string> {
   const token = signAuthToken(payload);
   const cookieStore = await cookies();
-  
+
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -69,14 +70,14 @@ export async function setAuthCookie(payload: JWTPayload) {
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
   });
-  
+
   return token;
 }
 
 /**
  * Clears HTTP-Only session cookie
  */
-export async function clearAuthCookie() {
+export async function clearAuthCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE_NAME, '', {
     httpOnly: true,
@@ -88,14 +89,40 @@ export async function clearAuthCookie() {
 }
 
 /**
- * Retrieves & verifies current session user from HTTP-Only cookie
+ * Retrieves & verifies current session user from HTTP-Only cookie,
+ * fetching fresh database user record to ensure roles are strictly server-enforced.
  */
 export async function getAuthSession(): Promise<JWTPayload | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
     if (!token) return null;
-    return verifyAuthToken(token);
+
+    const decoded = verifyAuthToken(token);
+    if (!decoded || !decoded.id) return null;
+
+    // Retrieve fresh user details directly from Database
+    const freshUser = await DB.getUserById(decoded.id);
+    if (!freshUser) {
+      // If user was deleted or not found in DB by ID, check by email
+      const freshUserByEmail = await DB.getUserByEmail(decoded.email);
+      if (!freshUserByEmail) return null;
+      return {
+        id: freshUserByEmail.id,
+        name: freshUserByEmail.name,
+        email: freshUserByEmail.email,
+        role: freshUserByEmail.role,
+        provider: freshUserByEmail.provider,
+      };
+    }
+
+    return {
+      id: freshUser.id,
+      name: freshUser.name,
+      email: freshUser.email,
+      role: freshUser.role,
+      provider: freshUser.provider,
+    };
   } catch (err) {
     return null;
   }

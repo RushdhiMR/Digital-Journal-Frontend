@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleAccountChooserModal from "@/components/GoogleAccountChooserModal";
-import { ShieldCheck, TrendingUp, Edit3, Lock } from "lucide-react";
-import { getUserProfile, saveUserProfile } from "@/lib/userProfiles";
+import { Lock } from "lucide-react";
+import { getUserProfile, saveUserProfile, isEmailAlreadyRegistered } from "@/lib/userProfiles";
 import { triggerGoogleOAuth } from "@/lib/googleAuth";
+import { dispatchTabLogin } from "@/lib/auth-context";
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,62 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showGoogleChooser, setShowGoogleChooser] = useState(false);
+
+  const getRedirectDestination = (userRole: string) => {
+    const rawRedirect = searchParams
+      ? (searchParams.get("redirect") ||
+         searchParams.get("callbackUrl") ||
+         searchParams.get("from") ||
+         searchParams.get("next"))
+      : null;
+
+    let destinationPath = rawRedirect;
+
+    // Fallback to document.referrer if no query param and user navigated from another page on the same origin
+    if (!destinationPath && typeof window !== "undefined" && document.referrer) {
+      try {
+        const refUrl = new URL(document.referrer);
+        if (refUrl.origin === window.location.origin) {
+          const path = refUrl.pathname;
+          if (path && path !== "/login" && path !== "/register" && path !== "/forgot-password") {
+            destinationPath = path;
+          }
+        }
+      } catch (e) {
+        // ignore invalid referrer
+      }
+    }
+
+    const normalizedRole = (userRole || "").toLowerCase();
+    const isAdmin = normalizedRole === "admin" || normalizedRole === "co-admin";
+    const isWriter = normalizedRole === "writer" || normalizedRole === "editor" || isAdmin;
+
+    if (
+      destinationPath &&
+      destinationPath.startsWith("/") &&
+      !destinationPath.startsWith("//") &&
+      destinationPath !== "/login" &&
+      destinationPath !== "/register"
+    ) {
+      // Permission checks for role-restricted destinations
+      if (destinationPath.startsWith("/admin") && !isAdmin) {
+        return isWriter ? "/writer" : "/reader";
+      }
+      if (destinationPath.startsWith("/writer") && !isWriter) {
+        return "/reader";
+      }
+      return destinationPath;
+    }
+
+    // Default home "belong page" according to user role
+    if (isAdmin) {
+      return "/admin";
+    }
+    if (normalizedRole === "writer" || normalizedRole === "editor") {
+      return "/writer";
+    }
+    return "/reader";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,55 +89,39 @@ export default function LoginPage() {
     }
     setIsSubmitting(true);
 
-    const lowerEmail = email.toLowerCase().trim();
-    const cleanPassword = password.trim();
-
     try {
-      const savedProfile = getUserProfile(lowerEmail);
-      let userRole = savedProfile?.role || "user";
-      if (lowerEmail.includes("admin")) {
-        userRole = "Admin";
-      } else if (lowerEmail.includes("writer")) {
-        userRole = "Writer";
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || "Sign-in failed. Please check your credentials.");
+        return;
       }
 
-      const authenticatedUser = {
-        id: Date.now(),
-        name: savedProfile?.name || lowerEmail.split("@")[0],
-        email: lowerEmail,
-        avatar: savedProfile?.avatar || "/author_woman.jpg",
-        bio: savedProfile?.bio || "Digital Journal Member",
-        role: userRole,
-        provider: "local",
-      };
+      const authenticatedUser = data.user;
+      const userRole = authenticatedUser.role;
 
-      saveUserProfile(authenticatedUser);
+      // Bind this user to this tab's session (tab-isolated via sessionStorage)
+      dispatchTabLogin({
+        id: authenticatedUser.id,
+        name: authenticatedUser.name,
+        email: authenticatedUser.email,
+        role: authenticatedUser.role,
+        provider: authenticatedUser.provider || 'local',
+      });
 
-      let targetDestination = "/reader";
-      const normalizedRole = userRole.toLowerCase();
-      if (normalizedRole === "admin" || normalizedRole === "co-admin") {
-        targetDestination = "/admin";
-      } else if (normalizedRole === "writer" || normalizedRole === "editor") {
-        targetDestination = "/writer";
-      }
-
-      localStorage.removeItem("dj_signed_out");
-      localStorage.setItem("dj_user", JSON.stringify(authenticatedUser));
-      if (normalizedRole === "admin" || normalizedRole === "co-admin") {
-        localStorage.setItem("dj_admin_user", JSON.stringify(authenticatedUser));
-      }
-      if (normalizedRole === "writer" || normalizedRole === "editor") {
-        localStorage.setItem("dj_writer_user", JSON.stringify(authenticatedUser));
-      }
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("dj_auth_change"));
-      }
+      const targetDestination = getRedirectDestination(userRole);
       localStorage.setItem("dj_toast", `Welcome back, ${authenticatedUser.name}! Signed in successfully.`);
 
       setSuccessMessage(`✓ Security Verified! Signed in as ${authenticatedUser.name}. Opening ${targetDestination}...`);
       setTimeout(() => {
-        router.push(targetDestination);
-      }, 800);
+        window.location.href = targetDestination;
+      }, 300);
     } catch (err: any) {
       setErrorMessage("Sign-in process failed. Please try again.");
     } finally {
@@ -109,42 +151,43 @@ export default function LoginPage() {
     setSuccessMessage("");
 
     try {
-      const savedProfile = getUserProfile(acc.email);
-      const role = savedProfile?.role || "user";
-      
-      const finalAccount = {
-        id: Date.now(),
-        name: savedProfile?.name || acc.name,
-        email: acc.email.toLowerCase().trim(),
-        avatar: savedProfile?.avatar || acc.avatar || "/author_woman.jpg",
-        role: role,
-        provider: "google",
-      };
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: acc.email,
+          name: acc.name,
+          googleId: acc.googleId,
+          avatar: acc.avatar,
+        }),
+      });
 
-      saveUserProfile(finalAccount);
-      localStorage.removeItem("dj_signed_out");
-      localStorage.setItem("dj_user", JSON.stringify(finalAccount));
+      const data = await res.json();
 
-      const userRole = (role || "").toLowerCase();
-      let targetDestination = "/reader";
-      if (userRole === "admin" || userRole === "co-admin") {
-        targetDestination = "/admin";
-        localStorage.setItem("dj_admin_user", JSON.stringify(finalAccount));
-      } else if (userRole === "writer" || userRole === "editor") {
-        targetDestination = "/writer";
-        localStorage.setItem("dj_writer_user", JSON.stringify(finalAccount));
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || "Google sign-in failed.");
+        return;
       }
 
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("dj_auth_change"));
-      }
+      const finalAccount = data.user;
+      const role = finalAccount.role;
 
-      localStorage.setItem("dj_toast", `Welcome back, ${finalAccount.name}! Opening Reader Hub...`);
+      // Bind this Google user to this tab's session (tab-isolated via sessionStorage)
+      dispatchTabLogin({
+        id: finalAccount.id,
+        name: finalAccount.name,
+        email: finalAccount.email,
+        role: finalAccount.role,
+        provider: finalAccount.provider || 'google',
+      });
 
-      setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Opening Reader Hub...`);
+      const targetDestination = getRedirectDestination(role);
+      localStorage.setItem("dj_toast", `Welcome back, ${finalAccount.name}! Opening ${targetDestination}...`);
+
+      setSuccessMessage(`Authenticated as ${acc.name} (${acc.email}) with Google! Opening ${targetDestination}...`);
       setTimeout(() => {
-        router.push(targetDestination);
-      }, 800);
+        window.location.href = targetDestination;
+      }, 300);
     } catch (err: any) {
       setErrorMessage("Google sign-in failed.");
     } finally {
@@ -165,11 +208,11 @@ export default function LoginPage() {
             <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity mb-2 group">
               <img
                 src="/logo.png"
-                alt="Digital Journal Logo"
+                alt="London BigBen Logo"
                 className="w-9 h-9 object-contain"
               />
               <span className="text-2xl font-serif font-black tracking-tight text-slate-900 group-hover:text-[#BF1E2D] transition-colors">
-                DIGITAL JOURNAL
+                LONDON BIGBEN
               </span>
             </Link>
 
@@ -341,3 +384,16 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center font-sans">
+        <div className="text-slate-500 font-medium text-sm">Loading sign in...</div>
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  );
+}
+

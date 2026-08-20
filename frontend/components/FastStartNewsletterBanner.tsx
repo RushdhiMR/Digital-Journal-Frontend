@@ -30,7 +30,7 @@ export default function FastStartNewsletterBanner() {
   return (
     <div className="clear-both w-full my-10 p-6 md:p-8 bg-white border-y-2 border-[#D97706]/70 font-serif rounded-xs shadow-xs" style={{ clear: 'both' }}>
       <h3 className="text-[20px] md:text-[23px] font-bold text-[#B45309] mb-1.5 font-serif leading-snug tracking-tight">
-        Digital Journal Fast Start — <span className="font-normal italic text-[#92400E]">Let the best of news come to you</span>
+        London BigBen Fast Start — <span className="font-normal italic text-[#92400E]">Let the best of news come to you</span>
       </h3>
       <p className="text-[13px] text-zinc-600 font-sans mb-5 font-normal">
         Sign up for daily news updates sent directly to your inbox.
@@ -38,7 +38,7 @@ export default function FastStartNewsletterBanner() {
       
       {subscribed ? (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold p-3.5 rounded font-sans">
-          ✓ Thank you for subscribing to Digital Journal Fast Start!
+          ✓ Thank you for subscribing to London BigBen Fast Start!
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl">

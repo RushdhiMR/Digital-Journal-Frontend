@@ -1,2 +1,5 @@
 {
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "eslint.workingDirectories": ["./frontend", "./digital-journal-clone"],
+  "typescript.preferences.importModuleSpecifier": "non-relative"
 }

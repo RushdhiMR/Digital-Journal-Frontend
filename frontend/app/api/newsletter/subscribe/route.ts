@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Subscribed to Digital Journal newsletters successfully!',
+      message: 'Subscribed to London BigBen newsletters successfully!',
     });
   } catch (error: any) {
     return NextResponse.json(

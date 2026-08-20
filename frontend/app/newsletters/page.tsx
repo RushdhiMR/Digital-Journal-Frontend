@@ -111,11 +111,11 @@ export default function NewslettersPage() {
         {/* Intro */}
         <div className="text-center mb-12">
           <h2 className="text-[24px] md:text-[28px] font-semibold text-zinc-900 leading-tight mb-4">
-            Let the best of Digital Journal news come to you.
+            Let the best of London BigBen news come to you.
           </h2>
           <p className="text-[13px] text-zinc-600 leading-relaxed max-w-2xl mx-auto font-normal">
             Select any of the free newsletters below. Then, enter your email address and click &quot;Sign Up Now.&quot;<br />
-            Your newsletter subscriptions with us are subject to Digital Journal&apos;s{" "}
+            Your newsletter subscriptions with us are subject to London BigBen&apos;s{" "}
             <Link href="#" className="underline text-[#BF1E2D] font-bold">Terms and Conditions</Link> and{" "}
             <Link href="#" className="underline text-[#BF1E2D] font-bold">Privacy Policy</Link>.
           </p>

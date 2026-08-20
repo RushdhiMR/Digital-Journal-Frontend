@@ -35,11 +35,11 @@ export default function CategoryHero({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Featured Image */}
-        <div className="lg:col-span-2 relative w-full aspect-[16/10] sm:aspect-video lg:h-[480px] overflow-hidden bg-gray-100 rounded-lg">
+        <div className="lg:col-span-2 relative w-full aspect-[16/9] md:aspect-[16/8.5] max-h-[360px] overflow-hidden bg-zinc-50 rounded-lg border border-zinc-200 flex items-center justify-center">
           <img
             src={articleImage}
             alt={articleTitle}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain mx-auto block"
           />
         </div>
         {/* Article Details Card */}

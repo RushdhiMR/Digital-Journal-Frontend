@@ -3,52 +3,88 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useLiveArticles } from "@/lib/articlesSync";
+import { getAuthorAvatarByNameOrEmail } from "@/lib/userProfiles";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [userPublishedArticles, setUserPublishedArticles] = useState<any[]>([]);
+  const [userTrendingArticles, setUserTrendingArticles] = useState<any[]>([]);
+  const { articles: liveArticles } = useLiveArticles();
 
-  // Load any published articles from localStorage to feature in Hero Carousel
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("dj_writer_submitted_articles");
-      if (stored) {
-        const posts: any[] = JSON.parse(stored);
-        const published = posts.filter((p) => p.status === "Published");
-        const formatted = published.map((post, index) => {
-          const cat = (post.category || "BUSINESS").toUpperCase();
-          const postSlug = (post.title || "")
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, "")
-            .trim()
-            .replace(/\s+/g, "-");
-          
-          let rawAvatar = post.authorAvatar;
-          let rawName = post.authorName || "Rushdhi MR";
-          if (!rawAvatar || rawAvatar.includes("cart") || rawName.toLowerCase().includes("admin")) {
-            rawName = "Rushdhi MR";
-            rawAvatar = "/author_bluesuit.jpg";
-          }
+      // 1. Home Page A+ Section (Carousel Main Story)
+      let aPlusPublished = (Array.isArray(liveArticles) ? liveArticles : []).filter((p) => {
+        if (!p || (p.status || "").toLowerCase() !== "published") return false;
+        const pl = (p.placement || "").toLowerCase();
+        return (
+          pl.includes("home page a+") ||
+          pl === "home page a+ section" ||
+          pl === "a+ section" ||
+          p.is_featured === true
+        ) && !pl.includes("section 2");
+      });
 
-          return {
-            id: `user-pub-${post.id || index}`,
-            category: cat,
-            title: post.title,
-            excerpt: post.summary || (post.content || "").replace(/<[^>]*>?/gm, "").slice(0, 160) + "...",
-            author: rawName,
-            authorAvatar: rawAvatar,
-            date: post.date || "Just now",
-            readTime: post.readDuration || "4 MIN READ",
-            image: post.imageUrl || "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&h=800&fit=crop",
-            href: `/${cat.toLowerCase()}/companies/${postSlug}?id=${post.id}`
-          };
-        });
-        setUserPublishedArticles(formatted);
-      }
+      const formattedAPlus = aPlusPublished.map((post, index) => {
+        const cat = (post.category || "BUSINESS").toUpperCase();
+        const postSlug = (post.title || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .trim()
+          .replace(/\s+/g, "-");
+        
+        const rawName = (post.authorName || (post as any).author_name || post.author || "Rushdhi MR").trim();
+        const resolvedAvatar = getAuthorAvatarByNameOrEmail(rawName, post.authorEmail || (post as any).author_email) || 
+          (post.authorAvatar && post.authorAvatar.length > 5 && !post.authorAvatar.includes("cart") ? post.authorAvatar : "/author_bluesuit.jpg");
+
+        const validImg = post.imageUrl || post.image || (post as any).image_url || "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&h=800&fit=crop";
+
+        return {
+          id: `user-pub-${post.id || index}`,
+          category: cat,
+          title: post.title,
+          excerpt: post.summary || post.description || (post.content || "").replace(/<[^>]*>?/gm, "").slice(0, 160) + "...",
+          author: rawName,
+          authorAvatar: resolvedAvatar,
+          date: post.date || "Just now",
+          readTime: post.readDuration || "4 MIN READ",
+          image: validImg,
+          href: `/${cat.toLowerCase()}/companies/${postSlug}?id=${post.id}`
+        };
+      });
+      setUserPublishedArticles(formattedAPlus);
+
+      // 2. Trending Now Section
+      let trendingPublished = (Array.isArray(liveArticles) ? liveArticles : []).filter((p) => {
+        if (!p || (p.status || "").toLowerCase() !== "published") return false;
+        const pl = (p.placement || "").toLowerCase();
+        return pl.includes("trending") || pl === "trending now" || pl === "trending now section";
+      });
+
+      const formattedTrending = trendingPublished.map((post, index) => {
+        const cat = (post.category || "NEWS").toUpperCase();
+        const postSlug = (post.title || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .trim()
+          .replace(/\s+/g, "-");
+
+        return {
+          number: `0${index + 1}`.slice(-2),
+          category: cat,
+          title: post.title,
+          time: post.date || "Just now",
+          image: post.imageUrl || post.image || "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=200&h=140&fit=crop",
+          hasVideo: false,
+          href: `/${cat.toLowerCase()}/news/${postSlug}?id=${post.id}`
+        };
+      });
+      setUserTrendingArticles(formattedTrending);
     } catch (e) {
       console.warn("Error reading published articles for Hero:", e);
     }
-  }, []);
+  }, [liveArticles]);
 
   const carouselArticles = [
     {
@@ -177,6 +213,7 @@ export default function HeroSection() {
               <img
                 src={activeArticle.image}
                 alt={activeArticle.title}
+                onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&h=750&fit=crop"; }}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-none"
               />
               <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
@@ -211,30 +248,37 @@ export default function HeroSection() {
               </p>
 
               {/* Author Row */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1E293B] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-                  {activeArticle.authorAvatar && activeArticle.authorAvatar.length > 5 ? (
-                    <img
-                      src={activeArticle.authorAvatar}
-                      alt={activeArticle.author}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span>{(activeArticle.author || "RM").slice(0, 2).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 text-[11px] font-sans flex-wrap">
-                  <span className="font-bold text-gray-900">
-                    By {activeArticle.author}
-                  </span>
-                  <span className="w-3.5 h-3.5 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
-                    <Check size={8} strokeWidth={3} />
-                  </span>
-                  <span className="text-gray-400 font-medium ml-1">
-                    • {activeArticle.date}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const resolvedAvatar = getAuthorAvatarByNameOrEmail(activeArticle.author, (activeArticle as any).authorEmail) ||
+                  (activeArticle.authorAvatar && activeArticle.authorAvatar.length > 5 && !activeArticle.authorAvatar.includes("cart") ? activeArticle.authorAvatar : "/author_bluesuit.jpg");
+
+                return (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1E293B] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                      {resolvedAvatar && resolvedAvatar.length > 5 ? (
+                        <img
+                          src={resolvedAvatar}
+                          alt={activeArticle.author}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{(activeArticle.author || "RM").slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] font-sans flex-wrap">
+                      <span className="font-bold text-gray-900">
+                        By {activeArticle.author}
+                      </span>
+                      <span className="w-3.5 h-3.5 bg-[#D31220] text-white rounded-full inline-flex items-center justify-center flex-shrink-0">
+                        <Check size={8} strokeWidth={3} />
+                      </span>
+                      <span className="text-gray-400 font-medium ml-1">
+                        • {activeArticle.date}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Bottom Control Bar: Dots & Nav Arrows */}
@@ -281,24 +325,28 @@ export default function HeroSection() {
         {/* RIGHT CARD: TRENDING NOW BOX (~33% GRID WIDTH, MATCHES LEFT CARD EXACT HEIGHT) */}
         <div className="w-full lg:col-span-4 bg-white border border-gray-200 rounded-none p-3.5 sm:p-4 flex flex-col justify-between h-auto lg:h-[360px]">
           <div className="flex flex-col justify-between h-full">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-100">
+            {/* Header with Small View All Link on Top */}
+            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-100">
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-4 bg-[#D31220]" />
-                <h2 className="text-xs sm:text-sm font-extrabold text-gray-900 tracking-tight uppercase">
+                <h2 className="text-xs sm:text-sm font-extrabold text-gray-900 tracking-tight uppercase font-sans">
                   Trending Now
                 </h2>
               </div>
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                Live Feed
-              </span>
+              <Link 
+                href="/news" 
+                className="text-[10.5px] font-extrabold text-gray-500 hover:text-[#D31220] uppercase tracking-wider flex items-center gap-1 group transition-colors font-sans"
+              >
+                <span>View All</span>
+                <span className="group-hover:translate-x-0.5 transition-transform text-xs">→</span>
+              </Link>
             </div>
 
             {/* List */}
-            <div className="space-y-2.5 flex-1">
-              {trendingNowItems.map((item) => (
+            <div className="space-y-2.5 flex-1 flex flex-col justify-between">
+              {(userTrendingArticles.length > 0 ? [...userTrendingArticles, ...trendingNowItems].slice(0, 4) : trendingNowItems).map((item, idx) => (
                 <div 
-                  key={item.number}
+                  key={`trending-item-${idx}-${item.title || item.href}`}
                   className="flex items-center gap-3 p-1.5 rounded hover:bg-gray-50 transition-colors group cursor-pointer"
                 >
                   {/* Item Image */}
@@ -324,17 +372,6 @@ export default function HeroSection() {
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Bottom View All Link */}
-            <div className="pt-2 border-t border-gray-100 mt-1">
-              <Link 
-                href="/news" 
-                className="text-[11px] font-extrabold text-gray-900 hover:text-[#D31220] flex items-center justify-between uppercase tracking-wider group transition-colors"
-              >
-                <span>View All Trending News</span>
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
             </div>
 
           </div>

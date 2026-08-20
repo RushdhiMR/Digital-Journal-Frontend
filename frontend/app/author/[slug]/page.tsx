@@ -16,13 +16,13 @@ const authorsDatabase: Record<string, {
     name: "Rushdhi MR",
     role: "STAFF WRITER",
     avatar: "/author_bluesuit.jpg",
-    bio: "Rushdhi MR is a journalist for Digital Journal covering business strategy, software architecture, emerging technology, and digital transformation."
+    bio: "Rushdhi MR is a journalist for London BigBen covering business strategy, software architecture, emerging technology, and digital transformation."
   },
   "rushdhi-mr": {
     name: "Rushdhi MR",
     role: "STAFF WRITER",
     avatar: "/author_bluesuit.jpg",
-    bio: "Rushdhi MR is a journalist for Digital Journal covering business strategy, software architecture, emerging technology, and digital transformation."
+    bio: "Rushdhi MR is a journalist for London BigBen covering business strategy, software architecture, emerging technology, and digital transformation."
   },
   "april-hicke": {
     name: "April Hicke",
@@ -40,7 +40,7 @@ const authorsDatabase: Record<string, {
     name: "Jennifer Friesen",
     role: "ASSOCIATE EDITOR",
     avatar: "/author_woman.jpg",
-    bio: "Jennifer Friesen is Digital Journal's associate editor and Calgary Bureau lead. Committed to ethical reporting and in-depth storytelling across energy, technology, and policy."
+    bio: "Jennifer Friesen is London BigBen's associate editor and Calgary Bureau lead. Committed to ethical reporting and in-depth storytelling across energy, technology, and policy."
   },
   "pramod-jain": {
     name: "Pramod Jain",
@@ -82,7 +82,7 @@ const authorsDatabase: Record<string, {
     name: "Frank Morgan",
     role: "POLITICAL CORRESPONDENT",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop",
-    bio: "Frank Morgan is Digital Journal's senior political correspondent covering transatlantic diplomacy, legislative policy, and international affairs."
+    bio: "Frank Morgan is London BigBen's senior political correspondent covering transatlantic diplomacy, legislative policy, and international affairs."
   },
   "sarah-miller": {
     name: "Sarah Miller",
@@ -138,7 +138,7 @@ export default async function AuthorProfilePage({ params }: AuthorPageProps) {
     name: rawName,
     role: "STAFF WRITER",
     avatar: defaultAvatar,
-    bio: `${rawName} is a dedicated journalist for Digital Journal covering breaking news, enterprise technology, policy developments, and market trends.`
+    bio: `${rawName} is a dedicated journalist for London BigBen covering breaking news, enterprise technology, policy developments, and market trends.`
   };
 
   const authorArticles = [

@@ -22,7 +22,7 @@ router.post('/subscribe', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Subscribed to Digital Journal newsletters successfully!',
+      message: 'Subscribed to London BigBen newsletters successfully!',
     });
   } catch (error) {
     return res.status(500).json({ error: error.message || 'Internal server error' });

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --prefix digital-journal-clone",
-    "build": "npm run build --prefix digital-journal-clone",
-    "start": "npm run start --prefix digital-journal-clone",
-    "lint": "npm run lint --prefix digital-journal-clone"
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend",
+    "lint": "npm run lint --prefix frontend"
   },
   "dependencies": {
     "mysql2": "^3.23.1"

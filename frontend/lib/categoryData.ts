@@ -41,7 +41,7 @@ export function getCategoryData(slug: string): CategoryData {
     return {
       categoryName: "Lifestyle & Culture",
       categoryColor: "bg-rose-50",
-      infoBoxText: `Digital Journal's Lifestyle & Culture coverage explores modern living, wellness, architecture, personal finance, and workplace dynamics.\nFrom sustainable design trends to remote-work burnout solutions, our team delivers thoughtful features on how society lives, works, and thrives in an evolving digital age.`,
+      infoBoxText: `London BigBen's Lifestyle & Culture coverage explores modern living, wellness, architecture, personal finance, and workplace dynamics.\nFrom sustainable design trends to remote-work burnout solutions, our team delivers thoughtful features on how society lives, works, and thrives in an evolving digital age.`,
       featured: {
         category: "LIFESTYLE • WELLNESS & MODERN LIVING",
         title: "The rise of slow living and minimalist design in urban architecture",
@@ -131,7 +131,7 @@ export function getCategoryData(slug: string): CategoryData {
     return {
       categoryName: "Sports & Athletics",
       categoryColor: "bg-blue-50",
-      infoBoxText: `Digital Journal's Sports & Athletics coverage delivers breaking news, performance analytics, sports technology, and athlete features.\nFrom Olympic preparation to high-tech biometric analytics in professional leagues, our sports journalists track the games, teams, and innovations transforming global sport.`,
+      infoBoxText: `London BigBen's Sports & Athletics coverage delivers breaking news, performance analytics, sports technology, and athlete features.\nFrom Olympic preparation to high-tech biometric analytics in professional leagues, our sports journalists track the games, teams, and innovations transforming global sport.`,
       featured: {
         category: "SPORTS • PERFORMANCE & BIOMETRICS",
         title: "Next-gen sports telemetry: How AI wearables are revolutionizing elite athlete training",
@@ -221,7 +221,7 @@ export function getCategoryData(slug: string): CategoryData {
     return {
       categoryName: "Entertainment & Arts",
       categoryColor: "bg-purple-50",
-      infoBoxText: `Digital Journal's Entertainment & Arts coverage brings you the latest from film, streaming, music, digital media, and pop culture.\nWe track industry shifts, box office analytics, independent cinema breakthroughs, and how virtual production technologies are reshaping storytelling worldwide.`,
+      infoBoxText: `London BigBen's Entertainment & Arts coverage brings you the latest from film, streaming, music, digital media, and pop culture.\nWe track industry shifts, box office analytics, independent cinema breakthroughs, and how virtual production technologies are reshaping storytelling worldwide.`,
       featured: {
         category: "ENTERTAINMENT • VIRTUAL PRODUCTION & FILM",
         title: "How LED volume stages are changing Hollywood film production forever",
@@ -311,7 +311,7 @@ export function getCategoryData(slug: string): CategoryData {
     return {
       categoryName: "Health & Medicine",
       categoryColor: "bg-emerald-50",
-      infoBoxText: `Digital Journal's Health & Medicine coverage provides trusted reporting on medical research, public health policy, biotechnology breakthroughs, and clinical innovations.\nFrom mRNA cancer vaccine trials to AI-assisted diagnostics, our medical writers break down complex science into actionable news for global readers.`,
+      infoBoxText: `London BigBen's Health & Medicine coverage provides trusted reporting on medical research, public health policy, biotechnology breakthroughs, and clinical innovations.\nFrom mRNA cancer vaccine trials to AI-assisted diagnostics, our medical writers break down complex science into actionable news for global readers.`,
       featured: {
         category: "HEALTH • GENOMIC MEDICINE & IMMUNOLOGY",
         title: "CRISPR gene editing trial demonstrates landmark reversal of hereditary blood disorders",
@@ -401,7 +401,7 @@ export function getCategoryData(slug: string): CategoryData {
     return {
       categoryName: "Research & Industry Insights",
       categoryColor: "bg-amber-50",
-      infoBoxText: `Digital Journal's Research & Industry Insights desk publishes data-driven analyses, whitepapers, economic forecasts, and market intelligence.\nOur analysts evaluate macroeconomic shifts, supply chain resilience, emerging technologies, and corporate governance for executive decision-makers worldwide.`,
+      infoBoxText: `London BigBen's Research & Industry Insights desk publishes data-driven analyses, whitepapers, economic forecasts, and market intelligence.\nOur analysts evaluate macroeconomic shifts, supply chain resilience, emerging technologies, and corporate governance for executive decision-makers worldwide.`,
       featured: {
         category: "RESEARCH • GLOBAL MACROECONOMICS & AI IMPACT",
         title: "Global AI economic forecast: $15.7 Trillion value creation projected by 2030",
@@ -496,7 +496,7 @@ export function getCategoryData(slug: string): CategoryData {
   return {
     categoryName: displayName,
     categoryColor: "bg-[#EEEEEE]",
-    infoBoxText: `Digital Journal's ${displayName} coverage brings you breaking reporting, objective analysis, and global field dispatches.\nOur newsroom verifies facts, tracks market movements, and reports independent stories with real impact.`,
+    infoBoxText: `London BigBen's ${displayName} coverage brings you breaking reporting, objective analysis, and global field dispatches.\nOur newsroom verifies facts, tracks market movements, and reports independent stories with real impact.`,
     featured: {
       category: `${displayName.toUpperCase()} • VERIFIED REPORTING`,
       title: `Global policy & market dynamics shape the future of ${displayName}`,

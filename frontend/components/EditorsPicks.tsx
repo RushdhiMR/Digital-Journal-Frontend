@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
+import { useLiveArticles } from "@/lib/articlesSync";
 
 export default function EditorsPicks() {
   const [activeTab, setActiveTab] = useState<"indices" | "commodities" | "currencies">("indices");
+  const { articles: liveArticles = [] } = useLiveArticles();
+  const [dynamicEditorsPicks, setDynamicEditorsPicks] = useState<any[]>([]);
 
-  const editorsPicks = [
+  const defaultEditorsPicks = [
     {
       id: 1,
       category: "INNOVATION",
@@ -41,6 +44,40 @@ export default function EditorsPicks() {
       href: "/business/small-businesses-compete-ai-world"
     }
   ];
+
+  useEffect(() => {
+    try {
+      const picks = (Array.isArray(liveArticles) ? liveArticles : []).filter(
+        (a) => {
+          if (!a || (a.status || "").toLowerCase() !== "published") return false;
+          const pl = (a.placement || "").toLowerCase();
+          return pl.includes("editor") || a.is_editors_pick === true;
+        }
+      );
+
+      if (picks.length > 0) {
+        const formatted = picks.map((post, idx) => {
+          const cat = (post.category || "BUSINESS").toUpperCase();
+          const postSlug = (post.title || "").toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+          return {
+            id: `ed-pick-${post.id || idx}`,
+            category: cat,
+            title: post.title,
+            readTime: post.readDuration || "5 MIN READ",
+            image: post.imageUrl || post.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=380&fit=crop",
+            href: `/${cat.toLowerCase()}/companies/${postSlug}?id=${post.id}`
+          };
+        });
+        setDynamicEditorsPicks(formatted);
+      } else {
+        setDynamicEditorsPicks([]);
+      }
+    } catch (e) {}
+  }, [liveArticles]);
+
+  const displayPicks = dynamicEditorsPicks.length > 0 
+    ? [...dynamicEditorsPicks, ...defaultEditorsPicks].slice(0, 4) 
+    : defaultEditorsPicks;
 
   const marketTabs = {
     indices: [
@@ -86,7 +123,7 @@ export default function EditorsPicks() {
 
           {/* 4 Enclosed White Card Containers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 flex-1">
-            {editorsPicks.map((item) => (
+            {displayPicks.map((item) => (
               <article key={item.id} className="bg-white border border-gray-200 rounded-none p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full group cursor-pointer">
                 <div>
                   {/* Image with Bottom-Left White Overlay Category Tag */}

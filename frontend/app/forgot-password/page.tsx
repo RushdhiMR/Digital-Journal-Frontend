@@ -31,7 +31,18 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      setSuccessMessage("If an account with that email exists, password reset instructions have been dispatched.");
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Failed to process request. Please try again.");
+      } else {
+        setSuccessMessage(data.message || "If an account with that email exists, password reset instructions have been dispatched.");
+      }
     } catch (err: any) {
       setErrorMessage("Failed to process request. Please try again.");
     } finally {
@@ -51,11 +62,11 @@ export default function ForgotPasswordPage() {
             <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity mb-2 group">
               <img
                 src="/logo.png"
-                alt="Digital Journal Logo"
+                alt="London BigBen Logo"
                 className="w-9 h-9 object-contain"
               />
               <span className="text-2xl font-serif font-black tracking-tight text-slate-900 group-hover:text-[#BF1E2D] transition-colors">
-                DIGITAL JOURNAL
+                LONDON BIGBEN
               </span>
             </Link>
 

@@ -1,66 +1,137 @@
 "use client";
 
 import Link from "next/link";
+import { useLiveArticles, ArticleItem, isTopPlacementArticle, articleMatchesCategory } from "@/lib/articlesSync";
 
 export default function BottomCategoryGrid() {
+  const { articles: liveArticles = [] } = useLiveArticles();
+
+  // Helper to filter articles by category keywords
+  const getCategoryArticles = (keywords: string[]) => {
+    return (Array.isArray(liveArticles) ? liveArticles : []).filter((art: ArticleItem) => {
+      if (!art || (art.status || "").toLowerCase() !== "published") return false;
+      const pl = (art.placement || "").toLowerCase();
+      if (pl.includes("home page a+") || pl.includes("a+ section") || pl.includes("trending")) return false;
+      return keywords.some(k => articleMatchesCategory(art, k));
+    });
+  };
+
+  const researchLive = getCategoryArticles(["research", "innovation", "science", "industry", "insights"]);
+  const sportsLive = getCategoryArticles(["sports", "sport", "athletics", "olympics", "racing", "football"]);
+  const economyLive = getCategoryArticles(["economy", "economic", "economics", "finance", "macro", "trade"]);
+  const healthLive = getCategoryArticles(["health", "healthcare", "medical", "wellness", "medicine", "biotech", "pharma"]);
+
+  const buildColumnData = (
+    title: string,
+    liveList: ArticleItem[],
+    fallbackFeatured: any,
+    fallbackList: any[]
+  ) => {
+    if (liveList.length > 0) {
+      // Sort in strict descending order (newest first)
+      const sortedLive = [...liveList].sort((a, b) => {
+        const timeA = new Date(a.published_at || a.date || 0).getTime() || (typeof a.id === 'number' ? a.id : Number(String(a.id).replace(/\D/g, '')) || 0);
+        const timeB = new Date(b.published_at || b.date || 0).getTime() || (typeof b.id === 'number' ? b.id : Number(String(b.id).replace(/\D/g, '')) || 0);
+        return timeB - timeA;
+      });
+
+      const first = sortedLive[0];
+      const rest = sortedLive.slice(1);
+      const firstCat = (first.category || first.category_name || title).toLowerCase().replace(/[^a-z0-9]/g, "-");
+      const firstSlug = first.slug || (first.title || "").toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+      
+      const restList = rest.map(r => {
+        const rCat = (r.category || r.category_name || title).toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const rSlug = r.slug || (r.title || "").toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+        return { title: r.title, href: `/${rCat}/news/${rSlug}?id=${r.id}` };
+      });
+
+      // Shift previous fallback featured article down into the top of the list
+      const allFallbackHeadlines = [
+        { title: fallbackFeatured.title, href: fallbackFeatured.href },
+        ...fallbackList.filter(f => f.title !== fallbackFeatured.title)
+      ];
+
+      // Combine in chronological order: older published articles first, then fallback headlines
+      const combinedHeadlines = [...restList, ...allFallbackHeadlines].slice(0, 3);
+
+      return {
+        title,
+        featured: {
+          title: first.title,
+          description: first.description || first.summary || "",
+          image: first.imageUrl || first.image || fallbackFeatured.image,
+          href: `/${firstCat}/news/${firstSlug}?id=${first.id}`,
+          hasPlay: false
+        },
+        list: combinedHeadlines
+      };
+    }
+    return { title, featured: fallbackFeatured, list: fallbackList };
+  };
+
   const columns = [
-    {
-      title: "Top News",
-      featured: {
+    buildColumnData(
+      "Research & Innovation",
+      researchLive,
+      {
         title: "What next for the green transition in light of new economic headwinds?",
         description: "Governments balance renewable targets with immediate energy security demands across key industrial sectors.",
         image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400&h=250&fit=crop",
         href: "/news/top-news/green-transition-economic-headwinds"
       },
-      list: [
+      [
         { title: "International data privacy standards updated after cross-border audits", href: "/news/top-news/data-privacy-standards" },
         { title: "Public transportation systems roll out unified digital ticketing", href: "/news/top-news/public-transport-digital-ticketing" },
         { title: "Education systems adapt curricula to include basic AI literacy", href: "/news/top-news/education-ai-literacy" }
       ]
-    },
-    {
-      title: "Sports",
-      featured: {
+    ),
+    buildColumnData(
+      "Sports",
+      sportsLive,
+      {
         title: "EU & US leaders sign historic defense and international trade agreement",
         description: "Multilateral summits conclude with commitments to strengthen economic ties and critical supply chains.",
         image: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=400&h=250&fit=crop",
         hasPlay: true,
         href: "/sports/eu-us-leaders-sign-trade-agreement"
       },
-      list: [
+      [
         { title: "Global athletic championships adopt real-time AI biomechanics tracking", href: "/sports/athletic-championships-ai-tracking" },
         { title: "Formula E expands battery recovery rules ahead of next season", href: "/sports/formula-e-battery-recovery" },
         { title: "New stadium infrastructure integrates zero-waste solar canopy roofs", href: "/sports/stadium-zero-waste-solar" }
       ]
-    },
-    {
-      title: "Economy",
-      featured: {
+    ),
+    buildColumnData(
+      "Economy",
+      economyLive,
+      {
         title: "Transportation sector speeds up transition to zero emission heavy fleets",
         description: "Commercial freight operators replace diesel fleets with hydrogen and battery-electric heavy trucks.",
         image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop",
         href: "/economy/transportation-zero-emission-fleets"
       },
-      list: [
+      [
         { title: "Central banks test inter-bank settlement protocols via digital ledger", href: "/economy/central-banks-digital-ledger" },
         { title: "Global inflation indicators stabilize as supply lines recover", href: "/economy/global-inflation-indicators" },
         { title: "E-commerce platforms scale up localized transaction distribution nodes", href: "/economy/e-commerce-distribution-nodes" }
       ]
-    },
-    {
-      title: "Health",
-      featured: {
+    ),
+    buildColumnData(
+      "Health",
+      healthLive,
+      {
         title: "AI in healthcare: groundbreaking algorithm detects early stage heart anomalies",
         description: "Machine learning models trained on millions of ECG scans identify cardiovascular risks long before symptoms emerge.",
         image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=250&fit=crop",
         href: "/health/ai-healthcare-heart-anomalies"
       },
-      list: [
+      [
         { title: "Gene therapy trials deliver promising early results for rare conditions", href: "/health/gene-therapy-trials-promising" },
         { title: "Wearable biosensors allow real-time glucose and hydration monitoring", href: "/health/wearable-biosensors-real-time" },
         { title: "Surgical robotics systems achieve sub-millimeter precision milestone", href: "/health/surgical-robotics-precision" }
       ]
-    }
+    )
   ];
 
   return (
